@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}# {{ room_name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex justify-center gap-2">
+        <input class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" id="room-name-input" type="text" placeholder="Enter room name to enter">
+        <input class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg text-sm" id="room-name-submit" type="button" value="Enter">
+    </div>
+</div>
+
+<script>
+    document.querySelector('#room-name-input').focus();
+    document.querySelector('#room-name-input').onkeyup = function(e) {
+        if (e.key === 'Enter') { 
+            document.querySelector('#room-name-submit').click();
+        }
+    };
+    document.querySelector('#room-name-submit').onclick = function(e) {
+        var roomName = document.querySelector('#room-name-input').value;
+        if (roomName != '') {
+            window.location.pathname = '/room/' + roomName + '/';
+        }
+    };
+</script>
+{% endblock %}
