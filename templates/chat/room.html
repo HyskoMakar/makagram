@@ -3,15 +3,15 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-4 py-3 border-b font-semibold text-gray-700"># {{ room_name }}</div>
+        <div class="px-4 py-3 border-b flex justify-between"><span class="font-semibold text-gray-700"># {{ room_name }}</span><span class="text-red-300">Reloading page will delete all messages</span></div>
         <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
         <div class="px-4 py-3 border-t flex gap-2">
             <input id="chat-message-input" type="text"
                 class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Написати повідомлення...">
+                placeholder="Write something...">
             <button id="chat-message-submit"
                 class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
-                Надіслати
+                Send
             </button>
         </div>
     </div>
