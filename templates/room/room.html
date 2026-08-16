@@ -3,7 +3,10 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-4 py-3 border-b flex justify-between"><span class="font-semibold text-gray-700"># {{ room_name }}</span><span class="text-red-300">Reloading page will delete all messages</span></div>
+        <div class="px-4 py-3 border-b flex justify-between items-center">
+            <span class="font-semibold text-gray-700"># {{ room_name }}</span>
+            <span class="text-sm text-green-500"><span id="online-count">0</span> online</span>
+        </div>
         <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
         <div class="px-4 py-3 border-t flex gap-2">
             <input id="chat-message-input" type="text"
@@ -26,12 +29,20 @@
         wsScheme + '://' + window.location.host + '/ws/chat/' + roomName + '/'
     );
 
+    window.addEventListener('beforeunload', () => chatSocket.close());
+
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
+
+        if (data.type === 'online_count') {
+            document.getElementById('online-count').textContent = data.count;
+            return;
+        }
+
         const log = document.querySelector('#chat-log');
         const msg = document.createElement('div');
         msg.className = 'bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-800 self-start max-w-xs';
-        msg.textContent = data.message;
+        msg.innerHTML = '<span class="font-semibold text-purple-500">' + data.username + '</span>: ' + data.message;
         log.appendChild(msg);
         log.scrollTop = log.scrollHeight;
     };

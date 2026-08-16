@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style type="text/tailwindcss">
-        * {
-            @apply transition ease-in-out
-        }
+        * { @apply transition ease-in-out }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -19,13 +16,38 @@
             <nav class="items-center gap-4">
                 <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'room-index' %}">Rooms</a>
             </nav>
-            <div>
-                
+            <div class="flex flex-1 items-center justify-end gap-2">
+                {% if request.user.is_authenticated %}
+                <div class="relative">
+                    <button id="profile-btn" class="w-9 h-9 rounded-full bg-blue-300 flex items-center justify-center text-sm font-semibold text-gray-700 hover:bg-blue-400 focus:outline-none">
+                        {{ request.user.profile.username|default:request.user.username|slice:":1"|upper }}
+                    </button>
+                    <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2">
+                        <div class="px-4 py-2 text-sm font-medium text-gray-800 border-b">
+                            {{ request.user.profile.username|default:request.user.username }}
+                        </div>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Вийти</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-md">Sign in</a>
+                {% endif %}
             </div>
         </div>
     </header>
     <div class="container mx-auto px-4 py-6">
         {% block content %}{% endblock %}
     </div>
+    <script>
+        const btn = document.getElementById('profile-btn');
+        const dropdown = document.getElementById('profile-dropdown');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => dropdown.classList.add('hidden'));
+        }
+    </script>
 </body>
 </html>

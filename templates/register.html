@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-16">
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Sign up</h2>
+        <form method="post" class="flex flex-col gap-3">
+            {% csrf_token %}
+            {% for field in form %}
+            <div>
+                <label class="text-sm text-gray-600">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 text-sm">Sign up</button>
+        </form>
+        <p class="text-sm text-center mt-4 text-gray-500">Already have an account? <a href="{% url 'login' %}" class="text-blue-500">Login</a></p>
+    </div>
+</div>
+{% endblock %}
