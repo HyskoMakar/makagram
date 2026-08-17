@@ -26,7 +26,7 @@
 
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const chatSocket = new WebSocket(
-        wsScheme + '://' + window.location.host + '/ws/chat/' + roomName + '/'
+        wsScheme + '://' + window.location.host + '/ws/room/' + roomName + '/'
     );
 
     window.addEventListener('beforeunload', () => chatSocket.close());
@@ -42,7 +42,7 @@
         const log = document.querySelector('#chat-log');
         const msg = document.createElement('div');
         msg.className = 'bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-800 self-start max-w-xs';
-        msg.innerHTML = '<span class="font-semibold text-purple-500">' + data.username + '</span>: ' + data.message;
+        msg.innerHTML = '<span class="text-' + data.user.color + '-600">' + data.user.username + '</span></br> ' + data.message;
         log.appendChild(msg);
         log.scrollTop = log.scrollHeight;
     };

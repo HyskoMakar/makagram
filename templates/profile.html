@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white bg-{{ profile.color }}-300">
+                {{ profile.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <p class="font-semibold text-{{ profile.color }}-600">{{ profile.username }}</p>
+                <p class="text-sm text-gray-400">@{{ request.user.username }}</p>
+            </div>
+        </div>
+
+        <form method="post" class="flex flex-col gap-4">
+            {% csrf_token %}
+            <div>
+                <label class="text-sm text-gray-600">Nickname</label>
+                <input name="username" type="text" value="{{ profile.username }}"
+                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 mt-1">
+            </div>
+            <div>
+                <label class="text-sm text-gray-600 block mb-2">Color</label>
+                <div class="flex flex-wrap gap-2">
+                    {% for color in colors %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="color" value="{{ color }}" class="hidden peer"
+                            {% if profile.color == color %}checked{% endif %}>
+                        <div class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white rounded-lg py-2 text-sm">
+                Save
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

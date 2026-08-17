@@ -19,14 +19,15 @@
             <div class="flex flex-1 items-center justify-end gap-2">
                 {% if request.user.is_authenticated %}
                 <div class="relative">
-                    <button id="profile-btn" class="w-9 h-9 rounded-full bg-blue-300 flex items-center justify-center text-sm font-semibold text-gray-700 hover:bg-blue-400 focus:outline-none">
+                    <button id="profile-btn" class="w-9 h-9 rounded-full bg-{{ request.user.profile.color }}-300 flex items-center justify-center text-sm font-semibold text-white hover:bg-{{ request.user.profile.color }}-400 focus:outline-none">
                         {{ request.user.profile.username|default:request.user.username|slice:":1"|upper }}
                     </button>
                     <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2">
-                        <div class="px-4 py-2 text-sm font-medium text-gray-800 border-b">
+                        <div class="px-4 py-2 text-sm font-medium text-{{ request.user.profile.color }}-600 border-b">
                             {{ request.user.profile.username|default:request.user.username }}
                         </div>
-                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Вийти</a>
+                        <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">Profile</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Exit</a>
                     </div>
                 </div>
                 {% else %}

@@ -5,7 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 room_users = {}
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
@@ -20,40 +20,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         messages = await self._get_last_messages()
         for msg in messages:
-            await self.send(text_data=json.dumps({
-                "type": "message",
-                "message": msg["content"],
-                "username": msg["username"]
-            }))
+            await self.send(text_data=json.dumps({"type": "message", "message": msg["content"], "user": msg["user"]}))
 
         await self._broadcast_online_count()
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
         if self.room_group_name in room_users:
             room_users[self.room_group_name].discard(self.channel_name)
-
         await self._broadcast_online_count()
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         user = self.scope["user"]
-        username = await self._get_username(user)
+        user_data = await self._get_user_data(user)
 
         if user.is_authenticated:
             await self._save_message(user, data["message"])
 
         await self.channel_layer.group_send(
             self.room_group_name,
-            {"type": "chat.message", "message": data["message"], "username": username}
+            {"type": "chat.message", "message": data["message"], "user": user_data}
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             "type": "message",
             "message": event["message"],
-            "username": event["username"]
+            "user": event["user"]
         }))
 
     async def online_count(self, event):
@@ -67,13 +61,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
     @sync_to_async
-    def _get_username(self, user):
+    def _get_user_data(self, user):
         if not user.is_authenticated:
-            return "Анонім"
+            return {"username": "Анонім", "color": "gray"}
         try:
-            return user.profile.username or user.username
+            return {"username": user.profile.username or user.username, "color": user.profile.color or "gray"}
         except Exception:
-            return user.username
+            return {"username": user.username, "color": "gray"}
 
     @sync_to_async
     def _save_message(self, user, content):
@@ -87,8 +81,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         result = []
         for msg in reversed(list(messages)):
             try:
-                username = msg.user.profile.username or msg.user.username
+                user_data = {"username": msg.user.profile.username or msg.user.username, "color": msg.user.profile.color or "gray"}
             except Exception:
-                username = msg.user.username
-            result.append({"content": msg.content, "username": username})
+                user_data = {"username": msg.user.username, "color": "gray"}
+            result.append({"content": msg.content, "user": user_data})
         return result

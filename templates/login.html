@@ -6,6 +6,11 @@
         <h2 class="text-xl font-semibold mb-4">Login</h2>
         <form method="post" class="flex flex-col gap-3">
             {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-3 py-2">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
             {% for field in form %}
             <div>
                 <label class="text-sm text-gray-600">{{ field.label }}</label>
