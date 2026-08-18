@@ -45,9 +45,15 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _get_user_data(self, user):
         try:
-            return {'username': user.profile.username or user.username, 'color': user.profile.color or 'gray'}
+            avatar = None
+            try:
+                if user.profile.avatar:
+                    avatar = user.profile.avatar.url
+            except Exception:
+                avatar = None
+            return {'username': user.profile.username or user.username, 'color': user.profile.color or 'gray', 'avatar': avatar}
         except Exception:
-            return {'username': user.username, 'color': 'gray'}
+            return {'username': user.username, 'color': 'gray', 'avatar': None}
 
     @sync_to_async
     def _save_message(self, content):
@@ -79,8 +85,14 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         result = []
         for msg in reversed(list(messages)):
             try:
-                user_data = {'username': msg.from_user.profile.username or msg.from_user.username, 'color': msg.from_user.profile.color or 'gray'}
+                avatar = None
+                try:
+                    if msg.from_user.profile.avatar:
+                        avatar = msg.from_user.profile.avatar.url
+                except Exception:
+                    avatar = None
+                user_data = {'username': msg.from_user.profile.username or msg.from_user.username, 'color': msg.from_user.profile.color or 'gray', 'avatar': avatar}
             except Exception:
-                user_data = {'username': msg.from_user.username, 'color': 'gray'}
+                user_data = {'username': msg.from_user.username, 'color': 'gray', 'avatar': None}
             result.append({'content': msg.content, 'user': user_data})
         return result

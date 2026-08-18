@@ -14,6 +14,7 @@ DEFAULT_COLOR = 'blue'
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     username = models.CharField(max_length=50, blank=True)
+    description = models.CharField(max_length=50, default="")
     color = models.CharField(max_length=25, default=DEFAULT_COLOR)
     avatar = models.ImageField(blank=True)
 

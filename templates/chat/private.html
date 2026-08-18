@@ -13,17 +13,20 @@
       {{ other.profile.username|default:other.username|slice:":1"|upper }}
       {% endif %}
     </div>
-    <div>
-      <div class="font-medium">{{ other.profile.username|default:other.username }}</div>
+    <div class="width-full">
+      <div class="font-medium text-{{ other.profile.color }}-600">{{ other.profile.username|default:other.username }}</div>
       <div class="text-sm text-gray-500">@{{ other.username }}</div>
+      <div class="text-sm text-gray-600">{{ other.profile.description }}</div>
+    </div>
+    <div>
     </div>
   </div>
 
   <div id="messages" class="bg-white rounded-lg shadow p-4 h-96 overflow-y-auto space-y-3 mb-4"></div>
 
   <form id="chat-form" class="flex gap-2">
-    <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 px-4 py-2 rounded-lg border focus:outline-none">
-    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Send</button>
+    <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-400">
+    <button type="submit" class="px-4 py-2 bg-emerald-500 text-white rounded-lg">Send</button>
   </form>
 </div>
 
@@ -38,11 +41,45 @@
     const wsPath = `${wsScheme}://${window.location.host}/ws/privatechat/${encodeURIComponent(other)}/`;
     const socket = new WebSocket(wsPath);
 
-    function appendMessage(message, username, color){
-      const el = document.createElement('div');
-      el.className = 'p-2 rounded-lg';
-      el.innerHTML = `<div class="text-xs text-gray-500">${username}</div><div class="mt-1">${message}</div>`;
-      messagesEl.appendChild(el);
+    const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+
+    function appendMessage(message, user){
+      // user: {username, color, avatar}
+      const isMe = user.username === currentUser;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-start gap-3';
+      if (isMe) wrapper.classList.add('justify-end');
+
+      const avatar = document.createElement('div');
+      avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.className = 'w-full h-full object-cover';
+        avatar.appendChild(img);
+      } else {
+        avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
+        avatar.textContent = (user.username || '?').slice(0,1).toUpperCase();
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
+      if (isMe) {
+        bubble.classList.add('bg-blue-500','text-white');
+      } else {
+        bubble.classList.add('bg-gray-100','text-gray-800');
+      }
+      bubble.textContent = message;
+
+      if (isMe) {
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(avatar);
+      } else {
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(bubble);
+      }
+
+      messagesEl.appendChild(wrapper);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
@@ -54,7 +91,7 @@
       try{
         const data = JSON.parse(e.data);
         if(data.type === 'message'){
-          appendMessage(data.message, data.user.username, data.user.color);
+          appendMessage(data.message, data.user);
         }
       }catch(err){ console.error(err) }
     });

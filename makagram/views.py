@@ -40,10 +40,13 @@ def profile_view(request):
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
+        description = request.POST.get('description', '').strip()
         color = request.POST.get('color', DEFAULT_COLOR)
 
         if username:
             profile.username = username
+        if description:
+            profile.description = description
         profile.color = color if color in ALLOWED_COLORS else DEFAULT_COLOR
 
         if 'clear_avatar' in request.POST and profile.avatar:
