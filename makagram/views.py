@@ -1,14 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from .forms import LoginForm, RegisterForm
-
-ALLOWED_COLORS = [
-    'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
-    'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink',
-    'rose', 'slate', 'gray', 'zinc', 'neutral', 'stone', 'taupe', 'mauve',
-    'mist', 'olive',
-]
-DEFAULT_COLOR = 'blue'
+from .models import ALLOWED_COLORS, DEFAULT_COLOR
 
 def index(request):
     return render(request, "base.html")
@@ -48,9 +41,19 @@ def profile_view(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         color = request.POST.get('color', DEFAULT_COLOR)
+
         if username:
             profile.username = username
         profile.color = color if color in ALLOWED_COLORS else DEFAULT_COLOR
+
+        if 'clear_avatar' in request.POST and profile.avatar:
+            profile.avatar.delete(save=False)
+            profile.avatar = None
+        elif 'avatar' in request.FILES:
+            if profile.avatar:
+                profile.avatar.delete(save=False)
+            profile.avatar = request.FILES['avatar']
+
         profile.save()
         return redirect('profile')
 

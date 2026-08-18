@@ -26,7 +26,7 @@
 
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const chatSocket = new WebSocket(
-        wsScheme + '://' + window.location.host + '/ws/room/' + roomName + '/'
+        wsScheme + '://' + window.location.host + '/ws/lobby/' + roomName + '/'
     );
 
     window.addEventListener('beforeunload', () => chatSocket.close());

@@ -10,7 +10,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "makagram.settings")
 # is populated before importing code that may import ORM models.
 django_asgi_app = get_asgi_application()
 
-from room.routing import websocket_urlpatterns
+from lobby.routing import websocket_urlpatterns as lobby_ws
+from chat.routing import websocket_urlpatterns as chat_ws
+
+websocket_urlpatterns = lobby_ws + chat_ws
 
 application = ProtocolTypeRouter(
     {

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat with {{ other.profile.username|default:other.username }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-4 mb-4">
+    <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
+      {% if other.profile.avatar %}
+      <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
+      {% else %}
+      {{ other.profile.username|default:other.username|slice:":1"|upper }}
+      {% endif %}
+    </div>
+    <div>
+      <div class="font-medium">{{ other.profile.username|default:other.username }}</div>
+      <div class="text-sm text-gray-500">@{{ other.username }}</div>
+    </div>
+  </div>
+
+  <div id="messages" class="bg-white rounded-lg shadow p-4 h-96 overflow-y-auto space-y-3 mb-4"></div>
+
+  <form id="chat-form" class="flex gap-2">
+    <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 px-4 py-2 rounded-lg border focus:outline-none">
+    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Send</button>
+  </form>
+</div>
+
+<script>
+  (function(){
+    const other = "{{ other.profile.username|default:other.username }}";
+    const messagesEl = document.getElementById('messages');
+    const input = document.getElementById('message-input');
+    const form = document.getElementById('chat-form');
+
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsPath = `${wsScheme}://${window.location.host}/ws/privatechat/${encodeURIComponent(other)}/`;
+    const socket = new WebSocket(wsPath);
+
+    function appendMessage(message, username, color){
+      const el = document.createElement('div');
+      el.className = 'p-2 rounded-lg';
+      el.innerHTML = `<div class="text-xs text-gray-500">${username}</div><div class="mt-1">${message}</div>`;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    socket.addEventListener('open', () => {
+      console.log('ws open');
+    });
+
+    socket.addEventListener('message', (e) => {
+      try{
+        const data = JSON.parse(e.data);
+        if(data.type === 'message'){
+          appendMessage(data.message, data.user.username, data.user.color);
+        }
+      }catch(err){ console.error(err) }
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = input.value.trim();
+      if(!val) return;
+      socket.send(JSON.stringify({message: val}));
+      input.value = '';
+    });
+  })();
+</script>
+
+{% endblock %}

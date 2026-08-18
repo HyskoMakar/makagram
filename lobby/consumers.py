@@ -71,12 +71,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def _save_message(self, user, content):
-        from room.models import Message
+        from lobby.models import Message
         Message.objects.create(user=user, room=self.room_name, content=content)
 
     @sync_to_async
     def _get_last_messages(self):
-        from room.models import Message
+        from lobby.models import Message
         messages = Message.objects.filter(room=self.room_name).select_related('user__profile').order_by('-created_at')[:50]
         result = []
         for msg in reversed(list(messages)):
