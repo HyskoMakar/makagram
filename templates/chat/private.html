@@ -1,109 +1,115 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Chat with {{ other.profile.username|default:other.username }}{% endblock %}
+{% block title %}# {{ other.profile.username|default:other.username }}{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-  <div class="flex items-center gap-4 mb-4">
-    <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
-      {% if other.profile.avatar %}
-      <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
-      {% else %}
-      {{ other.profile.username|default:other.username|slice:":1"|upper }}
-      {% endif %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="px-4 py-3 border-b flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
+                    {% if other.profile.avatar %}
+                    <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ other.profile.username|default:other.username|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-{{ other.profile.color }}-600">{{ other.profile.username|default:other.username }}</span>
+                    <span class="text-sm text-gray-400">@{{ other.username }}</span>
+                    <span class="text-sm text-gray-600">{{ other.profile.description }}</span>
+                </div>
+            </div>
+        </div>
+        <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
+        <div class="px-4 py-3 border-t flex gap-2">
+            <input id="chat-message-input" type="text"
+                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
+                placeholder="Write something...">
+            <button id="chat-message-submit"
+                class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                Send
+            </button>
+        </div>
     </div>
-    <div class="width-full">
-      <div class="font-medium text-{{ other.profile.color }}-600">{{ other.profile.username|default:other.username }}</div>
-      <div class="text-sm text-gray-500">@{{ other.username }}</div>
-      <div class="text-sm text-gray-600">{{ other.profile.description }}</div>
-    </div>
-    <div>
-    </div>
-  </div>
-
-  <div id="messages" class="bg-white rounded-lg shadow p-4 h-96 overflow-y-auto space-y-3 mb-4"></div>
-
-  <form id="chat-form" class="flex gap-2">
-    <input id="message-input" type="text" placeholder="Type a message..." class="flex-1 px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-400">
-    <button type="submit" class="px-4 py-2 bg-emerald-500 text-white rounded-lg">Send</button>
-  </form>
 </div>
 
+{{ other.profile.username|default:other.username|json_script:"private-name" }}
 <script>
-  (function(){
-    const other = "{{ other.profile.username|default:other.username }}";
-    const messagesEl = document.getElementById('messages');
-    const input = document.getElementById('message-input');
-    const form = document.getElementById('chat-form');
+    const otherName = JSON.parse(document.getElementById('private-name').textContent);
 
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsPath = `${wsScheme}://${window.location.host}/ws/privatechat/${encodeURIComponent(other)}/`;
-    const socket = new WebSocket(wsPath);
+    const chatSocket = new WebSocket(
+        wsScheme + '://' + window.location.host + '/ws/privatechat/' + encodeURIComponent(otherName) + '/'
+    );
 
-    const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+    window.addEventListener('beforeunload', () => chatSocket.close());
 
-    function appendMessage(message, user){
-      // user: {username, color, avatar}
-      const isMe = user.username === currentUser;
-      const wrapper = document.createElement('div');
-      wrapper.className = 'flex items-start gap-3';
-      if (isMe) wrapper.classList.add('justify-end');
-
-      const avatar = document.createElement('div');
-      avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
-      if (user.avatar) {
-        const img = document.createElement('img');
-        img.src = user.avatar;
-        img.className = 'w-full h-full object-cover';
-        avatar.appendChild(img);
-      } else {
-        avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
-        avatar.textContent = (user.username || '?').slice(0,1).toUpperCase();
-      }
-
-      const bubble = document.createElement('div');
-      bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
-      if (isMe) {
-        bubble.classList.add('bg-blue-500','text-white');
-      } else {
-        bubble.classList.add('bg-gray-100','text-gray-800');
-      }
-      bubble.textContent = message;
-
-      if (isMe) {
-        wrapper.appendChild(bubble);
-        wrapper.appendChild(avatar);
-      } else {
-        wrapper.appendChild(avatar);
-        wrapper.appendChild(bubble);
-      }
-
-      messagesEl.appendChild(wrapper);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    socket.addEventListener('open', () => {
-      console.log('ws open');
-    });
-
-    socket.addEventListener('message', (e) => {
-      try{
+    chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
-        if(data.type === 'message'){
-          appendMessage(data.message, data.user);
+
+        if (data.type === 'online_count') {
+            document.getElementById('online-count').textContent = data.count;
+            return;
         }
-      }catch(err){ console.error(err) }
-    });
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const val = input.value.trim();
-      if(!val) return;
-      socket.send(JSON.stringify({message: val}));
-      input.value = '';
-    });
-  })();
+        const log = document.querySelector('#chat-log');
+        const user = data.user || {};
+        const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+        const isMe = user.username === currentUser;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-start gap-2';
+        if (isMe) wrapper.classList.add('justify-end');
+
+        const avatar = document.createElement('div');
+        avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
+        if (user.avatar) {
+            const img = document.createElement('img');
+            img.src = user.avatar;
+            img.className = 'w-full h-full object-cover';
+            avatar.appendChild(img);
+        } else {
+            avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
+            avatar.textContent = (user.username || '?').slice(0,1).toUpperCase();
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
+        if (isMe) {
+            bubble.classList.add('bg-purple-500','text-white');
+        } else {
+            bubble.classList.add('bg-gray-100','text-gray-800');
+        }
+        bubble.textContent = data.message || '';
+
+        if (isMe) {
+            wrapper.appendChild(bubble);
+            wrapper.appendChild(avatar);
+        } else {
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(bubble);
+        }
+
+        log.appendChild(wrapper);
+        log.scrollTop = log.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.key === 'Enter') document.querySelector('#chat-message-submit').click();
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const input = document.querySelector('#chat-message-input');
+        if (input.value != '') {
+            chatSocket.send(JSON.stringify({ 'message': input.value }));
+            input.value = '';
+        }
+    };
 </script>
-
 {% endblock %}
