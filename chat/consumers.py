@@ -29,6 +29,15 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         user_data = await self._get_user_data(self.me)
+        # check if the other user has blocked me
+        to_user = await self._get_user_by_username(self.other_username)
+        if to_user:
+            blocked = await self._is_blocked_by(to_user, self.me)
+            if blocked:
+                # notify sender that they are blocked
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'You are blocked by this user'}))
+                return
+
         await self._save_message(data['message'])
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -64,6 +73,25 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         except User.DoesNotExist:
             to_user = User.objects.get(username=self.other_username)
         PrivateMessage.objects.create(from_user=self.me, to_user=to_user, content=content)
+
+    @sync_to_async
+    def _get_user_by_username(self, username):
+        from django.contrib.auth.models import User
+        try:
+            return User.objects.get(profile__username=username)
+        except User.DoesNotExist:
+            try:
+                return User.objects.get(username=username)
+            except User.DoesNotExist:
+                return None
+
+    @sync_to_async
+    def _is_blocked_by(self, blocker, blocked_user):
+        from makagram.models import is_blocked
+        try:
+            return is_blocked(blocker, blocked_user)
+        except Exception:
+            return False
 
     @sync_to_async
     def _get_last_messages(self):

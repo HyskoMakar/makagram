@@ -19,6 +19,10 @@
                     <span class="text-sm text-gray-400">@{{ other.username }}</span>
                     <span class="text-sm text-gray-600">{{ other.profile.description }}</span>
                 </div>
+                <div class="ml-4 flex items-center gap-2">
+                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm">{% if friends %}Unfriend{% else %}Add friend{% endif %}</button>
+                    <button id="block-btn" class="px-3 py-1 rounded border text-sm text-red-600">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button>
+                </div>
             </div>
         </div>
         <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
@@ -77,9 +81,9 @@
         const bubble = document.createElement('div');
         bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
         if (isMe) {
-            bubble.classList.add('bg-purple-500','text-white');
+            bubble.classList.add('bg-{{ request.user.profile.color }}-100','text-gray-800');
         } else {
-            bubble.classList.add('bg-gray-100','text-gray-800');
+            bubble.classList.add('bg-{{ other.profile.color }}-100','text-gray-800');
         }
         bubble.textContent = data.message || '';
 
@@ -106,10 +110,63 @@
 
     document.querySelector('#chat-message-submit').onclick = function(e) {
         const input = document.querySelector('#chat-message-input');
+        if (input.disabled) return;
         if (input.value != '') {
             chatSocket.send(JSON.stringify({ 'message': input.value }));
             input.value = '';
         }
     };
+
+    // Friend / Block buttons
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+    const friendBtn = document.getElementById('friend-btn');
+    const blockBtn = document.getElementById('block-btn');
+
+    friendBtn && friendBtn.addEventListener('click', async () => {
+        const res = await fetch(`/chat/toggle-friend/${encodeURIComponent(otherName)}/`, {method: 'POST', headers: {'X-CSRFToken': csrftoken}});
+        const data = await res.json();
+        if (data.ok) {
+            friendBtn.textContent = data.friends ? 'Unfriend' : 'Add friend';
+            if (data.error === 'blocked') alert('Cannot friend: blocked relationship exists');
+        }
+    });
+
+    blockBtn && blockBtn.addEventListener('click', async () => {
+        const res = await fetch(`/chat/toggle-block/${encodeURIComponent(otherName)}/`, {method: 'POST', headers: {'X-CSRFToken': csrftoken}});
+        const data = await res.json();
+        if (data.ok) {
+            blockBtn.textContent = data.blocked ? 'Unblock' : 'Block';
+            // if blocked by me, disable friend button
+            if (data.blocked) {
+                friendBtn.disabled = true;
+                document.getElementById('chat-message-input').disabled = true;
+            } else {
+                friendBtn.disabled = false;
+                document.getElementById('chat-message-input').disabled = false;
+            }
+        }
+    });
+
+    // initial disable if other has blocked me
+    const blockedByOther = {% if blocked_by_other %}true{% else %}false{% endif %};
+    if (blockedByOther) {
+        document.getElementById('chat-message-input').disabled = true;
+        document.getElementById('chat-message-submit').disabled = true;
+    }
 </script>
 {% endblock %}
