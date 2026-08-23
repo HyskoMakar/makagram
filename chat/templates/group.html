@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+
+        <!-- Header -->
+        <div class="px-4 py-3 border-b flex justify-between items-center w-full">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-{{ group.color|default:'blue' }}-300 text-lg select-none">
+                    {{ group.name|slice:":1"|upper }}
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-semibold text-{{ group.color|default:'blue' }}-600">{{ group.name }}</span>
+                    <span class="text-xs text-gray-400">{{ group.private|yesno:"Private,Public" }} · {{ group.members.count }} members</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                {% if request.user == group.owner %}
+                <button id="group-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm hover:bg-gray-50 flex items-center gap-1">
+                    Edit
+                </button>
+                {% endif %}
+
+                {% if is_member and request.user != group.owner %}
+                <form method="post" action="{% url 'group-leave' group.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50">
+                        Leave group
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Creator Settings Panel -->
+        {% if request.user == group.owner %}
+        <div id="group-settings-panel" class="hidden px-4 py-4 border-b bg-gray-50">
+            <h3 class="font-semibold text-sm mb-3 text-gray-700">Group Settings</h3>
+            <form method="post" action="{% url 'group-edit' group.id %}" class="flex flex-col gap-4">
+                {% csrf_token %}
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Group Name</label>
+                    <input type="text" name="name" value="{{ group.name }}" required
+                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Privacy Type</label>
+                    <div class="flex gap-4">
+                        <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+                            <input type="radio" name="private" value="0" {% if not group.private %}checked{% endif %}>
+                            <span>Public</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
+                            <input type="radio" name="private" value="1" {% if group.private %}checked{% endif %}>
+                            <span>Private</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Group Color</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for color in colors %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="color" value="{{ color }}" class="hidden peer"
+                                   {% if group.color == color %}checked{% endif %}>
+                            <div class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-2 border-t">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+                        Save changes
+                    </button>
+                </div>
+            </form>
+
+            <form method="post" action="{% url 'group-delete' group.id %}" class="mt-4 pt-3 border-t flex justify-between items-center">
+                {% csrf_token %}
+                <span class="text-xs text-red-500 font-medium">Danger Zone</span>
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">
+                    Delete Group
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Chat area -->
+        <div class="relative">
+            <div id="group-messages" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
+                {% for m in messages %}
+                {% with msg_username=m.author.profile.username|default:m.author.username %}
+                <div class="flex items-start gap-2 {% if m.author == request.user %}justify-end{% endif %}"
+                     data-username="{{ msg_username }}">
+                    {% if m.author != request.user %}
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
+                        {% if m.author.profile.avatar %}
+                        <img src="{{ m.author.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ msg_username|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {% if m.author != request.user %}
+                        <div class="text-xs font-medium text-{{ m.author.profile.color|default:'gray' }}-500 mb-1">{{ msg_username }}</div>
+                        {% endif %}
+                        <div>{{ m.content }}</div>
+                    </div>
+
+                    {% if m.author == request.user %}
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
+                        {% if request.user.profile.avatar %}
+                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ request.user.username|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Bottom bar -->
+        {% if is_member %}
+        <div class="px-4 py-3 border-t flex gap-2 items-center">
+            <input id="group-input" type="text"
+                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
+                   placeholder="Write to group...">
+            <button id="group-send"
+                    class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                Send
+            </button>
+        </div>
+        {% elif invited %}
+        <div class="px-4 py-3 border-t">
+            <form method="post" action="{% url 'accept-invite' invite.id %}">
+                {% csrf_token %}
+                <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Accept Invite</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="px-4 py-3 border-t text-gray-500 text-sm">
+            You are not a member of this group.
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Context Menu Dropdown -->
+<div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
+    <a id="cm-pm-btn" href="#" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">
+        Open Direct Message
+    </a>
+    {% if group.private and request.user == group.owner %}
+    <button id="cm-kick-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">
+        Kick from group
+    </button>
+    {% endif %}
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
+
+<script>
+  (function(){
+    const groupId = {{ group.id }};
+    const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+    const myColor = "{{ request.user.profile.color|default:'gray' }}";
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Toggle creator settings panel
+    const settingsToggleBtn = document.getElementById('group-settings-toggle');
+    const settingsPanel = document.getElementById('group-settings-panel');
+    if (settingsToggleBtn && settingsPanel) {
+        settingsToggleBtn.addEventListener('click', () => {
+            settingsPanel.classList.toggle('hidden');
+        });
+    }
+
+    // Context Menu Handler (Right Click)
+    const contextMenu = document.getElementById('context-menu');
+    const cmPmBtn = document.getElementById('cm-pm-btn');
+    const cmKickBtn = document.getElementById('cm-kick-btn');
+    let targetUsernameForContextMenu = null;
+
+    function hideContextMenu() {
+        if (contextMenu) contextMenu.classList.add('hidden');
+    }
+
+    document.addEventListener('click', hideContextMenu);
+    document.addEventListener('scroll', hideContextMenu, true);
+
+    const messagesDiv = document.getElementById('group-messages');
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    messagesDiv.addEventListener('click', function(e) {
+        const msgWrapper = e.target.closest('[data-username]');
+        if (!msgWrapper) return;
+
+        const username = msgWrapper.dataset.username;
+        if (!username || username === currentUser) return;
+
+        e.stopPropagation();
+        targetUsernameForContextMenu = username;
+
+        if (cmPmBtn) {
+            cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
+        }
+
+        const menuWidth = 180;
+        const menuHeight = 90;
+        let left = e.clientX;
+        let top = e.clientY;
+
+        if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 10;
+        if (top + menuHeight > window.innerHeight) top = window.innerHeight - menuHeight - 10;
+
+        contextMenu.style.left = left + 'px';
+        contextMenu.style.top = top + 'px';
+        contextMenu.classList.remove('hidden');
+    });
+
+    if (cmKickBtn) {
+        cmKickBtn.addEventListener('click', async function() {
+            if (!targetUsernameForContextMenu) return;
+            hideContextMenu();
+            const usernameToKick = targetUsernameForContextMenu;
+            const res = await fetch(`/chat/groups/${groupId}/kick/${encodeURIComponent(usernameToKick)}/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken}
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(`${usernameToKick} was kicked from group`);
+            } else {
+                showToast(data.error || 'Kick failed');
+            }
+        });
+    }
+
+    // WebSocket Setup
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(wsScheme + '://' + window.location.host + '/ws/group/' + groupId + '/');
+
+    const input = document.getElementById('group-input');
+    const sendBtn = document.getElementById('group-send');
+    const toast = document.getElementById('toast');
+
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function renderMessage(data) {
+      const user = data.user || {};
+      const isMe = user.username === currentUser;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-start gap-2';
+      if (isMe) wrapper.classList.add('justify-end');
+      wrapper.dataset.username = user.username || '?';
+
+      // Avatar
+      const avatar = document.createElement('div');
+      avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.className = 'w-full h-full object-cover';
+        avatar.appendChild(img);
+      } else {
+        avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
+        avatar.textContent = (user.username || '?').slice(0, 1).toUpperCase();
+      }
+
+      // Bubble
+      const bubble = document.createElement('div');
+      bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
+      if (isMe) {
+        bubble.classList.add('bg-' + myColor + '-100', 'text-gray-800');
+      } else {
+        bubble.classList.add('bg-gray-100', 'text-gray-800');
+        const nameEl = document.createElement('div');
+        nameEl.className = 'text-xs font-medium text-' + (user.color || 'gray') + '-500 mb-1';
+        nameEl.textContent = user.username || '?';
+        bubble.appendChild(nameEl);
+      }
+
+      const textEl = document.createElement('div');
+      textEl.textContent = data.message || '';
+      bubble.appendChild(textEl);
+
+      if (isMe) {
+        wrapper.appendChild(bubble);
+        wrapper.appendChild(avatar);
+      } else {
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(bubble);
+      }
+
+      messagesDiv.appendChild(wrapper);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    socket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      if (data.type === 'message') {
+        renderMessage(data);
+      } else if (data.type === 'error') {
+        showToast(data.message || 'Error');
+      }
+    };
+
+    socket.onclose = function() {
+      console.error('Group socket closed unexpectedly');
+    };
+
+    if (sendBtn && input) {
+      sendBtn.addEventListener('click', function() {
+        const v = input.value.trim();
+        if (!v) return;
+        socket.send(JSON.stringify({message: v}));
+        input.value = '';
+      });
+      input.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') sendBtn.click();
+      });
+      input.focus();
+    }
+  })();
+</script>
+{% endblock %}

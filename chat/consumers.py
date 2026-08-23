@@ -1,6 +1,100 @@
 import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import async_to_sync
+
+
+class GroupChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.me = self.scope['user']
+        self.group_id = self.scope['url_route']['kwargs']['group_id']
+
+        if not self.me.is_authenticated:
+            await self.close()
+            return
+
+        self.room_group_name = f'group_{self.group_id}'
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        user_data = await self._get_user_data(self.me)
+        # ensure user is member to post
+        is_member = await self._is_member(self.me, self.group_id)
+        if not is_member:
+            await self.send(text_data=json.dumps({'type': 'error', 'message': 'You are not a member of this group'}))
+            return
+
+        await self._save_message(data.get('message', ''))
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {'type': 'group.message', 'message': data.get('message', ''), 'user': user_data}
+        )
+
+    async def group_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'message',
+            'message': event['message'],
+            'user': event['user']
+        }))
+
+    @sync_to_async
+    def _is_member(self, user, group_id):
+        from .models import Group
+        try:
+            g = Group.objects.get(id=group_id)
+            return g.members.filter(id=user.id).exists()
+        except Exception:
+            return False
+
+    @sync_to_async
+    def _get_user_data(self, user):
+        try:
+            avatar = None
+            try:
+                if user.profile.avatar:
+                    avatar = user.profile.avatar.url
+            except Exception:
+                avatar = None
+            return {'username': user.profile.username or user.username, 'color': user.profile.color or 'gray', 'avatar': avatar}
+        except Exception:
+            return {'username': user.username, 'color': 'gray', 'avatar': None}
+
+    @sync_to_async
+    def _get_last_messages(self):
+        from chat.models import GroupMessage
+        try:
+            msgs = GroupMessage.objects.filter(group_id=self.group_id).select_related('author__profile').order_by('-created_at')[:50]
+        except Exception:
+            return []
+        result = []
+        for m in reversed(list(msgs)):
+            try:
+                avatar = None
+                try:
+                    if m.author.profile.avatar:
+                        avatar = m.author.profile.avatar.url
+                except Exception:
+                    avatar = None
+                user_data = {'username': m.author.profile.username or m.author.username, 'color': m.author.profile.color or 'gray', 'avatar': avatar}
+            except Exception:
+                user_data = {'username': m.author.username, 'color': 'gray', 'avatar': None}
+            result.append({'content': m.content, 'user': user_data})
+        return result
+
+    @sync_to_async
+    def _save_message(self, content):
+        from chat.models import GroupMessage, Group
+        from django.contrib.auth.models import User
+        try:
+            group = Group.objects.get(id=self.group_id)
+        except Group.DoesNotExist:
+            return
+        GroupMessage.objects.create(group=group, author=self.me, content=content)
 
 
 class PrivateChatConsumer(AsyncWebsocketConsumer):
@@ -18,10 +112,6 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-        messages = await self._get_last_messages()
-        for msg in messages:
-            await self.send(text_data=json.dumps({'type': 'message', 'message': msg['content'], 'user': msg['user']}))
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -50,6 +140,38 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             'message': event['message'],
             'user': event['user']
         }))
+
+    async def chat_state(self, event):
+        # Forward friend/block state changes to connected clients in the private room
+        payload = {
+            'type': 'state',
+            'friends': event.get('friends', False),
+            'blocked': event.get('blocked', False),
+            'actor': event.get('actor')
+        }
+        await self.send(text_data=json.dumps(payload))
+
+    async def chat_invite(self, event):
+        payload = {
+            'type': 'invite',
+            'invite_id': event.get('invite_id'),
+            'group_id': event.get('group_id'),
+            'group_name': event.get('group_name'),
+            'inviter': event.get('inviter')
+        }
+        await self.send(text_data=json.dumps(payload))
+
+    async def chat_invite_response(self, event):
+        # response to invite accept/decline
+        payload = {
+            'type': 'invite_response',
+            'invite_id': event.get('invite_id'),
+            'accepted': event.get('accepted'),
+            'group_id': event.get('group_id'),
+            'group_name': event.get('group_name'),
+            'user': event.get('user')
+        }
+        await self.send(text_data=json.dumps(payload))
 
     @sync_to_async
     def _get_user_data(self, user):

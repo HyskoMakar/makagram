@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style type="text/tailwindcss">
-        * { @apply transition ease-in-out }
+    <style>
+        * { transition: all 150ms ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -15,7 +15,7 @@
             <a href="" class="font-medium text-xl">MaKaGram</a>
             <nav class="items-center flex gap-4">
                 <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'room-index' %}">Lobbies</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'users-list' %}">Users</a>
+                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'chats-list' %}">Chats</a>
             </nav>
             <div class="flex flex-1 items-center justify-end gap-2">
                 {% if request.user.is_authenticated %}
