@@ -16,5 +16,6 @@ for i in $(seq 1 $RETRIES); do
 	fi
 done
 
+python ensure_db.py
 python manage.py collectstatic --no-input
 python manage.py migrate
