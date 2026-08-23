@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from makagram.models import is_friend, add_friend, remove_friend, is_blocked, block_user, unblock_user
+from django.core.cache import cache
 
 
 @login_required(login_url='login')
@@ -16,7 +17,11 @@ def users_list(request):
         users = User.objects.filter(id__in=friend_ids).select_related('profile')
     else:
         users = User.objects.exclude(id=request.user.id).select_related('profile')
-    return render(request, 'chat/users.html', {'users': users, 'tab': tab})
+    # build cache keys and check who is online
+    keys = {f'online_user_{u.id}': u.id for u in users}
+    online_map = cache.get_many(list(keys.keys()))
+    online_ids = {keys[k] for k in online_map.keys()}
+    return render(request, 'chat/users.html', {'users': users, 'tab': tab, 'online_ids': online_ids})
 
 
 @login_required(login_url='login')

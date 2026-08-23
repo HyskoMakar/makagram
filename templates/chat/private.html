@@ -5,27 +5,36 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-4 py-3 border-b flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
-                    {% if other.profile.avatar %}
-                    <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
-                    {% else %}
-                    {{ other.profile.username|default:other.username|slice:":1"|upper }}
-                    {% endif %}
+        <div class="px-4 py-3 border-b flex justify-between items-center w-full h-full">
+            <div class="flex items-center justify-between gap-3 w-full h-full">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
+                        {% if other.profile.avatar %}
+                        <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ other.profile.username|default:other.username|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-col">
+                        <div>
+                            <span class="font-semibold text-{{ other.profile.color }}-600 mr-4">{{ other.profile.username|default:other.username }}</span>
+                        </div>
+                        <span class="text-sm text-gray-400">@{{ other.username }}</span>
+                        <span class="text-sm text-gray-600">{{ other.profile.description }}</span>
+                    </div>
                 </div>
-                <div class="flex flex-col">
-                    <span class="font-semibold text-{{ other.profile.color }}-600">{{ other.profile.username|default:other.username }}</span>
-                    <span class="text-sm text-gray-400">@{{ other.username }}</span>
-                    <span class="text-sm text-gray-600">{{ other.profile.description }}</span>
-                </div>
-                <div class="ml-4 flex items-center gap-2">
-                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm">{% if friends %}Unfriend{% else %}Add friend{% endif %}</button>
-                    <button id="block-btn" class="px-3 py-1 rounded border text-sm text-red-600">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button>
+                <div>
+                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm hover:bg-gray-50">{% if friends %}Unfriend{% else %}Add friend{% endif %}</button>
+                    <button id="block-btn" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-gray-50">{% if i_blocked %}Unblock{% else %}Block{% endif %}</button>
                 </div>
             </div>
         </div>
-        <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
+            <div class="relative">
+              <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
+              <div id="chat-spinner" class="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+                <div class="w-12 h-12">{% include 'partials/spinner.html' %}</div>
+              </div>
+            </div>
         <div class="px-4 py-3 border-t flex gap-2">
             <input id="chat-message-input" type="text"
                 class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
@@ -97,6 +106,9 @@
 
         log.appendChild(wrapper);
         log.scrollTop = log.scrollHeight;
+        // hide spinner when we have at least one message rendered
+        const s = document.getElementById('chat-spinner');
+        if (s) s.style.display = 'none';
     };
 
     chatSocket.onclose = function(e) {
@@ -116,6 +128,12 @@
             input.value = '';
         }
     };
+
+        // also hide spinner when socket open if there are no prior messages
+        chatSocket.addEventListener('open', () => {
+            const s = document.getElementById('chat-spinner');
+            if (s) setTimeout(() => { s.style.display = 'none'; }, 400);
+        });
 
     // Friend / Block buttons
     function getCookie(name) {
@@ -163,7 +181,7 @@
     });
 
     // initial disable if other has blocked me
-    const blockedByOther = {% if blocked_by_other %}true{% else %}false{% endif %};
+    const blockedByOther = {{ blocked_by_other|yesno:"true,false" }};
     if (blockedByOther) {
         document.getElementById('chat-message-input').disabled = true;
         document.getElementById('chat-message-submit').disabled = true;
