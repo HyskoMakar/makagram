@@ -41,6 +41,13 @@ def fix_db():
                 );
                 ALTER TABLE chat_group ADD COLUMN IF NOT EXISTS color varchar(25) NOT NULL DEFAULT 'blue';
                 ALTER TABLE chat_group ADD COLUMN IF NOT EXISTS private boolean NOT NULL DEFAULT false;
+
+                INSERT INTO django_migrations (app, name, applied)
+                VALUES 
+                    ('chat', '0001_initial', CURRENT_TIMESTAMP),
+                    ('chat', '0002_groupinvite', CURRENT_TIMESTAMP),
+                    ('chat', '0003_group_color_alter_group_private', CURRENT_TIMESTAMP)
+                ON CONFLICT (app, name) DO NOTHING;
             """)
         else:
             statements = [
@@ -72,7 +79,12 @@ def fix_db():
                     invited_by_id integer NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
                     invitee_id integer NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,
                     UNIQUE (group_id, invitee_id)
-                );"""
+                );""",
+                """INSERT OR IGNORE INTO django_migrations (app, name, applied)
+                VALUES 
+                    ('chat', '0001_initial', CURRENT_TIMESTAMP),
+                    ('chat', '0002_groupinvite', CURRENT_TIMESTAMP),
+                    ('chat', '0003_group_color_alter_group_private', CURRENT_TIMESTAMP);"""
             ]
             for stmt in statements:
                 cursor.execute(stmt)
