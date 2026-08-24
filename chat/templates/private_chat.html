@@ -98,7 +98,7 @@
                 placeholder="Write something...">
             {% if my_private_groups %}
             <details class="relative flex-shrink-0" id="invite-details">
-                <summary class="px-3 py-2 rounded border text-sm cursor-pointer list-none hover:bg-gray-50 select-none">
+                <summary class="block px-3 py-2 rounded-lg border text-sm cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
                     Invite
                 </summary>
                 <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-1 z-10" style="min-width: 11rem;">
@@ -110,6 +110,12 @@
                     {% endfor %}
                 </div>
             </details>
+            {% else %}
+            <div class="relative flex-shrink-0" title="You have no private groups to invite to">
+                <button type="button" disabled class="px-3 py-2 rounded-lg border text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none">
+                    Invite
+                </button>
+            </div>
             {% endif %}
             <button id="chat-message-submit"
                 class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
