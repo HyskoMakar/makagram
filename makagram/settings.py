@@ -1,16 +1,23 @@
 import os
+from pathlib import Path
+
 try:
     import dj_database_url
-except Exception:
+except ImportError:
     dj_database_url = None
-from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gb6)ph3-+!&u!0w)bgu0-q^=ai!tl0qzu6v*vzb@el3bf4pm$!')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost').split(',')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-change-this-secret-key')
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+
+
+def env_list(name, default=''):
+    return [value.strip() for value in os.environ.get(name, default).split(',') if value.strip()]
+
+
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'http://localhost')
 
 INSTALLED_APPS = [
     'daphne',
@@ -55,10 +62,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'makagram.wsgi.application'
+ASGI_APPLICATION = 'makagram.asgi.application'
 
 if dj_database_url and os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'), conn_max_age=600)
+        'default': dj_database_url.config(
+            default=os.environ['DATABASE_URL'],
+            conn_max_age=600,
+        )
     }
 else:
     DATABASES = {
@@ -82,16 +93,20 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-ASGI_APPLICATION = "makagram.asgi.application"
-
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
 LOGIN_URL = 'login'
+
+if not DEBUG:
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'same-origin'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

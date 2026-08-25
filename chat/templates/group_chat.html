@@ -12,12 +12,12 @@
                 </div>
                 <div class="flex flex-col">
                     <span class="font-semibold text-{{ group.color|default:'blue' }}-600">{{ group.name }}</span>
-                    <span class="text-xs text-gray-400">{{ group.private|yesno:"Private,Public" }} · {{ group.members.count }} members</span>
+                    <span class="text-xs text-gray-400">{{ group.members.count }} members</span>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 {% if request.user == group.owner %}
-                <button id="group-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm hover:bg-gray-50 flex items-center gap-1">
+                <button id="group-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50 flex items-center gap-1">
                     Edit
                 </button>
                 {% endif %}
@@ -45,16 +45,67 @@
                            class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
                 </div>
 
+                <!-- Privacy Selection Cards -->
                 <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-1">Privacy Type</label>
-                    <div class="flex gap-4">
-                        <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
-                            <input type="radio" name="private" value="0" {% if not group.private %}checked{% endif %}>
-                            <span>Public</span>
+                    <label class="text-xs font-medium text-gray-600 block mb-2">
+                        Privacy Type
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-3">
+
+                        <!-- Public -->
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="private"
+                                value="0"
+                                class="hidden peer"
+                                {% if not group.private %}checked{% endif %}
+                            >
+
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
+                                        peer-checked:border-blue-500
+                                        peer-checked:bg-blue-50/50
+                                        peer-checked:ring-2
+                                        peer-checked:ring-blue-500/20
+                                        hover:border-gray-300">
+
+                                <div class="font-medium text-sm text-gray-800">
+                                    Public
+                                </div>
+
+                                <span class="text-xs text-gray-500">
+                                    Anyone can see and join
+                                </span>
+
+                            </div>
                         </label>
-                        <label class="inline-flex items-center gap-1.5 text-sm cursor-pointer">
-                            <input type="radio" name="private" value="1" {% if group.private %}checked{% endif %}>
-                            <span>Private</span>
+
+                        <!-- Private -->
+                        <label class="cursor-pointer">
+                            <input
+                                type="radio"
+                                name="private"
+                                value="1"
+                                class="hidden peer"
+                                {% if group.private %}checked{% endif %}
+                            >
+
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
+                                        peer-checked:border-blue-500
+                                        peer-checked:bg-blue-50/50
+                                        peer-checked:ring-2
+                                        peer-checked:ring-blue-500/20
+                                        hover:border-gray-300">
+
+                                <div class="font-medium text-sm text-gray-800">
+                                    Private
+                                </div>
+
+                                <span class="text-xs text-gray-500">
+                                    Invite only in private chat
+                                </span>
+                            </div>
                         </label>
                     </div>
                 </div>
@@ -132,10 +183,10 @@
         {% if is_member %}
         <div class="px-4 py-3 border-t flex gap-2 items-center">
             <input id="group-input" type="text"
-                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
+                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ group.color }}-400"
                    placeholder="Write to group...">
             <button id="group-send"
-                    class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                    class="bg-{{ group.color }}-500 hover:bg-{{ group.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
                 Send
             </button>
         </div>
@@ -169,10 +220,12 @@
 
 <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
 
+{% if is_member %}
+{{ request.user.profile.username|default:request.user.username|json_script:"current-user" }}
 <script>
   (function(){
     const groupId = {{ group.id }};
-    const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+    const currentUser = JSON.parse(document.getElementById('current-user').textContent);
     const myColor = "{{ request.user.profile.color|default:'gray' }}";
 
     function getCookie(name) {
@@ -344,6 +397,7 @@
       sendBtn.addEventListener('click', function() {
         const v = input.value.trim();
         if (!v) return;
+        if (socket.readyState !== WebSocket.OPEN) return;
         socket.send(JSON.stringify({message: v}));
         input.value = '';
       });
@@ -354,4 +408,5 @@
     }
   })();
 </script>
+{% endif %}
 {% endblock %}

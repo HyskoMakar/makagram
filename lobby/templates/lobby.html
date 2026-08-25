@@ -39,10 +39,22 @@
             return;
         }
 
+        if (data.type === 'error') {
+            console.error(data.message || 'WebSocket error');
+            return;
+        }
+
         const log = document.querySelector('#chat-log');
         const msg = document.createElement('div');
         msg.className = 'bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-800 self-start max-w-xs';
-        msg.innerHTML = '<span class="text-' + data.user.color + '-600">' + data.user.username + '</span></br> ' + data.message;
+
+        const username = document.createElement('span');
+        username.className = 'text-' + (data.user?.color || 'gray') + '-600';
+        username.textContent = data.user?.username || 'Unknown';
+        msg.appendChild(username);
+        msg.appendChild(document.createElement('br'));
+        msg.appendChild(document.createTextNode(' ' + (data.message || '')));
+
         log.appendChild(msg);
         log.scrollTop = log.scrollHeight;
     };
@@ -58,8 +70,9 @@
 
     document.querySelector('#chat-message-submit').onclick = function(e) {
         const input = document.querySelector('#chat-message-input');
-        if (input.value != '') {
-            chatSocket.send(JSON.stringify({ 'message': input.value }));
+        const message = input.value.trim();
+        if (message && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({ 'message': message }));
             input.value = '';
         }
     };

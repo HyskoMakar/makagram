@@ -1,7 +1,9 @@
 import json
+
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import async_to_sync
+
+MAX_MESSAGE_LENGTH = 4000
 
 
 class GroupChatConsumer(AsyncWebsocketConsumer):
@@ -10,7 +12,11 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         self.group_id = self.scope['url_route']['kwargs']['group_id']
 
         if not self.me.is_authenticated:
-            await self.close()
+            await self.close(code=4401)
+            return
+
+        if not await self._is_member(self.me, self.group_id):
+            await self.close(code=4403)
             return
 
         self.room_group_name = f'group_{self.group_id}'
@@ -18,83 +24,80 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        user_data = await self._get_user_data(self.me)
-        # ensure user is member to post
-        is_member = await self._is_member(self.me, self.group_id)
-        if not is_member:
-            await self.send(text_data=json.dumps({'type': 'error', 'message': 'You are not a member of this group'}))
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            await self._send_error('Invalid message format')
             return
 
-        await self._save_message(data.get('message', ''))
+        message = str(data.get('message', '')).strip()
+        if not message:
+            return
+        if len(message) > MAX_MESSAGE_LENGTH:
+            await self._send_error(f'Message is too long (max {MAX_MESSAGE_LENGTH} characters)')
+            return
+
+        if not await self._is_member(self.me, self.group_id):
+            await self._send_error('You are not a member of this group')
+            return
+
+        await self._save_message(message)
         await self.channel_layer.group_send(
             self.room_group_name,
-            {'type': 'group.message', 'message': data.get('message', ''), 'user': user_data}
+            {
+                'type': 'group.message',
+                'message': message,
+                'user': await self._get_user_data(self.me),
+            },
         )
 
     async def group_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
             'message': event['message'],
-            'user': event['user']
+            'user': event['user'],
         }))
+
+    async def group_kicked(self, event):
+        if event.get('user_id') != self.me.id:
+            return
+        await self._send_error('You were removed from this group')
+        await self.close(code=4403)
+
+    async def group_deleted(self, event):
+        await self._send_error('This group was deleted')
+        await self.close(code=4404)
+
+    async def _send_error(self, message):
+        await self.send(text_data=json.dumps({'type': 'error', 'message': message}))
 
     @sync_to_async
     def _is_member(self, user, group_id):
         from .models import Group
-        try:
-            g = Group.objects.get(id=group_id)
-            return g.members.filter(id=user.id).exists()
-        except Exception:
-            return False
+        return Group.objects.filter(id=group_id, members=user).exists()
 
     @sync_to_async
     def _get_user_data(self, user):
-        try:
-            avatar = None
-            try:
-                if user.profile.avatar:
-                    avatar = user.profile.avatar.url
-            except Exception:
-                avatar = None
-            return {'username': user.profile.username or user.username, 'color': user.profile.color or 'gray', 'avatar': avatar}
-        except Exception:
-            return {'username': user.username, 'color': 'gray', 'avatar': None}
-
-    @sync_to_async
-    def _get_last_messages(self):
-        from chat.models import GroupMessage
-        try:
-            msgs = GroupMessage.objects.filter(group_id=self.group_id).select_related('author__profile').order_by('-created_at')[:50]
-        except Exception:
-            return []
-        result = []
-        for m in reversed(list(msgs)):
-            try:
-                avatar = None
-                try:
-                    if m.author.profile.avatar:
-                        avatar = m.author.profile.avatar.url
-                except Exception:
-                    avatar = None
-                user_data = {'username': m.author.profile.username or m.author.username, 'color': m.author.profile.color or 'gray', 'avatar': avatar}
-            except Exception:
-                user_data = {'username': m.author.username, 'color': 'gray', 'avatar': None}
-            result.append({'content': m.content, 'user': user_data})
-        return result
+        profile = getattr(user, 'profile', None)
+        avatar = None
+        if profile and profile.avatar:
+            avatar = profile.avatar.url
+        return {
+            'username': (profile.username if profile else '') or user.username,
+            'color': (profile.color if profile else '') or 'gray',
+            'avatar': avatar,
+        }
 
     @sync_to_async
     def _save_message(self, content):
-        from chat.models import GroupMessage, Group
-        from django.contrib.auth.models import User
-        try:
-            group = Group.objects.get(id=self.group_id)
-        except Group.DoesNotExist:
-            return
-        GroupMessage.objects.create(group=group, author=self.me, content=content)
+        from .models import Group, GroupMessage
+        group = Group.objects.filter(id=self.group_id).first()
+        if group:
+            GroupMessage.objects.create(group=group, author=self.me, content=content)
 
 
 class PrivateChatConsumer(AsyncWebsocketConsumer):
@@ -103,10 +106,13 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         self.other_username = self.scope['url_route']['kwargs']['username']
 
         if not self.me.is_authenticated:
-            await self.close()
+            await self.close(code=4401)
             return
 
-        # Create a consistent room name regardless of who initiates
+        if not await self._get_user_by_username(self.other_username):
+            await self.close(code=4404)
+            return
+
         names = sorted([self.me.username, self.other_username])
         self.room_group_name = f'private_{names[0]}_{names[1]}'
 
@@ -114,135 +120,111 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        user_data = await self._get_user_data(self.me)
-        # check if the other user has blocked me
-        to_user = await self._get_user_by_username(self.other_username)
-        if to_user:
-            blocked = await self._is_blocked_by(to_user, self.me)
-            if blocked:
-                # notify sender that they are blocked
-                await self.send(text_data=json.dumps({'type': 'error', 'message': 'You are blocked by this user'}))
-                return
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            await self._send_error('Invalid message format')
+            return
 
-        await self._save_message(data['message'])
+        message = str(data.get('message', '')).strip()
+        if not message:
+            return
+        if len(message) > MAX_MESSAGE_LENGTH:
+            await self._send_error(f'Message is too long (max {MAX_MESSAGE_LENGTH} characters)')
+            return
+
+        to_user = await self._get_user_by_username(self.other_username)
+        if not to_user:
+            await self._send_error('User not found')
+            return
+
+        if await self._is_blocked_by(to_user, self.me) or await self._is_blocked_by(self.me, to_user):
+            await self._send_error('Messaging is blocked')
+            return
+
+        await self._save_message(to_user, message)
         await self.channel_layer.group_send(
             self.room_group_name,
-            {'type': 'chat.message', 'message': data['message'], 'user': user_data}
+            {
+                'type': 'chat.message',
+                'message': message,
+                'user': await self._get_user_data(self.me),
+            },
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
             'message': event['message'],
-            'user': event['user']
+            'user': event['user'],
         }))
 
     async def chat_state(self, event):
-        # Forward friend/block state changes to connected clients in the private room
-        payload = {
+        await self.send(text_data=json.dumps({
             'type': 'state',
             'friends': event.get('friends', False),
             'blocked': event.get('blocked', False),
-            'actor': event.get('actor')
-        }
-        await self.send(text_data=json.dumps(payload))
+            'actor': event.get('actor'),
+        }))
 
     async def chat_invite(self, event):
-        payload = {
+        await self.send(text_data=json.dumps({
             'type': 'invite',
             'invite_id': event.get('invite_id'),
             'group_id': event.get('group_id'),
             'group_name': event.get('group_name'),
-            'inviter': event.get('inviter')
-        }
-        await self.send(text_data=json.dumps(payload))
+            'inviter': event.get('inviter'),
+        }))
 
     async def chat_invite_response(self, event):
-        # response to invite accept/decline
-        payload = {
+        await self.send(text_data=json.dumps({
             'type': 'invite_response',
             'invite_id': event.get('invite_id'),
             'accepted': event.get('accepted'),
             'group_id': event.get('group_id'),
             'group_name': event.get('group_name'),
-            'user': event.get('user')
-        }
-        await self.send(text_data=json.dumps(payload))
+            'user': event.get('user'),
+        }))
+
+    async def _send_error(self, message):
+        await self.send(text_data=json.dumps({'type': 'error', 'message': message}))
 
     @sync_to_async
     def _get_user_data(self, user):
-        try:
-            avatar = None
-            try:
-                if user.profile.avatar:
-                    avatar = user.profile.avatar.url
-            except Exception:
-                avatar = None
-            return {'username': user.profile.username or user.username, 'color': user.profile.color or 'gray', 'avatar': avatar}
-        except Exception:
-            return {'username': user.username, 'color': 'gray', 'avatar': None}
+        profile = getattr(user, 'profile', None)
+        avatar = None
+        if profile and profile.avatar:
+            avatar = profile.avatar.url
+        return {
+            'username': (profile.username if profile else '') or user.username,
+            'color': (profile.color if profile else '') or 'gray',
+            'avatar': avatar,
+        }
 
     @sync_to_async
-    def _save_message(self, content):
-        from django.contrib.auth.models import User
-        from chat.models import PrivateMessage
-        try:
-            to_user = User.objects.get(profile__username=self.other_username)
-        except User.DoesNotExist:
-            to_user = User.objects.get(username=self.other_username)
-        PrivateMessage.objects.create(from_user=self.me, to_user=to_user, content=content)
+    def _save_message(self, to_user, content):
+        from .models import PrivateMessage
+        PrivateMessage.objects.create(
+            from_user=self.me,
+            to_user=to_user,
+            content=content,
+        )
 
     @sync_to_async
     def _get_user_by_username(self, username):
         from django.contrib.auth.models import User
-        try:
-            return User.objects.get(profile__username=username)
-        except User.DoesNotExist:
-            try:
-                return User.objects.get(username=username)
-            except User.DoesNotExist:
-                return None
+        return (
+            User.objects.select_related('profile')
+            .filter(profile__username=username)
+            .first()
+            or User.objects.select_related('profile').filter(username=username).first()
+        )
 
     @sync_to_async
     def _is_blocked_by(self, blocker, blocked_user):
-        from makagram.models import is_blocked
-        try:
-            return is_blocked(blocker, blocked_user)
-        except Exception:
-            return False
-
-    @sync_to_async
-    def _get_last_messages(self):
-        from django.contrib.auth.models import User
-        from chat.models import PrivateMessage
-        from django.db.models import Q
-        try:
-            other = User.objects.get(profile__username=self.other_username)
-        except User.DoesNotExist:
-            try:
-                other = User.objects.get(username=self.other_username)
-            except User.DoesNotExist:
-                return []
-
-        messages = PrivateMessage.objects.filter(
-            Q(from_user=self.me, to_user=other) | Q(from_user=other, to_user=self.me)
-        ).select_related('from_user__profile').order_by('-created_at')[:50]
-
-        result = []
-        for msg in reversed(list(messages)):
-            try:
-                avatar = None
-                try:
-                    if msg.from_user.profile.avatar:
-                        avatar = msg.from_user.profile.avatar.url
-                except Exception:
-                    avatar = None
-                user_data = {'username': msg.from_user.profile.username or msg.from_user.username, 'color': msg.from_user.profile.color or 'gray', 'avatar': avatar}
-            except Exception:
-                user_data = {'username': msg.from_user.username, 'color': 'gray', 'avatar': None}
-            result.append({'content': msg.content, 'user': user_data})
-        return result
+        from .models import Block
+        return Block.objects.filter(blocker=blocker, blocked=blocked_user).exists()

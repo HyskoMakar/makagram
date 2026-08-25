@@ -26,7 +26,7 @@
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm hover:bg-gray-50">
+                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
                         {% if friends %}Unfriend{% else %}Add friend{% endif %}
                     </button>
                     <button id="block-btn" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-gray-50">
@@ -98,13 +98,13 @@
                 placeholder="Write something...">
             {% if my_private_groups %}
             <details class="relative flex-shrink-0" id="invite-details">
-                <summary class="block px-3 py-2 rounded-lg border text-sm cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
+                <summary class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
                     Invite
                 </summary>
-                <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-1 z-10" style="min-width: 11rem;">
+                <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10" style="min-width: 11rem;">
                     {% for g in my_private_groups %}
                     <button type="button"
-                            class="group-invite-btn w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                            class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
                             data-group-id="{{ g.id }}"
                             data-group-name="{{ g.name }}">{{ g.name }}</button>
                     {% endfor %}
@@ -134,11 +134,12 @@
 </div>
 
 {{ other.profile.username|default:other.username|json_script:"private-name" }}
-{{ blocked_by_other|json_script:"blocked-flag" }}
+{{ chat_blocked|json_script:"blocked-flag" }}
+{{ request.user.profile.username|default:request.user.username|json_script:"current-user" }}
 
 <script>
     const otherName = JSON.parse(document.getElementById('private-name').textContent);
-    const currentUser = "{{ request.user.profile.username|default:request.user.username }}";
+    const currentUser = JSON.parse(document.getElementById('current-user').textContent);
 
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const chatSocket = new WebSocket(
@@ -295,12 +296,28 @@
         const box = document.createElement('div');
         box.className = 'px-3 py-2 rounded-lg text-sm bg-gray-100 text-gray-800';
 
+        const textRow = document.createElement('div');
         if (isInviter) {
-            // Sender — no buttons, just a status message
-            box.innerHTML = `<div>You invited <strong>${otherName}</strong> to <em>${inv.group_name}</em> — waiting for response</div>`;
+            textRow.append('You invited ');
+            const other = document.createElement('strong');
+            other.textContent = otherName;
+            textRow.appendChild(other);
+            textRow.append(' to ');
+            const group = document.createElement('em');
+            group.textContent = inv.group_name || '';
+            textRow.appendChild(group);
+            textRow.append(' — waiting for response');
+            box.appendChild(textRow);
         } else {
-            // Recipient — show Accept/Decline
-            box.innerHTML = `<div><strong>${inv.inviter}</strong> invited you to <em>${inv.group_name}</em></div>`;
+            const inviter = document.createElement('strong');
+            inviter.textContent = inv.inviter || '?';
+            textRow.appendChild(inviter);
+            textRow.append(' invited you to ');
+            const group = document.createElement('em');
+            group.textContent = inv.group_name || '';
+            textRow.appendChild(group);
+            box.appendChild(textRow);
+
             const btnRow = document.createElement('div');
             btnRow.className = 'flex gap-2 mt-2';
 
@@ -378,6 +395,11 @@
             return;
         }
 
+        if (data.type === 'error') {
+            addSystemMessage(data.message || 'Error');
+            return;
+        }
+
         if (data.type === 'invite') {
             renderInvite(data);
             return;
@@ -415,8 +437,9 @@
 
     document.getElementById('chat-message-submit').addEventListener('click', function() {
         if (messageInput.disabled) return;
-        if (messageInput.value !== '') {
-            chatSocket.send(JSON.stringify({'message': messageInput.value}));
+        const message = messageInput.value.trim();
+        if (message && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({'message': message}));
             messageInput.value = '';
         }
     });

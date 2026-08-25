@@ -1,23 +1,36 @@
-from django.shortcuts import render, redirect
+import re
+
+from PIL import Image, UnidentifiedImageError
 from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+
 from .forms import LoginForm, RegisterForm
 from .models import ALLOWED_COLORS, DEFAULT_COLOR
 
+MAX_AVATAR_SIZE = 5 * 1024 * 1024
+MAX_AVATAR_DIMENSION = 2000
+
+
 def index(request):
-    return render(request, "base.html")
+    return render(request, 'base.html')
+
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('room-index')
+
     form = LoginForm(data=request.POST or None)
     if request.method == 'POST' and form.is_valid():
         login(request, form.get_user())
         return redirect('room-index')
     return render(request, 'login.html', {'form': form})
 
+
 def register_view(request):
     if request.user.is_authenticated:
         return redirect('room-index')
+
     form = RegisterForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.save()
@@ -25,39 +38,73 @@ def register_view(request):
         return redirect('room-index')
     return render(request, 'register.html', {'form': form})
 
+
+@login_required(login_url='login')
 def logout_view(request):
-    logout(request)
+    if request.method == 'POST':
+        logout(request)
     return redirect('login')
 
+
+@login_required(login_url='login')
 def profile_view(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
     profile = request.user.profile
 
     if profile.color not in ALLOWED_COLORS:
         profile.color = DEFAULT_COLOR
-        profile.save()
+        profile.save(update_fields=['color'])
 
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        description = request.POST.get('description', '').strip()
+        username = request.POST.get('username', '').strip()[:50]
+        description = request.POST.get('description', '').strip()[:50]
         color = request.POST.get('color', DEFAULT_COLOR)
 
-        if username:
+        if username and re.fullmatch(r'[A-Za-z0-9_-]{1,50}', username):
             profile.username = username
-        if description:
-            profile.description = description
+        elif username:
+            return render(request, 'profile.html', {
+                'profile': profile,
+                'colors': ALLOWED_COLORS,
+                'error': 'Nickname can contain only letters, numbers, _ and -.',
+            })
+        profile.description = description
         profile.color = color if color in ALLOWED_COLORS else DEFAULT_COLOR
 
         if 'clear_avatar' in request.POST and profile.avatar:
             profile.avatar.delete(save=False)
             profile.avatar = None
         elif 'avatar' in request.FILES:
+            avatar = request.FILES['avatar']
+            if avatar.size > MAX_AVATAR_SIZE:
+                return render(request, 'profile.html', {
+                    'profile': profile,
+                    'colors': ALLOWED_COLORS,
+                    'error': 'Avatar is too large. Maximum size is 5 MB.',
+                })
+
+            try:
+                avatar.seek(0)
+                image = Image.open(avatar)
+                image.verify()
+                avatar.seek(0)
+                image = Image.open(avatar)
+                if image.width > MAX_AVATAR_DIMENSION or image.height > MAX_AVATAR_DIMENSION:
+                    raise ValueError('Avatar dimensions are too large.')
+            except (UnidentifiedImageError, OSError, ValueError):
+                return render(request, 'profile.html', {
+                    'profile': profile,
+                    'colors': ALLOWED_COLORS,
+                    'error': 'Please choose a valid image up to 2000×2000 pixels.',
+                })
+
             if profile.avatar:
                 profile.avatar.delete(save=False)
-            profile.avatar = request.FILES['avatar']
+            profile.avatar = avatar
 
         profile.save()
         return redirect('profile')
 
-    return render(request, 'profile.html', {'profile': profile, 'colors': ALLOWED_COLORS})
+    return render(request, 'profile.html', {
+        'profile': profile,
+        'colors': ALLOWED_COLORS,
+    })

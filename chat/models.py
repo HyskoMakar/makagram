@@ -107,4 +107,4 @@ class GroupMessage(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f'{self.user.username} in {self.group.name}: {self.content[:50]}'
+        return f'{self.author.username} in {self.group.name}: {self.content[:50]}'
