@@ -7,7 +7,6 @@
 <div class="max-w-2xl mx-auto">
     <h1 class="text-2xl font-semibold mb-4">Chats</h1>
 
-    <!-- User tabs -->
     <div class="flex items-center gap-4 mb-4">
         <a href="?tab=all&gtab={{ gtab }}" class="px-3 py-1 rounded {% if tab != 'friends' %}bg-gray-100{% endif %}">All</a>
         <a href="?tab=friends&gtab={{ gtab }}" class="px-3 py-1 rounded {% if tab == 'friends' %}bg-gray-100{% endif %}">Friends</a>
@@ -41,14 +40,12 @@
         <div class="text-gray-500">No other users found.</div>
         {% endfor %}
 
-        <!-- Groups section -->
         <div class="mt-6">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="font-semibold">Groups</h2>
                 <a href="{% url 'group-create' %}" class="text-sm text-blue-600 font-medium hover:underline">+ Create group</a>
             </div>
 
-            <!-- Group tabs -->
             <div class="flex items-center gap-2 mb-3">
                 <a href="?tab={{ tab }}&gtab=all"
                    class="px-3 py-1 rounded text-sm {% if gtab != 'mine' %}bg-gray-100{% endif %}">All</a>

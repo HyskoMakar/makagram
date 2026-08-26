@@ -6,7 +6,6 @@
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
 
-        <!-- Header -->
         <div class="px-4 py-3 border-b flex justify-between items-center w-full">
             <div class="flex items-center justify-between gap-3 w-full">
                 <div class="flex items-center gap-4">
@@ -36,7 +35,6 @@
             </div>
         </div>
 
-        <!-- Chat area -->
         <div class="relative">
             <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
                 {% for m in messages %}
@@ -71,11 +69,18 @@
                 {% endfor %}
 
                 {% for inv in pending_invites %}
-                <div class="flex items-start gap-2 my-1" data-invite-id="{{ inv.id }}">
-                    <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-gray-300">
+                <div class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}" data-invite-id="{{ inv.id }}">
+                    {% if inv.invited_by != request.user %}
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ inv.invited_by.profile.color|default:'gray' }}-300">
+                        {% if inv.invited_by.profile.avatar %}
+                        <img src="{{ inv.invited_by.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
                         {{ inv.invited_by.username|slice:":1"|upper }}
+                        {% endif %}
                     </div>
-                    <div class="px-3 py-2 rounded-lg text-sm bg-gray-100 text-gray-800">
+                    {% endif %}
+
+                    <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
                         {% if inv.invited_by == request.user %}
                         <div>You invited <strong>{{ other.profile.username|default:other.username }}</strong> to <em>{{ inv.group.name }}</em> — waiting for response</div>
                         {% else %}
@@ -86,12 +91,21 @@
                         </div>
                         {% endif %}
                     </div>
+
+                    {% if inv.invited_by == request.user %}
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
+                        {% if request.user.profile.avatar %}
+                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ request.user.username|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Bottom bar -->
         <div class="px-4 py-3 border-t flex gap-2 items-center">
             <input id="chat-message-input" type="text"
                 class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
@@ -102,11 +116,11 @@
                     Invite
                 </summary>
                 <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10" style="min-width: 11rem;">
-                    {% for g in my_private_groups %}
+                    {% for group in my_private_groups %}
                     <button type="button"
-                            class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-                            data-group-id="{{ g.id }}"
-                            data-group-name="{{ g.name }}">{{ g.name }}</button>
+                        class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+                        data-group-id="{{ group.id }}"
+                        data-group-name="{{ group.name }}">{{ group.name }}</button>
                     {% endfor %}
                 </div>
             </details>
@@ -126,7 +140,6 @@
     </div>
 </div>
 
-<!-- Context Menu -->
 <div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
     <a id="cm-pm-btn" href="#" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">
         Open Direct Message
@@ -167,9 +180,6 @@
     const log = document.getElementById('chat-log');
     log.scrollTop = log.scrollHeight;
 
-    // ──────────────────────────────────────────────
-    // Context Menu Handler (Left Click)
-    // ──────────────────────────────────────────────
     const contextMenu = document.getElementById('context-menu');
     const cmPmBtn = document.getElementById('cm-pm-btn');
 
@@ -205,10 +215,6 @@
         contextMenu.style.top = top + 'px';
         contextMenu.classList.remove('hidden');
     });
-
-    // ──────────────────────────────────────────────
-    // Helpers
-    // ──────────────────────────────────────────────
 
     function addSystemMessage(text) {
         const el = document.createElement('div');
@@ -286,15 +292,21 @@
         const isInviter = inv.inviter === currentUser;
 
         const wrapper = document.createElement('div');
-        wrapper.className = 'flex items-start gap-2 my-1';
+        wrapper.className = 'flex items-start gap-2';
+        if (isInviter) wrapper.classList.add('justify-end');
         if (inv.invite_id) wrapper.dataset.inviteId = inv.invite_id;
 
         const avatar = document.createElement('div');
-        avatar.className = 'w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold text-white bg-gray-300';
+        avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-gray-300';
         avatar.textContent = (inv.inviter || '?').slice(0, 1).toUpperCase();
 
-        const box = document.createElement('div');
-        box.className = 'px-3 py-2 rounded-lg text-sm bg-gray-100 text-gray-800';
+        const bubble = document.createElement('div');
+        bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
+        if (isInviter) {
+            bubble.classList.add('bg-{{ request.user.profile.color }}-100', 'text-gray-800');
+        } else {
+            bubble.classList.add('bg-{{ other.profile.color }}-100', 'text-gray-800');
+        }
 
         const textRow = document.createElement('div');
         if (isInviter) {
@@ -307,7 +319,7 @@
             group.textContent = inv.group_name || '';
             textRow.appendChild(group);
             textRow.append(' — waiting for response');
-            box.appendChild(textRow);
+            bubble.appendChild(textRow);
         } else {
             const inviter = document.createElement('strong');
             inviter.textContent = inv.inviter || '?';
@@ -316,7 +328,7 @@
             const group = document.createElement('em');
             group.textContent = inv.group_name || '';
             textRow.appendChild(group);
-            box.appendChild(textRow);
+            bubble.appendChild(textRow);
 
             const btnRow = document.createElement('div');
             btnRow.className = 'flex gap-2 mt-2';
@@ -355,18 +367,20 @@
 
             btnRow.appendChild(accept);
             btnRow.appendChild(decline);
-            box.appendChild(btnRow);
+            bubble.appendChild(btnRow);
         }
 
-        wrapper.appendChild(avatar);
-        wrapper.appendChild(box);
+        if (isInviter) {
+            wrapper.appendChild(bubble);
+            wrapper.appendChild(avatar);
+        } else {
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(bubble);
+        }
+
         log.appendChild(wrapper);
         log.scrollTop = log.scrollHeight;
     }
-
-    // ──────────────────────────────────────────────
-    // WebSocket handlers
-    // ──────────────────────────────────────────────
 
     chatSocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
@@ -406,7 +420,6 @@
         }
 
         if (data.type === 'invite_response') {
-            // Remove the pending invite card from sender's view
             const invCard = document.querySelector(`[data-invite-id="${data.invite_id}"]`);
             if (invCard) invCard.remove();
             const msg = data.accepted
@@ -424,10 +437,6 @@
     chatSocket.onclose = function() {
         console.error('Chat socket closed unexpectedly');
     };
-
-    // ──────────────────────────────────────────────
-    // Message input
-    // ──────────────────────────────────────────────
 
     const messageInput = document.getElementById('chat-message-input');
     messageInput.focus();
@@ -449,10 +458,6 @@
         messageInput.disabled = true;
         document.getElementById('chat-message-submit').disabled = true;
     }
-
-    // ──────────────────────────────────────────────
-    // Friend / Block buttons
-    // ──────────────────────────────────────────────
 
     const friendBtn = document.getElementById('friend-btn');
     const blockBtn = document.getElementById('block-btn');
@@ -484,9 +489,6 @@
         }
     });
 
-    // ──────────────────────────────────────────────
-    // Group invite dropdown (details/summary — no JS popup)
-    // ──────────────────────────────────────────────
 
     const inviteDetails = document.getElementById('invite-details');
 
@@ -504,7 +506,6 @@
             if (!data.ok) {
                 addSystemMessage(`Invite failed: ${data.error || 'unknown error'}`);
             }
-            // On success — invite will arrive via WebSocket as 'invite' event to both sides
         });
     });
 </script>

@@ -180,6 +180,7 @@ def edit_group(request, group_id):
     name = request.POST.get('name', '').strip()
     color = request.POST.get('color', '').strip()
     private = request.POST.get('private') == '1'
+    members_can_invite = request.POST.get('members_can_invite') == '1'
 
     if not name:
         messages.error(request, 'Group name cannot be empty.')
@@ -193,6 +194,8 @@ def edit_group(request, group_id):
     group.private = private
     if color in ALLOWED_COLORS:
         group.color = color
+    if private:
+        group.members_can_invite = members_can_invite
     group.save()
     return redirect('group-view', group_id=group.id)
 
@@ -263,6 +266,9 @@ def invite_to_group(request, group_id):
         return JsonResponse({'ok': False, 'error': 'cannot invite yourself'})
     if group.members.filter(id=other.id).exists():
         return JsonResponse({'ok': False, 'error': 'user is already a member'})
+
+    if request.user != group.owner and not group.members_can_invite:
+        return JsonResponse({'ok': False, 'error': 'only the group owner can invite members'})
 
     invite, created = GroupInvite.objects.get_or_create(
         group=group,
