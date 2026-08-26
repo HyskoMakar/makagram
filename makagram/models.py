@@ -16,7 +16,7 @@ class Profile(models.Model):
     username = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=50, default="")
     color = models.CharField(max_length=25, default=DEFAULT_COLOR)
-    avatar = models.ImageField(blank=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True)
 
     def __str__(self):
         return self.username or self.user.username
