@@ -86,8 +86,8 @@
                         {% else %}
                         <div><strong>{{ inv.invited_by.profile.username|default:inv.invited_by.username }}</strong> invited you to <em>{{ inv.group.name }}</em></div>
                         <div class="flex gap-2 mt-2">
-                            <button type="button" onclick="acceptInviteInline({{ inv.id }}, '{{ inv.group.name|escapejs }}', this)" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">Accept</button>
-                            <button type="button" onclick="declineInviteInline({{ inv.id }}, '{{ inv.group.name|escapejs }}', this)" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">Decline</button>
+                            <button type="button" data-action="accept-invite" data-invite-id="{{ inv.id }}" data-group-name="{{ inv.group.name }}" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">Accept</button>
+                            <button type="button" data-action="decline-invite" data-invite-id="{{ inv.id }}" data-group-name="{{ inv.group.name }}" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">Decline</button>
                         </div>
                         {% endif %}
                     </div>
@@ -222,28 +222,6 @@
         el.textContent = text;
         log.appendChild(el);
         log.scrollTop = log.scrollHeight;
-    }
-
-    async function acceptInviteInline(inviteId, groupName, btnEl) {
-        const wrapper = btnEl.closest('[data-invite-id]');
-        const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrftoken}
-        });
-        const d = await res.json();
-        if (wrapper) wrapper.remove();
-        if (d.ok) addSystemMessage(`You joined ${groupName}`);
-    }
-
-    async function declineInviteInline(inviteId, groupName, btnEl) {
-        const wrapper = btnEl.closest('[data-invite-id]');
-        const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrftoken}
-        });
-        const d = await res.json();
-        if (wrapper) wrapper.remove();
-        if (d.ok) addSystemMessage(`You declined the invite to ${groupName}`);
     }
 
     function renderMessage(data) {
@@ -507,6 +485,34 @@
                 addSystemMessage(`Invite failed: ${data.error || 'unknown error'}`);
             }
         });
+    });
+
+    log.addEventListener('click', async function(e) {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const inviteId = btn.dataset.inviteId;
+        const groupName = btn.dataset.groupName;
+        const wrapper = btn.closest('[data-invite-id]');
+
+        if (action === 'accept-invite') {
+            const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken}
+            });
+            const d = await res.json();
+            if (wrapper) wrapper.remove();
+            if (d.ok) addSystemMessage(`You joined ${groupName}`);
+        } else if (action === 'decline-invite') {
+            const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken}
+            });
+            const d = await res.json();
+            if (wrapper) wrapper.remove();
+            if (d.ok) addSystemMessage(`You declined the invite to ${groupName}`);
+        }
     });
 </script>
 {% endblock %}

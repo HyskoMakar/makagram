@@ -276,9 +276,10 @@
 
 {% if is_member %}
 {{ request.user.profile.username|default:request.user.username|json_script:"current-user" }}
+{{ group.id|json_script:"group-id" }}
 <script>
   (function(){
-    const groupId = {{ group.id }};
+    const groupId = JSON.parse(document.getElementById('group-id').textContent);
     const currentUser = JSON.parse(document.getElementById('current-user').textContent);
     const myColor = "{{ request.user.profile.color|default:'gray' }}";
 
