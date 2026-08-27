@@ -21,8 +21,8 @@
                 {% if request.user.is_authenticated %}
                 <div class="relative">
                     <button id="profile-btn" class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none bg-{{ request.user.profile.color }}-300">
-                        {% if request.user.profile.avatar %}
-                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if request.user.profile.avatar_data %}
+                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ request.user.profile.username|default:request.user.username|slice:":1"|upper }}
                         {% endif %}

@@ -10,8 +10,8 @@
             <div class="flex items-center justify-between gap-3 w-full">
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold bg-{{ other.profile.color }}-300">
-                        {% if other.profile.avatar %}
-                        <img src="{{ other.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if other.profile.avatar_data %}
+                        <img src="{% url 'avatar' other.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ other.profile.username|default:other.username|slice:":1"|upper }}
                         {% endif %}
@@ -43,8 +43,8 @@
                      data-username="{{ msg_user }}">
                     {% if m.from_user != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.from_user.profile.color|default:'gray' }}-300">
-                        {% if m.from_user.profile.avatar %}
-                        <img src="{{ m.from_user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if m.from_user.profile.avatar_data %}
+                        <img src="{% url 'avatar' m.from_user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ msg_user|slice:":1"|upper }}
                         {% endif %}
@@ -57,8 +57,8 @@
 
                     {% if m.from_user == request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
-                        {% if request.user.profile.avatar %}
-                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if request.user.profile.avatar_data %}
+                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ request.user.username|slice:":1"|upper }}
                         {% endif %}
@@ -72,8 +72,8 @@
                 <div class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}" data-invite-id="{{ inv.id }}">
                     {% if inv.invited_by != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ inv.invited_by.profile.color|default:'gray' }}-300">
-                        {% if inv.invited_by.profile.avatar %}
-                        <img src="{{ inv.invited_by.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if inv.invited_by.profile.avatar_data %}
+                        <img src="{% url 'avatar' inv.invited_by.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ inv.invited_by.username|slice:":1"|upper }}
                         {% endif %}
@@ -94,8 +94,8 @@
 
                     {% if inv.invited_by == request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
-                        {% if request.user.profile.avatar %}
-                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if request.user.profile.avatar_data %}
+                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ request.user.username|slice:":1"|upper }}
                         {% endif %}

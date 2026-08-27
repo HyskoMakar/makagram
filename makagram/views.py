@@ -4,6 +4,7 @@ from PIL import Image, UnidentifiedImageError
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.http import HttpResponse
 
 from .forms import LoginForm, RegisterForm
 from .models import ALLOWED_COLORS, DEFAULT_COLOR
@@ -70,36 +71,30 @@ def profile_view(request):
         profile.description = description
         profile.color = color if color in ALLOWED_COLORS else DEFAULT_COLOR
 
-        if 'clear_avatar' in request.POST and profile.avatar:
-            profile.avatar.delete(save=False)
-            profile.avatar = None
-        elif 'avatar' in request.FILES:
-            avatar = request.FILES['avatar']
-            if avatar.size > MAX_AVATAR_SIZE:
-                return render(request, 'profile.html', {
-                    'profile': profile,
-                    'colors': ALLOWED_COLORS,
-                    'error': 'Avatar is too large. Maximum size is 5 MB.',
-                })
-
-            try:
-                avatar.seek(0)
-                image = Image.open(avatar)
-                image.verify()
-                avatar.seek(0)
-                image = Image.open(avatar)
-                if image.width > MAX_AVATAR_DIMENSION or image.height > MAX_AVATAR_DIMENSION:
-                    raise ValueError('Avatar dimensions are too large.')
-            except (UnidentifiedImageError, OSError, ValueError):
-                return render(request, 'profile.html', {
-                    'profile': profile,
-                    'colors': ALLOWED_COLORS,
-                    'error': 'Please choose a valid image up to 2000×2000 pixels.',
-                })
+        if 'clear_avatar' in request.POST:
+            profile.avatar_data = None
+            profile.avatar_type = ''
 
             if profile.avatar:
                 profile.avatar.delete(save=False)
-            profile.avatar = avatar
+                profile.avatar = None
+
+        elif 'avatar' in request.FILES:
+            avatar = request.FILES['avatar']
+
+            if avatar.size > 2 * 1024 * 1024:
+                return render(request, 'profile.html', {
+                    'profile': profile,
+                    'colors': ALLOWED_COLORS,
+                    'error': 'Avatar must be smaller than 2 MB.'
+                })
+
+            profile.avatar_data = avatar.read()
+            profile.avatar_type = avatar.content_type
+
+            if profile.avatar:
+                profile.avatar.delete(save=False)
+                profile.avatar = None
 
         profile.save()
         return redirect('profile')
@@ -108,3 +103,19 @@ def profile_view(request):
         'profile': profile,
         'colors': ALLOWED_COLORS,
     })
+
+def avatar_view(request, user_id):
+    from django.contrib.auth.models import User
+
+    try:
+        profile = User.objects.get(id=user_id).profile
+    except User.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if not profile.avatar_data:
+        return HttpResponse(status=404)
+
+    return HttpResponse(
+        profile.avatar_data,
+        content_type=profile.avatar_type or 'image/jpeg'
+    )

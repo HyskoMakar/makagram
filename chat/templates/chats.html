@@ -19,8 +19,8 @@
             <div class="flex items-center gap-2 justify-between w-full">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ user.profile.color|default:'gray' }}-300">
-                        {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if user.profile.avatar_data %}
+                        <img src="{% url 'avatar' user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ user.profile.username|default:user.username|slice:":1"|upper }}
                         {% endif %}

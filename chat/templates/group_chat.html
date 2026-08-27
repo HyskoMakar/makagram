@@ -205,8 +205,8 @@
                      data-username="{{ msg_username }}">
                     {% if m.author != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
-                        {% if m.author.profile.avatar %}
-                        <img src="{{ m.author.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if m.author.profile.avatar_data %}
+                        <img src="{% url 'avatar' m.author.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ msg_username|slice:":1"|upper }}
                         {% endif %}
@@ -222,8 +222,8 @@
 
                     {% if m.author == request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
-                        {% if request.user.profile.avatar %}
-                        <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover">
+                        {% if request.user.profile.avatar_data %}
+                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
                         {{ request.user.username|slice:":1"|upper }}
                         {% endif %}

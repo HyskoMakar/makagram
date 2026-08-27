@@ -84,8 +84,8 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
     def _get_user_data(self, user):
         profile = getattr(user, 'profile', None)
         avatar = None
-        if profile and profile.avatar:
-            avatar = profile.avatar.url
+        if profile and profile.avatar_data:
+            avatar = f'/avatar/{user.id}/'
         return {
             'username': (profile.username if profile else '') or user.username,
             'color': (profile.color if profile else '') or 'gray',
@@ -197,8 +197,8 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     def _get_user_data(self, user):
         profile = getattr(user, 'profile', None)
         avatar = None
-        if profile and profile.avatar:
-            avatar = profile.avatar.url
+        if profile and profile.avatar_data:
+            avatar = f'/avatar/{user.id}/'
         return {
             'username': (profile.username if profile else '') or user.username,
             'color': (profile.color if profile else '') or 'gray',

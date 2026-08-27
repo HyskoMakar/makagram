@@ -5,8 +5,8 @@
     <div class="bg-white rounded-xl shadow p-6">
         {% if error %}<div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error }}</div>{% endif %}
         <div class="flex items-center gap-4 mb-6">
-            {% if profile.avatar %}
-            <img src="{{ profile.avatar.url }}" class="w-14 h-14 rounded-full object-cover">
+            {% if profile.avatar_data %}
+            <img src="{% url 'avatar' request.user.id %}" class="w-14 h-14 rounded-full object-cover">
             {% else %}
             <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white bg-{{ profile.color }}-300">
                 {{ profile.username|slice:":1"|upper }}
@@ -35,7 +35,7 @@
                 <div class="flex items-center">
                     <input name="avatar" type="file" accept="image/*"
                         class="w-full text-sm text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-50 file:text-slate-600 hover:file:bg-purple-100">
-                    {% if profile.avatar %}
+                    {% if profile.avatar_data %}
                     <button type="submit" name="clear_avatar" value="1"
                     class="text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg py-1 px-3">Remove</button>
                     {% endif %}
