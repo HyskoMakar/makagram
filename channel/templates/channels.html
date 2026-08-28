@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Channels{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-semibold">Channels</h1>
+        <a href="{% url 'channel-create' %}" class="text-sm text-blue-600 font-medium hover:underline">+ Create channel</a>
+    </div>
+
+    <div class="flex items-center gap-2 mb-4">
+        <a href="?tab=all" class="px-3 py-1 rounded text-sm {% if tab == 'all' %}bg-gray-100{% endif %}">All</a>
+        <a href="?tab=mine" class="px-3 py-1 rounded text-sm {% if tab == 'mine' %}bg-gray-100{% endif %}">Subscribed</a>
+        <a href="?tab=opped" class="px-3 py-1 rounded text-sm {% if tab == 'opped' %}bg-gray-100{% endif %}">I'm admin</a>
+        <a href="?tab=owned" class="px-3 py-1 rounded text-sm {% if tab == 'owned' %}bg-gray-100{% endif %}">Owned</a>
+    </div>
+
+    <div class="grid gap-3">
+        {% for entry in channels %}
+        {% with channel=entry.channel %}
+        <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md">
+            <a href="{% url 'channel-view' channel.id %}" class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ channel.color|default:'blue' }}-300 text-sm select-none">
+                    {{ channel.name|slice:":1"|upper }}
+                </div>
+                <div class="min-w-0">
+                    <div class="font-medium text-{{ channel.color|default:'blue' }}-600 truncate">{{ channel.name }}</div>
+                    <div class="text-sm text-gray-500 truncate">
+                        {% if entry.last_post %}{{ entry.last_post.content|truncatechars:50 }}{% else %}{{ channel.description|default:"No posts yet"|truncatechars:50 }}{% endif %}
+                    </div>
+                </div>
+            </a>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="text-xs text-gray-400 border px-2 py-0.5 rounded-full">{{ entry.subscriber_count }} subscriber{{ entry.subscriber_count|pluralize }}</span>
+                {% if channel.id not in my_channel_ids %}
+                <form method="post" action="{% url 'channel-subscribe' channel.id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg">Subscribe</button>
+                </form>
+                {% else %}
+                <span class="text-xs text-green-600 font-medium">Subscribed</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% empty %}
+        <div class="text-gray-500">No channels found.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

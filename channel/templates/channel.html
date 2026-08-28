@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% block title %}{{ channel.name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="px-4 py-3 border-b flex justify-between items-center w-full">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-{{ channel.color|default:'blue' }}-300 text-lg select-none flex-shrink-0">
+                    {{ channel.name|slice:":1"|upper }}
+                </div>
+                <div class="flex flex-col min-w-0">
+                    <span class="font-semibold text-{{ channel.color|default:'blue' }}-600 truncate">{{ channel.name }}</span>
+                    <span class="text-xs text-gray-400 truncate">
+                        <span id="subscriber-count">{{ subscriber_count }}</span> subscriber{{ subscriber_count|pluralize }}
+                        {% if channel.description %} &middot; {{ channel.description }}{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                {% if is_owner %}
+                <button id="subscribers-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
+                    Subscribers
+                </button>
+                <button id="channel-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
+                    Edit
+                </button>
+                {% elif is_subscriber %}
+                <form method="post" action="{% url 'channel-unsubscribe' channel.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50">
+                        Unsubscribe
+                    </button>
+                </form>
+                {% else %}
+                <form method="post" action="{% url 'channel-subscribe' channel.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm">
+                        Subscribe
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_owner %}
+        <div id="subscribers-panel" class="hidden px-4 py-4 border-b bg-gray-50">
+            <h3 class="font-semibold text-sm mb-3 text-gray-700">Subscribers</h3>
+            <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                {% for subscriber in subscribers %}
+                {% with sub_username=subscriber.profile.username|default:subscriber.username %}
+                <div class="flex items-center justify-between gap-3 bg-white border rounded-lg px-3 py-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 bg-{{ subscriber.profile.color|default:'gray' }}-300">
+                            {% if subscriber.profile.avatar_data %}
+                            <img src="{% url 'avatar' subscriber.id %}" class="w-full h-full object-cover">
+                            {% else %}
+                            {{ sub_username|slice:":1"|upper }}
+                            {% endif %}
+                        </div>
+                        <span class="text-sm text-gray-800 truncate">{{ sub_username }}</span>
+                        {% if subscriber == channel.owner %}
+                        <span class="text-xs text-violet-600 font-medium flex-shrink-0">Creator</span>
+                        {% elif subscriber.id in admin_ids %}
+                        <span class="text-xs text-yellow-600 font-medium flex-shrink-0">Admin</span>
+                        {% endif %}
+                    </div>
+
+                    {% if subscriber != channel.owner %}
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        {% if subscriber.id in admin_ids %}
+                        <button type="button" data-user-id="{{ subscriber.id }}" class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50">
+                            Remove admin
+                        </button>
+                        {% else %}
+                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-blue-600 hover:bg-blue-50">
+                            Make admin
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% empty %}
+                <div class="text-sm text-gray-500">No subscribers yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if is_owner %}
+        <div id="channel-settings-panel" class="hidden px-4 py-4 border-b bg-gray-50">
+            <h3 class="font-semibold text-sm mb-3 text-gray-700">Channel Settings</h3>
+            <form method="post" action="{% url 'channel-edit' channel.id %}" class="flex flex-col gap-4">
+                {% csrf_token %}
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Channel Name</label>
+                    <input type="text" name="name" value="{{ channel.name }}" required
+                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Description</label>
+                    <input type="text" name="description" value="{{ channel.description }}"
+                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-gray-600 block mb-1">Channel Color</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for color in colors %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="color" value="{{ color }}" class="hidden peer"
+                                   {% if channel.color == color %}checked{% endif %}>
+                            <div class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-2 border-t">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
+                        Save changes
+                    </button>
+                </div>
+            </form>
+
+            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center"
+                  onsubmit="return confirm('Delete this channel? This cannot be undone.');">
+                {% csrf_token %}
+                <span class="text-xs text-red-500 font-medium">Danger Zone</span>
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">
+                    Delete Channel
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div id="channel-posts" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
+            {% for entry in posts %}
+            {% with post=entry.post author_username=entry.post.author.profile.username|default:entry.post.author.username %}
+            <div class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}" data-post-id="{{ post.id }}">
+                {% if post.author != request.user %}
+                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ post.author.profile.color|default:'gray' }}-300">
+                    {% if post.author.profile.avatar_data %}
+                    <img src="{% url 'avatar' post.author.id %}" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ author_username|default:"?"|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if post.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {% if post.author != request.user %}
+                    <div class="text-xs font-medium text-{{ post.author.profile.color|default:'gray' }}-500 mb-1 flex items-center justify-between gap-2">
+                        <span>{{ author_username|default:"Deleted user" }}</span>
+                        <span class="text-xs text-gray-400 font-normal">{{ post.created_at|date:"M j, H:i" }}</span>
+                    </div>
+                    {% else %}
+                    <div class="text-xs text-gray-400 mb-1 text-right">{{ post.created_at|date:"M j, H:i" }}</div>
+                    {% endif %}
+
+                    <div>{{ post.content }}</div>
+
+                    <div class="flex items-center gap-1 mt-1">
+                        <button type="button"
+                                class="like-btn flex items-center gap-1 text-xs {% if entry.liked %}text-red-500{% else %}text-gray-400{% endif %} {% if is_subscriber %}hover:opacity-75{% else %}opacity-50 cursor-not-allowed{% endif %}"
+                                data-post-id="{{ post.id }}"
+                                data-liked="{{ entry.liked|yesno:'1,0' }}"
+                                {% if not is_subscriber %}disabled{% endif %}>
+                            <span class="like-icon">{% if entry.liked %}&#9829;{% else %}&#9825;{% endif %}</span>
+                            <span class="like-count">{{ entry.like_count }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {% if post.author == request.user %}
+                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
+                    {% if request.user.profile.avatar_data %}
+                    <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ request.user.username|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="text-gray-500 text-sm">No posts yet.</div>
+            {% endfor %}
+        </div>
+
+        {% if is_admin %}
+        <div class="px-4 py-3 border-t flex gap-2 items-center">
+            <input id="post-input" type="text"
+                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ channel.color }}-400"
+                   placeholder="Write a post...">
+            <button id="post-send"
+                    class="bg-{{ channel.color }}-500 hover:bg-{{ channel.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                Post
+            </button>
+        </div>
+        {% elif is_subscriber %}
+        <div class="px-4 py-3 border-t text-gray-500 text-sm">
+            Only channel admins can write posts.
+        </div>
+        {% else %}
+        <div class="px-4 py-3 border-t text-gray-500 text-sm">
+            Subscribe to like posts and get updates from this channel.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
+
+<script>
+  (function(){
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    const channelId = {{ channel.id }};
+    const isSubscriber = {{ is_subscriber|yesno:'true,false' }};
+    const currentUserId = {{ request.user.id|default:'null' }};
+    const myColor = "{{ request.user.profile.color|default:'gray' }}";
+
+    const toast = document.getElementById('toast');
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function togglePanel(toggleId, panelId) {
+      const btn = document.getElementById(toggleId);
+      const panel = document.getElementById(panelId);
+      if (btn && panel) {
+        btn.addEventListener('click', () => panel.classList.toggle('hidden'));
+      }
+    }
+    togglePanel('channel-settings-toggle', 'channel-settings-panel');
+    togglePanel('subscribers-toggle', 'subscribers-panel');
+
+    const postsDiv = document.getElementById('channel-posts');
+    if (postsDiv) postsDiv.scrollTop = postsDiv.scrollHeight;
+
+    function wireLikeButton(btn) {
+      btn.addEventListener('click', async function() {
+        if (btn.disabled) return;
+        const postId = btn.dataset.postId;
+        const res = await fetch(`/channel/${channelId}/posts/${postId}/like/`, {
+          method: 'POST',
+          headers: {'X-CSRFToken': csrftoken},
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          showToast(data.error || 'Could not like post');
+          return;
+        }
+        const icon = btn.querySelector('.like-icon');
+        const count = btn.querySelector('.like-count');
+        count.textContent = data.like_count;
+        if (data.liked) {
+          btn.classList.remove('text-gray-400');
+          btn.classList.add('text-red-500');
+          icon.innerHTML = '&#9829;';
+        } else {
+          btn.classList.remove('text-red-500');
+          btn.classList.add('text-gray-400');
+          icon.innerHTML = '&#9825;';
+        }
+      });
+    }
+    document.querySelectorAll('.like-btn').forEach(wireLikeButton);
+
+    document.querySelectorAll('.promote-btn, .demote-btn').forEach(function(btn) {
+      btn.addEventListener('click', async function() {
+        const userId = btn.dataset.userId;
+        const action = btn.classList.contains('promote-btn') ? 'promote' : 'demote';
+        const res = await fetch(`/channel/${channelId}/admins/${userId}/${action}/`, {
+          method: 'POST',
+          headers: {'X-CSRFToken': csrftoken},
+        });
+        const data = await res.json();
+        if (data.ok) {
+          window.location.reload();
+        } else {
+          showToast(data.error || 'Action failed');
+        }
+      });
+    });
+
+    function renderPost(post) {
+        const isMine = post.author && post.author.id === currentUserId;
+
+        const row = document.createElement('div');
+        row.className = 'flex items-start gap-2' + (isMine ? ' justify-end' : '');
+        row.dataset.postId = post.id;
+
+        const author = post.author || {};
+        const authorName = author.username || 'Deleted user';
+        const authorColor = author.color || 'gray';
+
+        function makeAvatar() {
+            const av = document.createElement('div');
+            av.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-' + authorColor + '-300';
+            if (author.avatar) {
+            const img = document.createElement('img');
+            img.src = author.avatar;
+            img.className = 'w-full h-full object-cover';
+            av.appendChild(img);
+            } else {
+            av.textContent = authorName.slice(0, 1).toUpperCase();
+            }
+            return av;
+        }
+
+        if (!isMine) {
+            row.appendChild(makeAvatar());
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words ' +
+            (isMine ? 'bg-' + authorColor + '-100 text-gray-800' : 'bg-gray-100 text-gray-800');
+
+        if (!isMine) {
+            const head = document.createElement('div');
+            head.className = 'text-xs font-medium text-' + authorColor + '-500 mb-1 flex items-center justify-between gap-2';
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = authorName;
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'text-xs text-gray-400 font-normal';
+            dateSpan.textContent = post.created_at || '';
+            head.appendChild(nameSpan);
+            head.appendChild(dateSpan);
+            bubble.appendChild(head);
+        } else {
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'text-xs text-gray-400 mb-1 text-right';
+            dateDiv.textContent = post.created_at || '';
+            bubble.appendChild(dateDiv);
+        }
+
+        const contentDiv = document.createElement('div');
+        contentDiv.textContent = post.content || '';
+        bubble.appendChild(contentDiv);
+
+        const likeRow = document.createElement('div');
+        likeRow.className = 'flex items-center gap-1 mt-1';
+
+        const likeBtn = document.createElement('button');
+        likeBtn.type = 'button';
+        likeBtn.className = 'like-btn flex items-center gap-1 text-xs text-gray-400' +
+            (isSubscriber ? ' hover:opacity-75' : ' opacity-50 cursor-not-allowed');
+        likeBtn.dataset.postId = post.id;
+        likeBtn.dataset.liked = '0';
+        if (!isSubscriber) likeBtn.disabled = true;
+
+        const likeIcon = document.createElement('span');
+        likeIcon.className = 'like-icon';
+        likeIcon.innerHTML = '&#9825;';
+
+        const likeCount = document.createElement('span');
+        likeCount.className = 'like-count';
+        likeCount.textContent = '0';
+
+        likeBtn.appendChild(likeIcon);
+        likeBtn.appendChild(likeCount);
+        likeRow.appendChild(likeBtn);
+        bubble.appendChild(likeRow);
+
+        row.appendChild(bubble);
+
+        if (isMine) {
+            row.appendChild(makeAvatar());
+        }
+
+        wireLikeButton(likeBtn);
+        return row;
+    }
+
+    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(wsScheme + '://' + window.location.host + '/ws/channel/' + channelId + '/');
+
+    socket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+
+      if (data.type === 'post') {
+        const emptyState = postsDiv.querySelector('.text-gray-500.text-sm');
+        if (emptyState) emptyState.remove();
+        postsDiv.appendChild(renderPost(data.post));
+        postsDiv.scrollTop = postsDiv.scrollHeight;
+      } else if (data.type === 'like') {
+        const card = postsDiv.querySelector(`[data-post-id="${data.post_id}"]`);
+        if (card) {
+          const countEl = card.querySelector('.like-count');
+          if (countEl) countEl.textContent = data.like_count;
+        }
+      } else if (data.type === 'admins_changed') {
+        showToast('Admin list was updated');
+      } else if (data.type === 'error') {
+        showToast(data.message || 'Error');
+        if (data.message && data.message.includes('deleted')) {
+          setTimeout(() => { window.location.href = '/channels/'; }, 1500);
+        }
+      }
+    };
+
+    socket.onclose = function() {
+      console.error('Channel socket closed unexpectedly');
+    };
+
+    const input = document.getElementById('post-input');
+    const sendBtn = document.getElementById('post-send');
+    if (sendBtn && input) {
+      const submitPost = async function() {
+        const v = input.value.trim();
+        if (!v) return;
+        const res = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'message=' + encodeURIComponent(v),
+        });
+        if (res.ok) {
+          input.value = '';
+        } else {
+          showToast('Could not publish post');
+        }
+      };
+      sendBtn.addEventListener('click', submitPost);
+      input.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') submitPost();
+      });
+    }
+  })();
+</script>
+{% endblock %}

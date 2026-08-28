@@ -274,17 +274,30 @@
         if (isInviter) wrapper.classList.add('justify-end');
         if (inv.invite_id) wrapper.dataset.inviteId = inv.invite_id;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-gray-300';
-        avatar.textContent = (inv.inviter || '?').slice(0, 1).toUpperCase();
+        function createAvatarElement(avatarUrl, username, color) {
+            const avatarEl = document.createElement('div');
+            avatarEl.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
+            if (avatarUrl) {
+                const img = document.createElement('img');
+                img.src = avatarUrl;
+                img.className = 'w-full h-full object-cover';
+                avatarEl.appendChild(img);
+            } else {
+                avatarEl.classList.add('bg-' + (color || 'gray') + '-300');
+                avatarEl.textContent = (username || '?').slice(0, 1).toUpperCase();
+            }
+            return avatarEl;
+        }
 
         const bubble = document.createElement('div');
         bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words';
         if (isInviter) {
-            bubble.classList.add('bg-{{ request.user.profile.color }}-100', 'text-gray-800');
+            bubble.classList.add('bg-{{ request.user.profile.color|default:"gray" }}-100', 'text-gray-800');
         } else {
-            bubble.classList.add('bg-{{ other.profile.color }}-100', 'text-gray-800');
+            bubble.classList.add('bg-{{ other.profile.color|default:"gray" }}-100', 'text-gray-800');
         }
+
+        let avatar; // Объявляем аватар заранее
 
         const textRow = document.createElement('div');
         if (isInviter) {
@@ -298,6 +311,12 @@
             textRow.appendChild(group);
             textRow.append(' — waiting for response');
             bubble.appendChild(textRow);
+
+            const myAvatarUrl = inv.inviter_avatar || "{% if request.user.profile.avatar_data %}{% url 'avatar' request.user.id %}{% endif %}";
+            avatar = createAvatarElement(myAvatarUrl, currentUser, "{{ request.user.profile.color|default:'gray' }}");
+
+            wrapper.appendChild(bubble);
+            wrapper.appendChild(avatar);
         } else {
             const inviter = document.createElement('strong');
             inviter.textContent = inv.inviter || '?';
@@ -346,12 +365,10 @@
             btnRow.appendChild(accept);
             btnRow.appendChild(decline);
             bubble.appendChild(btnRow);
-        }
 
-        if (isInviter) {
-            wrapper.appendChild(bubble);
-            wrapper.appendChild(avatar);
-        } else {
+            const otherAvatarUrl = inv.inviter_avatar || "{% if other.profile.avatar_data %}{% url 'avatar' other.id %}{% endif %}";
+            avatar = createAvatarElement(otherAvatarUrl, inv.inviter, "{{ other.profile.color|default:'gray' }}");
+
             wrapper.appendChild(avatar);
             wrapper.appendChild(bubble);
         }

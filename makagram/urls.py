@@ -20,6 +20,7 @@ urlpatterns = [
     # another apps
     path('lobby/', include('lobby.urls')),
     path('chat/', include('chat.urls')),
+    path('channel/', include('channel.urls')),
 
     # admin
     path('admin/', admin.site.urls),

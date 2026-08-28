@@ -12,8 +12,9 @@ django_asgi_app = get_asgi_application()
 
 from lobby.routing import websocket_urlpatterns as lobby_ws
 from chat.routing import websocket_urlpatterns as chat_ws
+from channel.routing import websocket_urlpatterns as channel_ws
 
-websocket_urlpatterns = lobby_ws + chat_ws
+websocket_urlpatterns = lobby_ws + chat_ws + channel_ws
 
 application = ProtocolTypeRouter(
     {

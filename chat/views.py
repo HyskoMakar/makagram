@@ -27,9 +27,6 @@ from .models import (
     unblock_user,
 )
 
-MAX_GROUP_NAME_LENGTH = 100
-
-
 def _private_room_name(user1, user2):
     names = sorted([user1.username, user2.username])
     return f'private_{names[0]}_{names[1]}'
@@ -47,15 +44,16 @@ def _send_private_event(user1, user2, event):
 
 
 @login_required(login_url='login')
-def users_list(request):
+def chats_list(request):
     tab = request.GET.get('tab', 'all')
     gtab = request.GET.get('gtab', 'all')
 
-    if tab == 'friends':
-        friend_ids = Friendship.objects.filter(user=request.user).values_list('friend_id', flat=True)
-        users = User.objects.filter(id__in=friend_ids)
-    else:
-        users = User.objects.exclude(id=request.user.id)
+    match tab:
+        case 'friends':
+            friend_ids = Friendship.objects.filter(user=request.user).values_list('friend_id', flat=True)
+            users = User.objects.filter(id__in=friend_ids)
+        case 'all':
+            users = User.objects.exclude(id=request.user.id)
     users = users.select_related('profile')
 
     last_private = PrivateMessage.objects.filter(
@@ -67,12 +65,13 @@ def users_list(request):
     my_groups = Group.objects.filter(members=request.user)
     my_group_ids = set(my_groups.values_list('id', flat=True))
 
-    if gtab == 'mine':
-        groups = my_groups
-    else:
-        groups = Group.objects.filter(
-            Q(private=False) | Q(members=request.user) | Q(invites__invitee=request.user)
-        ).distinct()
+    match gtab:
+        case 'mine':
+            groups = my_groups
+        case 'all':
+            groups = Group.objects.filter(
+                Q(private=False) | Q(members=request.user) | Q(invites__invitee=request.user)
+            ).distinct()
 
     last_group = GroupMessage.objects.filter(
         group=OuterRef('pk')
@@ -100,7 +99,7 @@ def users_list(request):
 
 
 class GroupForm(forms.Form):
-    name = forms.CharField(max_length=MAX_GROUP_NAME_LENGTH)
+    name = forms.CharField(max_length=100)
     private = forms.BooleanField(required=False)
     color = forms.CharField(max_length=25, required=False)
 
@@ -138,7 +137,7 @@ def create_group(request):
 
 
 @login_required(login_url='login')
-def group_view(request, group_id):
+def group(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     is_member = group.members.filter(id=request.user.id).exists()
     invite = GroupInvite.objects.filter(group=group, invitee=request.user).first()

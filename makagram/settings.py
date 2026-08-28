@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'makagram',
     'lobby',
     'chat',
+    'channel',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
