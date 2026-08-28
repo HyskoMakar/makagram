@@ -95,9 +95,23 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _save_message(self, content):
         from .models import Group, GroupMessage
+        from .views import create_notification_if_not_muted
         group = Group.objects.filter(id=self.group_id).first()
         if group:
             GroupMessage.objects.create(group=group, author=self.me, content=content)
+            for member in group.members.exclude(id=self.me.id):
+                create_notification_if_not_muted(
+                    recipient=member,
+                    sender=self.me,
+                    title=f'Message in group "{group.name}"',
+                    message=f'{content[:100]}',
+                    notification_type='group',
+                    link=f'/chat/groups/{group.id}/',
+                    chat_type='group',
+                    target_id=group.id,
+                )
+
+
 
 
 class PrivateChatConsumer(AsyncWebsocketConsumer):
@@ -208,11 +222,25 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _save_message(self, to_user, content):
         from .models import PrivateMessage
+        from .views import create_notification_if_not_muted
         PrivateMessage.objects.create(
             from_user=self.me,
             to_user=to_user,
             content=content,
         )
+        sender_name = self.me.profile.username if hasattr(self.me, 'profile') and self.me.profile.username else self.me.username
+        create_notification_if_not_muted(
+            recipient=to_user,
+            sender=self.me,
+            title=f'New message from @{sender_name}',
+            message=f'{content[:100]}',
+            notification_type='private',
+            link=f'/chat/private/{sender_name}/',
+            chat_type='private',
+            target_id=self.me.id,
+        )
+
+
 
     @sync_to_async
     def _get_user_by_username(self, username):

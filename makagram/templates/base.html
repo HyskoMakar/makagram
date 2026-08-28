@@ -12,14 +12,34 @@
 <body class="bg-gray-100 min-h-screen">
     <header class="sticky top-0 z-50 w-full bg-white border-b">
         <div class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4">
-            <a href="{% url 'room-index' %}" class="font-medium text-xl">MaKaGram</a>
+            <a href="{% url 'index' %}" class="font-medium text-xl">MaKaGram</a>
             <nav class="items-center flex gap-4">
+                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'index' %}">Feed</a>
                 <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'room-index' %}">Lobbies</a>
                 <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'chats-list' %}">Chats</a>
                 <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'channels-list' %}">Channels</a>
             </nav>
-            <div class="flex flex-1 items-center justify-end gap-2">
+            <div class="flex flex-1 items-center justify-end gap-3">
                 {% if request.user.is_authenticated %}
+                <div class="relative">
+                    <button id="notif-btn" type="button" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full focus:outline-none transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span id="notif-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
+                    </button>
+
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border py-2 z-50">
+                        <div class="px-4 py-2 border-b flex items-center justify-between">
+                            <span class="font-semibold text-sm text-gray-800">Notifications</span>
+                            <button id="notif-read-all" class="text-xs text-blue-600 hover:underline">Mark all as read</button>
+                        </div>
+                        <div id="notif-list" class="max-h-80 overflow-y-auto divide-y">
+                            <div class="px-4 py-3 text-sm text-gray-400 text-center">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="relative">
                     <button id="profile-btn" class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none bg-{{ request.user.profile.color }}-300">
                         {% if request.user.profile.avatar_data %}
@@ -28,7 +48,7 @@
                         {{ request.user.profile.username|default:request.user.username|slice:":1"|upper }}
                         {% endif %}
                     </button>
-                    <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2">
+                    <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
                         <div class="px-4 py-2 text-sm font-medium text-{{ request.user.profile.color }}-600 border-b">
                             {{ request.user.profile.username|default:request.user.username }}
                         </div>
@@ -54,10 +74,82 @@
         if (btn && dropdown) {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (notifDropdown) notifDropdown.classList.add('hidden');
                 dropdown.classList.toggle('hidden');
             });
-            document.addEventListener('click', () => dropdown.classList.add('hidden'));
         }
+
+        const notifBtn = document.getElementById('notif-btn');
+        const notifDropdown = document.getElementById('notif-dropdown');
+        const notifBadge = document.getElementById('notif-badge');
+        const notifList = document.getElementById('notif-list');
+        const notifReadAll = document.getElementById('notif-read-all');
+
+        function fetchNotifications() {
+            if (!notifBtn) return;
+            fetch('{% url "notifications-list" %}')
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.ok) return;
+                    if (data.unread_count > 0) {
+                        notifBadge.classList.remove('hidden');
+                    } else {
+                        notifBadge.classList.add('hidden');
+                    }
+
+                    if (data.notifications.length === 0) {
+                        notifList.innerHTML = '<div class="px-4 py-4 text-xs text-gray-400 text-center">No new notifications</div>';
+                        return;
+                    }
+
+                    notifList.innerHTML = data.notifications.map(n => `
+                        <a href="${n.link || '#'}" class="block px-4 py-3 hover:bg-gray-50 transition-colors ${n.is_read ? 'opacity-70' : 'bg-blue-50/40'}">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-semibold text-gray-800">${n.title}</span>
+                                <span class="text-[10px] text-gray-400">${n.created_at}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 line-clamp-2">${n.message}</p>
+                        </a>
+                    `).join('');
+                })
+                .catch(e => console.error('Notifications fetch error:', e));
+        }
+
+        if (notifBtn && notifDropdown) {
+            notifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (dropdown) dropdown.classList.add('hidden');
+                notifDropdown.classList.toggle('hidden');
+                if (!notifDropdown.classList.contains('hidden')) {
+                    fetchNotifications();
+                }
+            });
+
+            if (notifReadAll) {
+                notifReadAll.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fetch('{% url "notifications-mark-read" %}', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.ok) {
+                            notifBadge.classList.add('hidden');
+                            fetchNotifications();
+                        }
+                    });
+                });
+            }
+
+            fetchNotifications();
+            setInterval(fetchNotifications, 15000);
+        }
+
+        document.addEventListener('click', () => {
+            if (dropdown) dropdown.classList.add('hidden');
+            if (notifDropdown) notifDropdown.classList.add('hidden');
+        });
     </script>
 </body>
 </html>

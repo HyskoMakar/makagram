@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}News Feed{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">News Feed</h1>
+            <p class="text-xs text-gray-500 mt-0.5">All updates from channels, groups, and direct messages</p>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            All
+        </a>
+        <a href="?tab=channel" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'channel' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Channels
+        </a>
+        <a href="?tab=group" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'group' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Groups
+        </a>
+        <a href="?tab=private" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'private' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Direct Messages
+        </a>
+        <a href="?tab=system" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'system' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Community
+        </a>
+
+    </div>
+
+    <div class="grid gap-3">
+        {% for item in feed_items %}
+        <div class="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 p-4 transition-all">
+            <div class="flex items-center justify-between gap-3 mb-2">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ item.color }}-400 text-sm select-none shadow-sm">
+                        {% if item.author.profile.avatar_data %}
+                        <img src="{% url 'avatar' item.author.id %}" class="w-full h-full rounded-full object-cover">
+                        {% else %}
+                        {{ item.title|slice:":1"|upper }}
+                        {% endif %}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <a href="{{ item.link }}" class="font-semibold text-gray-900 hover:text-blue-600 truncate">
+                                {{ item.title }}
+                            </a>
+                            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex-shrink-0 
+                                {% if item.type == 'channel' %}bg-blue-50 text-blue-600 border border-blue-100
+                                {% elif item.type == 'group' %}bg-purple-50 text-purple-600 border border-purple-100
+                                {% elif item.type == 'private' %}bg-emerald-50 text-emerald-600 border border-emerald-100
+                                {% else %}bg-indigo-50 text-indigo-600 border border-indigo-100{% endif %}">
+                                {{ item.type_label }}
+                            </span>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            {% if item.author %}by @{{ item.author.profile.username|default:item.author.username }} &middot; {% endif %}
+                            {{ item.created_at|date:"M d, Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ item.link }}" class="px-3 py-1 text-xs font-medium border rounded-lg text-gray-600 hover:bg-gray-50 hover:border-gray-300 flex-shrink-0 transition-colors">
+                    Open &rarr;
+                </a>
+            </div>
+
+            <div class="text-sm text-gray-700 mt-2 whitespace-pre-line break-words pl-1 border-l-2 border-{{ item.color }}-300">
+                {{ item.content }}
+            </div>
+
+            {% if item.type == 'channel' %}
+            <div class="flex items-center justify-between mt-3 pt-2 border-t text-xs text-gray-400">
+                <form method="post" action="{% url 'channel-post-like' item.channel_id item.post_id %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-1 hover:text-red-500 transition-colors {% if item.liked %}text-red-500 font-semibold{% endif %}">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span>{{ item.like_count }}</span>
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm border p-8 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+            </svg>
+            <p class="font-medium text-gray-700">News feed is empty</p>
+            <p class="text-xs text-gray-400 mt-1">Updates from channels and messages will appear here</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

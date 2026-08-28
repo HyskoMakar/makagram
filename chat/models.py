@@ -111,3 +111,45 @@ class GroupMessage(models.Model):
 
     def __str__(self):
         return f'{self.author.username} in {self.group.name}: {self.content[:50]}'
+
+
+class NotificationMute(models.Model):
+    CHAT_TYPES = (
+        ('private', 'Private Chat'),
+        ('group', 'Group Chat'),
+        ('channel', 'Channel'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_mutes')
+    chat_type = models.CharField(max_length=20, choices=CHAT_TYPES)
+    target_id = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'chat_type', 'target_id')
+
+    def __str__(self):
+        return f'{self.user.username} muted {self.chat_type}:{self.target_id}'
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = (
+        ('system', 'System News'),
+        ('channel', 'Channel Post'),
+        ('group', 'Group Message'),
+        ('private', 'Private Message'),
+        ('invite', 'Group Invite'),
+    )
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='sent_notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='system')
+    link = models.CharField(max_length=255, default='', blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Notification for {self.recipient.username}: {self.title}'

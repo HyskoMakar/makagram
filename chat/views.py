@@ -18,6 +18,8 @@ from .models import (
     Group,
     GroupInvite,
     GroupMessage,
+    Notification,
+    NotificationMute,
     PrivateMessage,
     add_friend,
     block_user,
@@ -26,6 +28,23 @@ from .models import (
     remove_friend,
     unblock_user,
 )
+
+
+def create_notification_if_not_muted(recipient, sender, title, message, notification_type, link, chat_type=None, target_id=None):
+    if sender and recipient == sender:
+        return None
+    if chat_type and target_id:
+        if NotificationMute.objects.filter(user=recipient, chat_type=chat_type, target_id=target_id).exists():
+            return None
+    return Notification.objects.create(
+        recipient=recipient,
+        sender=sender,
+        title=title,
+        message=message,
+        notification_type=notification_type,
+        link=link,
+    )
+
 
 def _private_room_name(user1, user2):
     names = sorted([user1.username, user2.username])
@@ -163,10 +182,12 @@ def group(request, group_id):
         'group': group,
         'messages': reversed(list(messages_qs)) if is_member or not group.private else [],
         'is_member': is_member,
+        'is_muted': NotificationMute.objects.filter(user=request.user, chat_type='group', target_id=group.id).exists(),
         'invited': bool(invite),
         'invite': invite,
         'colors': ALLOWED_COLORS,
     })
+
 
 
 @login_required(login_url='login')
@@ -349,16 +370,20 @@ def private_chat(request, username):
         | Q(invited_by=other, invitee=request.user)
     ).select_related('group', 'invited_by', 'invitee')
 
+    is_muted = NotificationMute.objects.filter(user=request.user, chat_type='private', target_id=other.id).exists()
+
     return render(request, 'private_chat.html', {
         'other': other,
         'blocked_by_other': blocked_by_other,
         'chat_blocked': blocked_by_other or i_blocked,
         'i_blocked': i_blocked,
         'friends': friends,
+        'is_muted': is_muted,
         'my_private_groups': my_private_groups,
         'messages': reversed(list(messages_qs)),
         'pending_invites': pending_invites,
     })
+
 
 
 @login_required(login_url='login')
@@ -423,3 +448,56 @@ def join_group(request, group_id):
         return HttpResponseBadRequest('group is private')
     group.members.add(request.user)
     return redirect('group-view', group_id=group.id)
+
+
+@login_required(login_url='login')
+@require_POST
+def toggle_mute_view(request):
+    chat_type = request.POST.get('chat_type')
+    target_id = request.POST.get('target_id')
+    if not chat_type or not target_id:
+        return HttpResponseBadRequest('Invalid params')
+
+    mute, created = NotificationMute.objects.get_or_create(
+        user=request.user,
+        chat_type=chat_type,
+        target_id=target_id,
+    )
+    if not created:
+        mute.delete()
+        muted = False
+    else:
+        muted = True
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json':
+        return JsonResponse({'ok': True, 'muted': muted})
+
+    return redirect(request.META.get('HTTP_REFERER', 'index'))
+
+
+@login_required(login_url='login')
+def notifications_list_view(request):
+    notifications = Notification.objects.filter(recipient=request.user)[:20]
+    unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+    data = []
+    for n in notifications:
+        sender_name = (n.sender.profile.username if hasattr(n.sender, 'profile') and n.sender.profile.username else n.sender.username) if n.sender else 'MaKaGram Community'
+        data.append({
+            'id': n.id,
+            'title': n.title,
+            'message': n.message,
+            'type': n.notification_type,
+            'link': n.link,
+            'is_read': n.is_read,
+            'sender': sender_name,
+            'created_at': n.created_at.strftime('%H:%M %d.%m.%Y'),
+        })
+    return JsonResponse({'ok': True, 'notifications': data, 'unread_count': unread_count})
+
+
+@login_required(login_url='login')
+@require_POST
+def mark_notifications_read_view(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'ok': True})
+

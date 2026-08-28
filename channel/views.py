@@ -134,6 +134,21 @@ def channel(request, channel_id):
                     'author': _author_payload(request.user),
                 },
             })
+
+            from chat.views import create_notification_if_not_muted
+            for sub in channel.subscribers.exclude(id=request.user.id):
+                create_notification_if_not_muted(
+                    recipient=sub,
+                    sender=request.user,
+                    title=f'New post in channel "{channel.name}"',
+                    message=f'{content[:100]}',
+                    notification_type='channel',
+                    link=f'/channel/{channel.id}/',
+                    chat_type='channel',
+                    target_id=channel.id,
+                )
+
+
             return redirect('channel-view', channel_id=channel.id)
 
     posts_qs = ChannelPost.objects.filter(channel=channel).select_related(
@@ -155,6 +170,9 @@ def channel(request, channel_id):
         )
         admin_ids = set(channel.admins.values_list('id', flat=True))
 
+    from chat.models import NotificationMute
+    is_muted = NotificationMute.objects.filter(user=request.user, chat_type='channel', target_id=channel.id).exists()
+
     return render(request, 'channel.html', {
         'channel': channel,
         'posts': [
@@ -168,11 +186,13 @@ def channel(request, channel_id):
         'is_admin': is_admin,
         'is_owner': is_owner,
         'is_subscriber': is_subscriber,
+        'is_muted': is_muted,
         'subscriber_count': channel.subscribers.count(),
         'subscribers': subscribers,
         'admin_ids': admin_ids,
         'colors': ALLOWED_COLORS,
     })
+
 
 
 @login_required(login_url='login')

@@ -20,4 +20,9 @@ urlpatterns = [
     
     path('toggle-friend/<str:username>/', views.toggle_friend, name='toggle-friend'),
     path('toggle-block/<str:username>/', views.toggle_block, name='toggle-block'),
+
+    path('api/mute/', views.toggle_mute_view, name='toggle-mute'),
+    path('api/notifications/', views.notifications_list_view, name='notifications-list'),
+    path('api/notifications/mark-read/', views.mark_notifications_read_view, name='notifications-mark-read'),
 ]
+
