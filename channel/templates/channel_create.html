@@ -2,9 +2,12 @@
 {% block title %}Create Channel{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto">
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-        <h1 class="text-2xl font-semibold mb-6">Create Channel</h1>
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6">
+            <h1 class="text-2xl font-semibold text-gray-800">Create Channel</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Publish posts and share updates with subscribers</p>
+        </div>
 
         {% if form.errors %}
         <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
@@ -19,14 +22,14 @@
                 <label class="text-sm font-medium text-gray-700 block mb-1">Channel Name</label>
                 <input type="text" name="name" required placeholder="My Awesome Channel"
                        value="{{ form.name.value|default:'' }}"
-                       class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                       class="w-full border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
             </div>
 
             <div>
                 <label class="text-sm font-medium text-gray-700 block mb-1">Description</label>
                 <input type="text" name="description" placeholder="What is this channel about?"
                        value="{{ form.description.value|default:'' }}"
-                       class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                       class="w-full border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
             </div>
 
             <div>
@@ -36,17 +39,17 @@
                     <label class="cursor-pointer">
                         <input type="radio" name="color" value="{{ color }}" class="hidden peer"
                                {% if color == 'blue' %}checked{% endif %}>
-                        <div class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
+                        <div class="w-8 h-8 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-400 shadow-sm"></div>
                     </label>
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 pt-2">
-                <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 text-sm font-medium shadow-sm transition-colors">
+            <div class="flex items-center gap-3 pt-4 border-t">
+                <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-sm transition-colors">
                     Create Channel
                 </button>
-                <a href="{% url 'channels-list' %}" class="px-4 py-2 border rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+                <a href="{% url 'channels-list' %}" class="px-5 py-2.5 border rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium">
                     Cancel
                 </a>
             </div>

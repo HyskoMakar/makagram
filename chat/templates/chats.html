@@ -5,86 +5,109 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-semibold mb-4">Chats</h1>
-
-    <div class="flex items-center gap-4 mb-4">
-        <a href="?tab=all&gtab={{ gtab }}" class="px-3 py-1 rounded {% if tab != 'friends' %}bg-gray-100{% endif %}">All</a>
-        <a href="?tab=friends&gtab={{ gtab }}" class="px-3 py-1 rounded {% if tab == 'friends' %}bg-gray-100{% endif %}">Friends</a>
+    <div class="mb-4">
+        <h1 class="text-2xl font-semibold text-gray-800">Chats</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Manage direct conversations and group discussions</p>
     </div>
 
-    <div class="grid gap-3">
+    <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <a href="?tab=all&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab != 'friends' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            All Users
+        </a>
+        <a href="?tab=friends&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'friends' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Friends
+        </a>
+    </div>
+
+    <div class="grid gap-3 mb-8">
         {% for entry in users %}
         {% with user=entry.user %}
-        <a href="{% url 'private-chat' user.profile.username|default:user.username %}" class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md">
-            <div class="flex items-center gap-2 justify-between w-full">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ user.profile.color|default:'gray' }}-300">
-                        {% if user.profile.avatar_data %}
-                        <img src="{% url 'avatar' user.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ user.profile.username|default:user.username|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    <div>
-                        <div class="font-medium text-{{ user.profile.color|default:'gray' }}-600">{{ user.profile.username|default:user.username }}</div>
-                        {% if entry.last_message %}<div class="text-sm text-gray-500">{{ entry.last_message|truncatechars:50 }}</div>{% endif %}
-                    </div>
+        <a href="{% url 'private-chat' user.profile.username|default:user.username %}" class="flex items-center justify-between gap-3 px-5 py-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ user.profile.color|default:'gray' }}-400 text-sm shadow-sm">
+                    {% if user.profile.avatar_data %}
+                    <img src="{% url 'avatar' user.id %}" class="w-full h-full object-cover">
+                    {% else %}
+                    {{ user.profile.username|default:user.username|slice:":1"|upper }}
+                    {% endif %}
                 </div>
-                <div class="{% if user.id in online_ids %}text-green-500{% else %}text-gray-500{% endif %} flex-shrink-0">
-                    {% if user.id in online_ids %}online{% else %}offline{% endif %}
+                <div class="min-w-0">
+                    <div class="font-semibold text-gray-900 truncate">@{user.profile.username|default:user.username}</div>
+                    {% if entry.last_message %}
+                    <div class="text-xs text-gray-500 truncate mt-0.5">{{ entry.last_message|truncatechars:50 }}</div>
+                    {% endif %}
                 </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                {% if user.id in online_ids %}
+                <span class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100">online</span>
+                {% else %}
+                <span class="text-xs text-gray-400 px-2 py-0.5 bg-gray-50 rounded-full border">offline</span>
+                {% endif %}
             </div>
         </a>
         {% endwith %}
         {% empty %}
-        <div class="text-gray-500">No other users found.</div>
+        <div class="bg-white rounded-xl shadow-sm border p-6 text-center text-gray-500 text-sm">
+            No users found.
+        </div>
         {% endfor %}
+    </div>
 
-        <div class="mt-6">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="font-semibold">Groups</h2>
-                <a href="{% url 'group-create' %}" class="text-sm text-blue-600 font-medium hover:underline">+ Create group</a>
+    <div class="mt-8">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Groups</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Public and private group chats</p>
             </div>
+            <a href="{% url 'group-create' %}" class="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+                + Create group
+            </a>
+        </div>
 
-            <div class="flex items-center gap-2 mb-3">
-                <a href="?tab={{ tab }}&gtab=all"
-                   class="px-3 py-1 rounded text-sm {% if gtab != 'mine' %}bg-gray-100{% endif %}">All</a>
-                <a href="?tab={{ tab }}&gtab=mine"
-                   class="px-3 py-1 rounded text-sm {% if gtab == 'mine' %}bg-gray-100{% endif %}">My groups</a>
-            </div>
+        <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+            <a href="?tab={{ tab }}&gtab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                All Groups
+            </a>
+            <a href="?tab={{ tab }}&gtab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                My Groups
+            </a>
+        </div>
 
+        <div class="grid gap-3">
             {% for g in groups %}
             {% with group=g.group %}
-            <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md mb-3">
-                <div class="flex items-center gap-2 justify-between w-full">
-                    <a href="{% url 'group-view' group.id %}" class="flex items-center gap-3 flex-1 min-w-0">
-                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ group.color|default:'blue' }}-300 text-sm select-none">
-                            {{ group.name|slice:":1"|upper }}
-                        </div>
-                        <div class="min-w-0">
-                            <div class="font-medium text-{{ group.color|default:'blue' }}-600 truncate">{{ group.name }}</div>
-                            {% if g.last_message %}
-                            <div class="text-sm text-gray-500 truncate">{{ g.last_message|truncatechars:50 }}</div>
-                            {% endif %}
-                        </div>
-                    </a>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <span class="text-xs text-gray-400 border px-2 py-0.5 rounded-full">{% if group.private %}Private{% else %}Public{% endif %}</span>
-                        {% if not group.private and group.id not in my_group_ids %}
-                        <form method="post" action="{% url 'group-join' group.id %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit"
-                                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg">Join</button>
-                        </form>
-                        {% elif group.id in my_group_ids %}
-                        <span class="text-xs text-green-600 font-medium">Joined</span>
+            <div class="flex items-center justify-between gap-3 px-5 py-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                <a href="{% url 'group-view' group.id %}" class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ group.color|default:'blue' }}-400 text-sm select-none shadow-sm">
+                        {{ group.name|slice:":1"|upper }}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-semibold text-gray-900 hover:text-blue-600 truncate">{{ group.name }}</div>
+                        {% if g.last_message %}
+                        <div class="text-xs text-gray-500 truncate mt-0.5">{{ g.last_message|truncatechars:50 }}</div>
                         {% endif %}
                     </div>
+                </a>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-xs text-gray-400 border px-2.5 py-0.5 rounded-full bg-gray-50">
+                        {% if group.private %}Private{% else %}Public{% endif %}
+                    </span>
+                    {% if not group.private and group.id not in my_group_ids %}
+                    <form method="post" action="{% url 'group-join' group.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Join</button>
+                    </form>
+                    {% elif group.id in my_group_ids %}
+                    <span class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100">Joined</span>
+                    {% endif %}
                 </div>
             </div>
             {% endwith %}
             {% empty %}
-            <div class="text-gray-500">No groups found.</div>
+            <div class="bg-white rounded-xl shadow-sm border p-6 text-center text-gray-500 text-sm">
+                No groups found.
+            </div>
             {% endfor %}
         </div>
     </div>

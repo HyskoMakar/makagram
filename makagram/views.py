@@ -13,7 +13,7 @@ MAX_AVATAR_SIZE = 5 * 1024 * 1024
 MAX_AVATAR_DIMENSION = 2000
 
 
-def index(request):
+def feed(request):
     tab = request.GET.get('tab', 'all')
     feed_items = []
 
@@ -117,7 +117,7 @@ def index(request):
 
     feed_items.sort(key=lambda x: x['created_at'], reverse=True)
 
-    return render(request, 'index.html', {
+    return render(request, 'feed.html', {
         'feed_items': feed_items[:50],
         'tab': tab,
     })

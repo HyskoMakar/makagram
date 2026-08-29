@@ -6,47 +6,66 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-semibold">Channels</h1>
-        <a href="{% url 'channel-create' %}" class="text-sm text-blue-600 font-medium hover:underline">+ Create channel</a>
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-800">Channels</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Explore, subscribe, and manage channels</p>
+        </div>
+        <a href="{% url 'channel-create' %}" class="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+            + Create channel
+        </a>
     </div>
 
-    <div class="flex items-center gap-2 mb-4">
-        <a href="?tab=all" class="px-3 py-1 rounded text-sm {% if tab == 'all' %}bg-gray-100{% endif %}">All</a>
-        <a href="?tab=mine" class="px-3 py-1 rounded text-sm {% if tab == 'mine' %}bg-gray-100{% endif %}">Subscribed</a>
-        <a href="?tab=opped" class="px-3 py-1 rounded text-sm {% if tab == 'opped' %}bg-gray-100{% endif %}">I'm admin</a>
-        <a href="?tab=owned" class="px-3 py-1 rounded text-sm {% if tab == 'owned' %}bg-gray-100{% endif %}">Owned</a>
+    <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            All
+        </a>
+        <a href="?tab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Subscribed
+        </a>
+        <a href="?tab=opped" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'opped' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Admin
+        </a>
+        <a href="?tab=owned" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'owned' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            Owned
+        </a>
     </div>
 
     <div class="grid gap-3">
         {% for entry in channels %}
         {% with channel=entry.channel %}
-        <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm hover:shadow-md">
+        <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
             <a href="{% url 'channel-view' channel.id %}" class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ channel.color|default:'blue' }}-300 text-sm select-none">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ channel.color|default:'blue' }}-400 text-sm select-none shadow-sm">
                     {{ channel.name|slice:":1"|upper }}
                 </div>
                 <div class="min-w-0">
-                    <div class="font-medium text-{{ channel.color|default:'blue' }}-600 truncate">{{ channel.name }}</div>
-                    <div class="text-sm text-gray-500 truncate">
+                    <div class="font-semibold text-gray-900 hover:text-blue-600 truncate">{{ channel.name }}</div>
+                    <div class="text-xs text-gray-500 truncate mt-0.5">
                         {% if entry.last_post %}{{ entry.last_post.content|truncatechars:50 }}{% else %}{{ channel.description|default:"No posts yet"|truncatechars:50 }}{% endif %}
                     </div>
                 </div>
             </a>
             <div class="flex items-center gap-2 flex-shrink-0">
-                <span class="text-xs text-gray-400 border px-2 py-0.5 rounded-full">{{ entry.subscriber_count }} subscriber{{ entry.subscriber_count|pluralize }}</span>
+                <span class="text-xs text-gray-400 border px-2.5 py-0.5 rounded-full bg-gray-50">{{ entry.subscriber_count }} subscriber{{ entry.subscriber_count|pluralize }}</span>
                 {% if channel.id not in my_channel_ids %}
                 <form method="post" action="{% url 'channel-subscribe' channel.id %}" class="inline">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg">Subscribe</button>
+                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Subscribe</button>
                 </form>
                 {% else %}
-                <span class="text-xs text-green-600 font-medium">Subscribed</span>
+                <span class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100">Subscribed</span>
                 {% endif %}
             </div>
         </div>
         {% endwith %}
         {% empty %}
-        <div class="text-gray-500">No channels found.</div>
+        <div class="bg-white rounded-xl shadow-sm border p-8 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/>
+            </svg>
+            <p class="font-medium text-gray-700">No channels found</p>
+            <p class="text-xs text-gray-400 mt-1">Try creating a channel or changing the active tab filter</p>
+        </div>
         {% endfor %}
     </div>
 </div>
