@@ -34,6 +34,55 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
             await self._send_error('Invalid message format')
             return
 
+        action = data.get('action')
+
+        if action == 'edit':
+            message_id = data.get('message_id')
+            new_content = str(data.get('message', '')).strip()
+            if not message_id or not new_content:
+                return
+            if len(new_content) > MAX_MESSAGE_LENGTH:
+                await self._send_error(f'Message is too long (max {MAX_MESSAGE_LENGTH} characters)')
+                return
+            if not await self._is_member(self.me, self.group_id):
+                await self._send_error('You are not a member of this group')
+                return
+
+            ok = await self._edit_message(message_id, new_content)
+            if ok:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'group.message_edited',
+                        'message_id': message_id,
+                        'message': new_content,
+                    },
+                )
+            else:
+                await self._send_error('Cannot edit this message')
+            return
+
+        if action == 'delete':
+            message_id = data.get('message_id')
+            if not message_id:
+                return
+            if not await self._is_member(self.me, self.group_id):
+                await self._send_error('You are not a member of this group')
+                return
+
+            ok = await self._delete_message(message_id)
+            if ok:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'group.message_deleted',
+                        'message_id': message_id,
+                    },
+                )
+            else:
+                await self._send_error('Cannot delete this message')
+            return
+
         message = str(data.get('message', '')).strip()
         if not message:
             return
@@ -45,11 +94,12 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
             await self._send_error('You are not a member of this group')
             return
 
-        await self._save_message(message)
+        msg_obj = await self._save_message(message)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'group.message',
+                'message_id': msg_obj.id if msg_obj else None,
                 'message': message,
                 'user': await self._get_user_data(self.me),
             },
@@ -58,8 +108,22 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
     async def group_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
+            'message_id': event.get('message_id'),
             'message': event['message'],
             'user': event['user'],
+        }))
+
+    async def group_message_edited(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'edit_message',
+            'message_id': event['message_id'],
+            'message': event['message'],
+        }))
+
+    async def group_message_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'delete_message',
+            'message_id': event['message_id'],
         }))
 
     async def group_kicked(self, event):
@@ -98,7 +162,7 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         from makagram.views import create_notification_if_not_muted
         group = Group.objects.filter(id=self.group_id).first()
         if group:
-            GroupMessage.objects.create(group=group, author=self.me, content=content)
+            msg = GroupMessage.objects.create(group=group, author=self.me, content=content)
             for member in group.members.exclude(id=self.me.id):
                 create_notification_if_not_muted(
                     recipient=member,
@@ -110,6 +174,30 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
                     chat_type='group',
                     target_id=group.id,
                 )
+            return msg
+        return None
+
+    @sync_to_async
+    def _edit_message(self, message_id, new_content):
+        from .models import GroupMessage
+        msg = GroupMessage.objects.filter(id=message_id, group_id=self.group_id, author=self.me).first()
+        if not msg:
+            return False
+        msg.content = new_content
+        msg.save()
+        return True
+
+    @sync_to_async
+    def _delete_message(self, message_id):
+        from .models import Group, GroupMessage
+        msg = GroupMessage.objects.filter(id=message_id, group_id=self.group_id).first()
+        if not msg:
+            return False
+        group = Group.objects.filter(id=self.group_id).first()
+        if msg.author == self.me or (group and group.owner == self.me):
+            msg.delete()
+            return True
+        return False
 
 
 
@@ -144,6 +232,47 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             await self._send_error('Invalid message format')
             return
 
+        action = data.get('action')
+
+        if action == 'edit':
+            message_id = data.get('message_id')
+            new_content = str(data.get('message', '')).strip()
+            if not message_id or not new_content:
+                return
+            if len(new_content) > MAX_MESSAGE_LENGTH:
+                await self._send_error(f'Message is too long (max {MAX_MESSAGE_LENGTH} characters)')
+                return
+            ok = await self._edit_message(message_id, new_content)
+            if ok:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat.message_edited',
+                        'message_id': message_id,
+                        'message': new_content,
+                    },
+                )
+            else:
+                await self._send_error('Cannot edit this message')
+            return
+
+        if action == 'delete':
+            message_id = data.get('message_id')
+            if not message_id:
+                return
+            ok = await self._delete_message(message_id)
+            if ok:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'chat.message_deleted',
+                        'message_id': message_id,
+                    },
+                )
+            else:
+                await self._send_error('Cannot delete this message')
+            return
+
         message = str(data.get('message', '')).strip()
         if not message:
             return
@@ -160,11 +289,12 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             await self._send_error('Messaging is blocked')
             return
 
-        await self._save_message(to_user, message)
+        msg_obj = await self._save_message(to_user, message)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat.message',
+                'message_id': msg_obj.id if msg_obj else None,
                 'message': message,
                 'user': await self._get_user_data(self.me),
             },
@@ -173,8 +303,22 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
+            'message_id': event.get('message_id'),
             'message': event['message'],
             'user': event['user'],
+        }))
+
+    async def chat_message_edited(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'edit_message',
+            'message_id': event['message_id'],
+            'message': event['message'],
+        }))
+
+    async def chat_message_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'delete_message',
+            'message_id': event['message_id'],
         }))
 
     async def chat_state(self, event):
@@ -223,7 +367,7 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     def _save_message(self, to_user, content):
         from .models import PrivateMessage
         from makagram.views import create_notification_if_not_muted
-        PrivateMessage.objects.create(
+        msg = PrivateMessage.objects.create(
             from_user=self.me,
             to_user=to_user,
             content=content,
@@ -239,8 +383,26 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             chat_type='private',
             target_id=self.me.id,
         )
+        return msg
 
+    @sync_to_async
+    def _edit_message(self, message_id, new_content):
+        from .models import PrivateMessage
+        msg = PrivateMessage.objects.filter(id=message_id, from_user=self.me).first()
+        if not msg:
+            return False
+        msg.content = new_content
+        msg.save()
+        return True
 
+    @sync_to_async
+    def _delete_message(self, message_id):
+        from .models import PrivateMessage
+        msg = PrivateMessage.objects.filter(id=message_id, from_user=self.me).first()
+        if not msg:
+            return False
+        msg.delete()
+        return True
 
     @sync_to_async
     def _get_user_by_username(self, username):
@@ -256,3 +418,4 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     def _is_blocked_by(self, blocker, blocked_user):
         from .models import Block
         return Block.objects.filter(blocker=blocker, blocked=blocked_user).exists()
+

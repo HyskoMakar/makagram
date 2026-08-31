@@ -220,7 +220,7 @@
                 {% for m in messages %}
                 {% with msg_username=m.author.profile.username|default:m.author.username %}
                 <div class="flex items-start gap-2 {% if m.author == request.user %}justify-end{% endif %}"
-                     data-username="{{ msg_username }}">
+                     data-username="{{ msg_username }}" data-message-id="{{ m.id }}">
                     {% if m.author != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
                         {% if m.author.profile.avatar_data %}
@@ -235,7 +235,7 @@
                         {% if m.author != request.user %}
                         <div class="text-xs font-medium text-{{ m.author.profile.color|default:'gray' }}-500 mb-1">{{ msg_username }}</div>
                         {% endif %}
-                        <div>{{ m.content }}</div>
+                        <span class="msg-content">{{ m.content }}</span>
                     </div>
 
                     {% if m.author == request.user %}
@@ -251,6 +251,14 @@
                 {% endwith %}
                 {% endfor %}
             </div>
+        </div>
+
+        <div id="edit-banner" class="hidden px-4 py-1.5 bg-blue-50 border-t flex items-center justify-between text-xs text-blue-700">
+            <div class="flex items-center gap-1.5 truncate">
+                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span>Editing message</span>
+            </div>
+            <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
         </div>
 
         {% if is_member %}
@@ -280,14 +288,26 @@
 </div>
 
 <div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
-    <a id="cm-pm-btn" href="#" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">
-        Open Direct Message
-    </a>
-    {% if group.private and request.user == group.owner %}
-    <button id="cm-kick-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">
-        Kick from group
-    </button>
-    {% endif %}
+    <div id="cm-other-options">
+        <a id="cm-pm-btn" href="#" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">
+            Open Direct Message
+        </a>
+        {% if group.private and request.user == group.owner %}
+        <button id="cm-kick-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">
+            Kick from group
+        </button>
+        {% endif %}
+    </div>
+    <div id="cm-own-options" class="hidden">
+        <button id="cm-edit-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Edit
+        </button>
+        <button id="cm-delete-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Delete
+        </button>
+    </div>
 </div>
 
 <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
@@ -326,12 +346,33 @@
     }
 
     const contextMenu = document.getElementById('context-menu');
+    const cmOtherOptions = document.getElementById('cm-other-options');
+    const cmOwnOptions = document.getElementById('cm-own-options');
     const cmPmBtn = document.getElementById('cm-pm-btn');
     const cmKickBtn = document.getElementById('cm-kick-btn');
+    const cmEditBtn = document.getElementById('cm-edit-btn');
+    const cmDeleteBtn = document.getElementById('cm-delete-btn');
+    const editBanner = document.getElementById('edit-banner');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
     let targetUsernameForContextMenu = null;
+    let selectedMsgWrapper = null;
+    let selectedMsgId = null;
+    let editingMessageId = null;
 
     function hideContextMenu() {
         if (contextMenu) contextMenu.classList.add('hidden');
+    }
+
+    function cancelEditing() {
+        editingMessageId = null;
+        if (editBanner) editBanner.classList.add('hidden');
+        const input = document.getElementById('group-input');
+        if (input) input.value = '';
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', cancelEditing);
     }
 
     document.addEventListener('click', hideContextMenu);
@@ -345,13 +386,24 @@
         if (!msgWrapper) return;
 
         const username = msgWrapper.dataset.username;
-        if (!username || username === currentUser) return;
+        if (!username) return;
 
         e.stopPropagation();
+
+        selectedMsgWrapper = msgWrapper;
+        selectedMsgId = msgWrapper.dataset.messageId || null;
         targetUsernameForContextMenu = username;
 
-        if (cmPmBtn) {
-            cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
+        if (username === currentUser) {
+            if (!selectedMsgId) return; // Cannot edit/delete without ID
+            if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
+            if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
+        } else {
+            if (cmOwnOptions) cmOwnOptions.classList.add('hidden');
+            if (cmOtherOptions) cmOtherOptions.classList.remove('hidden');
+            if (cmPmBtn) {
+                cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
+            }
         }
 
         const menuWidth = 180;
@@ -366,6 +418,36 @@
         contextMenu.style.top = top + 'px';
         contextMenu.classList.remove('hidden');
     });
+
+    if (cmEditBtn) {
+        cmEditBtn.addEventListener('click', function() {
+            hideContextMenu();
+            if (!selectedMsgWrapper || !selectedMsgId) return;
+            const contentEl = selectedMsgWrapper.querySelector('.msg-content');
+            const currentContent = contentEl ? contentEl.textContent : '';
+
+            editingMessageId = selectedMsgId;
+            const input = document.getElementById('group-input');
+            if (input) {
+                input.value = currentContent;
+                input.focus();
+            }
+            if (editBanner) editBanner.classList.remove('hidden');
+        });
+    }
+
+    if (cmDeleteBtn) {
+        cmDeleteBtn.addEventListener('click', function() {
+            hideContextMenu();
+            if (!selectedMsgId) return;
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    action: 'delete',
+                    message_id: selectedMsgId
+                }));
+            }
+        });
+    }
 
     if (cmKickBtn) {
         cmKickBtn.addEventListener('click', async function() {
@@ -407,6 +489,9 @@
       wrapper.className = 'flex items-start gap-2';
       if (isMe) wrapper.classList.add('justify-end');
       wrapper.dataset.username = user.username || '?';
+      if (data.message_id) {
+        wrapper.dataset.messageId = data.message_id;
+      }
 
       const avatar = document.createElement('div');
       avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
@@ -432,9 +517,10 @@
         bubble.appendChild(nameEl);
       }
 
-      const textEl = document.createElement('div');
-      textEl.textContent = data.message || '';
-      bubble.appendChild(textEl);
+      const contentSpan = document.createElement('span');
+      contentSpan.className = 'msg-content';
+      contentSpan.textContent = data.message || '';
+      bubble.appendChild(contentSpan);
 
       if (isMe) {
         wrapper.appendChild(bubble);
@@ -452,6 +538,15 @@
       const data = JSON.parse(e.data);
       if (data.type === 'message') {
         renderMessage(data);
+      } else if (data.type === 'edit_message') {
+        const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
+        if (wrapper) {
+            const contentEl = wrapper.querySelector('.msg-content');
+            if (contentEl) contentEl.textContent = data.message;
+        }
+      } else if (data.type === 'delete_message') {
+        const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
+        if (wrapper) wrapper.remove();
       } else if (data.type === 'error') {
         showToast(data.message || 'Error');
       }
@@ -466,10 +561,20 @@
         const v = input.value.trim();
         if (!v) return;
         if (socket.readyState !== WebSocket.OPEN) return;
-        socket.send(JSON.stringify({message: v}));
-        input.value = '';
+        if (editingMessageId) {
+            socket.send(JSON.stringify({
+                action: 'edit',
+                message_id: editingMessageId,
+                message: v
+            }));
+            cancelEditing();
+        } else {
+            socket.send(JSON.stringify({message: v}));
+            input.value = '';
+        }
       });
       input.addEventListener('keyup', function(e) {
+        if (e.key === 'Escape') cancelEditing();
         if (e.key === 'Enter') sendBtn.click();
       });
       input.focus();
@@ -478,3 +583,4 @@
 </script>
 {% endif %}
 {% endblock %}
+
