@@ -95,7 +95,7 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _save_message(self, content):
         from .models import Group, GroupMessage
-        from .views import create_notification_if_not_muted
+        from makagram.views import create_notification_if_not_muted
         group = Group.objects.filter(id=self.group_id).first()
         if group:
             GroupMessage.objects.create(group=group, author=self.me, content=content)
@@ -222,7 +222,7 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def _save_message(self, to_user, content):
         from .models import PrivateMessage
-        from .views import create_notification_if_not_muted
+        from makagram.views import create_notification_if_not_muted
         PrivateMessage.objects.create(
             from_user=self.me,
             to_user=to_user,

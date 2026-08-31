@@ -22,6 +22,11 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('channel/', include('channel.urls')),
 
+    # notifications
+    path('api/mute/', views.toggle_mute_view, name='toggle-mute'),
+    path('api/notifications/', views.notifications_list_view, name='notifications-list'),
+    path('api/notifications/mark-read/', views.mark_notifications_read_view, name='notifications-mark-read'),
+
     # admin
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

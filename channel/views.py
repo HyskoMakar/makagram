@@ -135,7 +135,7 @@ def channel(request, channel_id):
                 },
             })
 
-            from chat.views import create_notification_if_not_muted
+            from makagram.views import create_notification_if_not_muted
             for sub in channel.subscribers.exclude(id=request.user.id):
                 create_notification_if_not_muted(
                     recipient=sub,
@@ -170,7 +170,7 @@ def channel(request, channel_id):
         )
         admin_ids = set(channel.admins.values_list('id', flat=True))
 
-    from chat.models import NotificationMute
+    from makagram.models import NotificationMute
     is_muted = NotificationMute.objects.filter(user=request.user, chat_type='channel', target_id=channel.id).exists()
 
     return render(request, 'channel.html', {
