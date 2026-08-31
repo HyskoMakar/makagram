@@ -17,6 +17,6 @@ for i in $(seq 1 $RETRIES); do
 done
 
 python manage.py collectstatic --no-input
-python manage.py migrate --fake-initial
 python manage.py migrate
-python manage.py createsuperuser --noinput
+python manage.py createsuperuser --noinput || true
+
