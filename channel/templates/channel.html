@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
+{% load chat_extras %}
+
 {% block title %}{{ channel.name }}{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
@@ -31,30 +34,21 @@
                         <span>Mute</span>
                         {% endif %}
                     </button>
-
                 </form>
                 {% endif %}
 
                 {% if is_owner %}
-                <button id="subscribers-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
-                    Subscribers
-                </button>
-                <button id="channel-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
-                    Edit
-                </button>
+                <button id="subscribers-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">Subscribers</button>
+                <button id="channel-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">Edit</button>
                 {% elif is_subscriber %}
                 <form method="post" action="{% url 'channel-unsubscribe' channel.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50">
-                        Unsubscribe
-                    </button>
+                    <button type="submit" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50">Unsubscribe</button>
                 </form>
                 {% else %}
                 <form method="post" action="{% url 'channel-subscribe' channel.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm">
-                        Subscribe
-                    </button>
+                    <button type="submit" class="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm">Subscribe</button>
                 </form>
                 {% endif %}
             </div>
@@ -86,13 +80,9 @@
                     {% if subscriber != channel.owner %}
                     <div class="flex items-center gap-2 flex-shrink-0">
                         {% if subscriber.id in admin_ids %}
-                        <button type="button" data-user-id="{{ subscriber.id }}" class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50">
-                            Remove admin
-                        </button>
+                        <button type="button" data-user-id="{{ subscriber.id }}" class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50">Remove admin</button>
                         {% else %}
-                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-blue-600 hover:bg-blue-50">
-                            Make admin
-                        </button>
+                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-blue-600 hover:bg-blue-50">Make admin</button>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -112,43 +102,32 @@
                 {% csrf_token %}
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Channel Name</label>
-                    <input type="text" name="name" value="{{ channel.name }}" required
-                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <input type="text" name="name" value="{{ channel.name }}" required class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
                 </div>
-
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Description</label>
-                    <input type="text" name="description" value="{{ channel.description }}"
-                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <input type="text" name="description" value="{{ channel.description }}" class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
                 </div>
-
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Channel Color</label>
                     <div class="flex flex-wrap gap-2">
                         {% for color in colors %}
                         <label class="cursor-pointer">
-                            <input type="radio" name="color" value="{{ color }}" class="hidden peer"
-                                   {% if channel.color == color %}checked{% endif %}>
+                            <input type="radio" name="color" value="{{ color }}" class="hidden peer" {% if channel.color == color %}checked{% endif %}>
                             <div class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
                         </label>
                         {% endfor %}
                     </div>
                 </div>
-
                 <div class="flex justify-between items-center pt-2 border-t">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-                        Save changes
-                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
                 </div>
             </form>
 
-            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center"
-                  onsubmit="return confirm('Delete this channel? This cannot be undone.');">
+            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center" onsubmit="return confirm('Delete this channel? This cannot be undone.');">
                 {% csrf_token %}
                 <span class="text-xs text-red-500 font-medium">Danger Zone</span>
-                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">
-                    Delete Channel
-                </button>
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">Delete Channel</button>
             </form>
         </div>
         {% endif %}
@@ -156,7 +135,8 @@
         <div id="channel-posts" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
             {% for entry in posts %}
             {% with post=entry.post author_username=entry.post.author.profile.username|default:entry.post.author.username %}
-            <div class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}" data-post-id="{{ post.id }}">
+            <div class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}" data-post-id="{{ post.id }}" data-author-id="{{ post.author.id|default:'' }}"
+                 data-attachments='[{% for att in post.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                 {% if post.author != request.user %}
                 <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ post.author.profile.color|default:'gray' }}-300">
                     {% if post.author.profile.avatar_data %}
@@ -167,7 +147,7 @@
                 </div>
                 {% endif %}
 
-                <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if post.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if is_admin or post.author == request.user %}cursor-pointer{% endif %} {% if post.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
                     {% if post.author != request.user %}
                     <div class="text-xs font-medium text-{{ post.author.profile.color|default:'gray' }}-500 mb-1 flex items-center justify-between gap-2">
                         <span>{{ author_username|default:"Deleted user" }}</span>
@@ -177,17 +157,42 @@
                     <div class="text-xs text-gray-400 mb-1 text-right">{{ post.created_at|date:"M j, H:i" }}</div>
                     {% endif %}
 
-                    <div>{{ post.content }}</div>
+                    {% if post.content %}
+                    <div class="post-content whitespace-pre-wrap break-words">{{ post.content|autolink }}</div>
+                    {% else %}
+                    <div class="post-content whitespace-pre-wrap break-words hidden"></div>
+                    {% endif %}
 
-                    <div class="flex items-center gap-1 mt-1">
-                        <button type="button"
-                                class="like-btn flex items-center gap-1 text-xs {% if entry.liked %}text-red-500{% else %}text-gray-400{% endif %} {% if is_subscriber %}hover:opacity-75{% else %}opacity-50 cursor-not-allowed{% endif %}"
-                                data-post-id="{{ post.id }}"
-                                data-liked="{{ entry.liked|yesno:'1,0' }}"
-                                {% if not is_subscriber %}disabled{% endif %}>
-                            <span class="like-icon">{% if entry.liked %}&#9829;{% else %}&#9825;{% endif %}</span>
-                            <span class="like-count">{{ entry.like_count }}</span>
-                        </button>
+                    <div class="post-attachments flex flex-col gap-1.5 {% if post.content and post.attachments.all %}mt-2{% endif %}">
+                        {% for att in post.attachments.all %}
+                        {% if att.is_image %}
+                        <a href="{{ att.file.url }}" target="_blank" class="block">
+                            <img src="{{ att.file.url }}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                        </a>
+                        {% else %}
+                        <a href="{{ att.file.url }}" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                            <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
+                                <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
+                            </div>
+                            <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 mt-1">
+                        <div class="flex items-center gap-1">
+                            <button type="button"
+                                    class="like-btn flex items-center gap-1 text-xs {% if entry.liked %}text-red-500{% else %}text-gray-400{% endif %} {% if is_subscriber %}hover:opacity-75{% else %}opacity-50 cursor-not-allowed{% endif %}"
+                                    data-post-id="{{ post.id }}"
+                                    data-liked="{{ entry.liked|yesno:'1,0' }}"
+                                    {% if not is_subscriber %}disabled{% endif %}>
+                                <span class="like-icon">{% if entry.liked %}&#9829;{% else %}&#9825;{% endif %}</span>
+                                <span class="like-count">{{ entry.like_count }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -207,13 +212,28 @@
             {% endfor %}
         </div>
 
+        <div id="edit-banner" class="hidden px-4 py-1.5 bg-blue-50 border-t flex items-center justify-between text-xs text-blue-700">
+            <div class="flex items-center gap-1.5 truncate">
+                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span>Editing post</span>
+            </div>
+            <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
+        </div>
+
+        <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
+
         {% if is_admin %}
         <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <input id="post-input" type="text"
-                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ channel.color }}-400"
-                   placeholder="Write a post...">
+            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            </button>
+            <input type="file" id="chat-file-input" multiple class="hidden">
+
+            <textarea id="post-input" rows="1"
+                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ channel.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
+                   placeholder="Write a post..."></textarea>
             <button id="post-send"
-                    class="bg-{{ channel.color }}-500 hover:bg-{{ channel.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                    class="bg-{{ channel.color }}-500 hover:bg-{{ channel.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0">
                 Post
             </button>
         </div>
@@ -227,6 +247,17 @@
         </div>
         {% endif %}
     </div>
+</div>
+
+<div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
+    <button id="cm-edit-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Edit
+    </button>
+    <button id="cm-delete-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Delete
+    </button>
 </div>
 
 <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
@@ -250,15 +281,233 @@
     const csrftoken = getCookie('csrftoken');
     const channelId = {{ channel.id }};
     const isSubscriber = {{ is_subscriber|yesno:'true,false' }};
+    const isAdmin = {{ is_admin|yesno:'true,false' }};
     const currentUserId = {{ request.user.id|default:'null' }};
     const myColor = "{{ request.user.profile.color|default:'gray' }}";
 
+    let editingPostId = null;
+    let selectedPostCard = null;
+    let selectedPostId = null;
+    let pendingAttachments = [];
+
     const toast = document.getElementById('toast');
+    const editBanner = document.getElementById('edit-banner');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const input = document.getElementById('post-input');
+    const sendBtn = document.getElementById('post-send');
+    const contextMenu = document.getElementById('context-menu');
+    const cmEditBtn = document.getElementById('cm-edit-btn');
+    const cmDeleteBtn = document.getElementById('cm-delete-btn');
+    const postsDiv = document.getElementById('channel-posts');
+    const attachFileBtn = document.getElementById('attach-file-btn');
+    const chatFileInput = document.getElementById('chat-file-input');
+    const attachmentTray = document.getElementById('attachment-tray');
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function autolink(text) {
+        if (!text) return '';
+        const escaped = escapeHtml(text);
+        const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
+        return escaped.replace(urlPattern, function(match, url, trailing) {
+            let href = url;
+            if (url.toLowerCase().startsWith('www.')) {
+                href = 'http://' + url;
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
+        });
+    }
+
+    function adjustTextareaHeight() {
+        if (!input) return;
+        input.style.height = 'auto';
+        if (input.scrollHeight > 160) {
+            input.style.height = '160px';
+            input.style.overflowY = 'auto';
+        } else {
+            input.style.height = input.scrollHeight + 'px';
+            input.style.overflowY = 'hidden';
+        }
+    }
+
+    if (input) {
+        input.addEventListener('input', adjustTextareaHeight);
+        input.addEventListener('focus', adjustTextareaHeight);
+    }
+
+    function renderAttachmentTray() {
+        if (!attachmentTray) return;
+        if (pendingAttachments.length === 0) {
+            attachmentTray.classList.add('hidden');
+            attachmentTray.innerHTML = '';
+            return;
+        }
+        attachmentTray.classList.remove('hidden');
+        attachmentTray.innerHTML = pendingAttachments.map((att, idx) => `
+            <div class="flex items-center gap-1.5 bg-white border rounded-md px-2 py-1 shadow-sm">
+                ${att.is_image
+                    ? `<img src="${att.url}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
+                    : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
+                }
+                <span class="max-w-[120px] truncate font-medium text-gray-700">${escapeHtml(att.name)}</span>
+                <button type="button" data-remove-att="${idx}" class="text-gray-400 hover:text-red-500 font-bold ml-1">&times;</button>
+            </div>
+        `).join('');
+
+        attachmentTray.querySelectorAll('[data-remove-att]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const i = parseInt(e.target.dataset.removeAtt);
+                pendingAttachments.splice(i, 1);
+                renderAttachmentTray();
+            });
+        });
+    }
+
+    if (attachFileBtn && chatFileInput) {
+        attachFileBtn.addEventListener('click', () => chatFileInput.click());
+        chatFileInput.addEventListener('change', async () => {
+            if (!chatFileInput.files.length) return;
+            const formData = new FormData();
+            for (let i = 0; i < chatFileInput.files.length; i++) {
+                formData.append('files', chatFileInput.files[i]);
+            }
+            try {
+                const res = await fetch('/chat/attachments/upload/', {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrftoken},
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    pendingAttachments.push(...data.attachments);
+                    renderAttachmentTray();
+                } else {
+                    showToast(data.error || 'Failed to upload attachment');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Upload error');
+            }
+            chatFileInput.value = '';
+        });
+    }
+
     function showToast(msg) {
       if (!toast) return;
       toast.textContent = msg;
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    function hideContextMenu() {
+      if (contextMenu) contextMenu.classList.add('hidden');
+    }
+
+    document.addEventListener('click', function(e) {
+      if (contextMenu && !contextMenu.contains(e.target)) {
+        hideContextMenu();
+      }
+    });
+
+    function openContextMenu(e, card) {
+      e.stopPropagation();
+      selectedPostCard = card;
+      selectedPostId = card.dataset.postId;
+
+      const menuWidth = 180;
+      const menuHeight = 90;
+      let left = e.clientX;
+      let top = e.clientY;
+
+      if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 10;
+      if (top + menuHeight > window.innerHeight) top = window.innerHeight - menuHeight - 10;
+
+      contextMenu.style.left = left + 'px';
+      contextMenu.style.top = top + 'px';
+      contextMenu.classList.remove('hidden');
+    }
+
+    if (postsDiv) {
+      postsDiv.addEventListener('click', function(e) {
+        if (e.target.closest('.like-btn') || e.target.closest('a')) return;
+
+        const card = e.target.closest('[data-post-id]');
+        if (!card) return;
+
+        const authorIdStr = card.dataset.authorId;
+        const authorId = authorIdStr ? parseInt(authorIdStr) : null;
+        const canManage = isAdmin || (authorId && authorId === currentUserId);
+        if (!canManage) return;
+
+        openContextMenu(e, card);
+      });
+    }
+
+    if (cmEditBtn) {
+      cmEditBtn.addEventListener('click', function() {
+        hideContextMenu();
+        if (!selectedPostCard || !selectedPostId) return;
+        const contentDiv = selectedPostCard.querySelector('.post-content');
+        const oldText = contentDiv ? contentDiv.textContent.trim() : '';
+
+        let existingAtts = [];
+        try {
+            if (selectedPostCard.dataset.attachments) {
+                existingAtts = JSON.parse(selectedPostCard.dataset.attachments);
+            }
+        } catch (err) {}
+
+        editingPostId = selectedPostId;
+        pendingAttachments = [...existingAtts];
+        renderAttachmentTray();
+
+        if (input) {
+          input.value = oldText;
+          input.focus();
+          adjustTextareaHeight();
+        }
+        if (editBanner) editBanner.classList.remove('hidden');
+      });
+    }
+
+    if (cmDeleteBtn) {
+      cmDeleteBtn.addEventListener('click', async function() {
+        hideContextMenu();
+        if (!selectedPostId || !selectedPostCard) return;
+        if (!confirm('Delete this post?')) return;
+
+        const res = await fetch(`/channel/${channelId}/posts/${selectedPostId}/delete/`, {
+          method: 'POST',
+          headers: {'X-CSRFToken': csrftoken},
+        });
+        const data = await res.json();
+        if (data.ok) {
+          if (editingPostId === selectedPostId) cancelEditing();
+          selectedPostCard.remove();
+          checkEmptyPosts();
+        } else {
+          showToast(data.error || 'Could not delete post');
+        }
+      });
+    }
+
+    function cancelEditing() {
+      editingPostId = null;
+      pendingAttachments = [];
+      renderAttachmentTray();
+      if (editBanner) editBanner.classList.add('hidden');
+      if (input) {
+        input.value = '';
+        adjustTextareaHeight();
+      }
+    }
+
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener('click', cancelEditing);
     }
 
     function togglePanel(toggleId, panelId) {
@@ -271,8 +520,13 @@
     togglePanel('channel-settings-toggle', 'channel-settings-panel');
     togglePanel('subscribers-toggle', 'subscribers-panel');
 
-    const postsDiv = document.getElementById('channel-posts');
     if (postsDiv) postsDiv.scrollTop = postsDiv.scrollHeight;
+
+    function checkEmptyPosts() {
+      if (postsDiv && postsDiv.querySelectorAll('[data-post-id]').length === 0) {
+        postsDiv.innerHTML = '<div class="text-gray-500 text-sm">No posts yet.</div>';
+      }
+    }
 
     function wireLikeButton(btn) {
       btn.addEventListener('click', async function() {
@@ -301,6 +555,7 @@
         }
       });
     }
+
     document.querySelectorAll('.like-btn').forEach(wireLikeButton);
 
     document.querySelectorAll('.promote-btn, .demote-btn').forEach(function(btn) {
@@ -320,12 +575,36 @@
       });
     });
 
+    function renderAttachmentsHTML(attachments) {
+        if (!attachments || !attachments.length) return '';
+        return attachments.map(att => {
+            if (att.is_image) {
+                return `<a href="${att.url}" target="_blank" class="block">
+                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                </a>`;
+            } else {
+                return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                    <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
+                        <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
+                    </div>
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </a>`;
+            }
+        }).join('');
+    }
+
     function renderPost(post) {
         const isMine = post.author && post.author.id === currentUserId;
 
         const row = document.createElement('div');
         row.className = 'flex items-start gap-2' + (isMine ? ' justify-end' : '');
         row.dataset.postId = post.id;
+        if (post.author && post.author.id) {
+          row.dataset.authorId = post.author.id;
+        }
+        row.dataset.attachments = JSON.stringify(post.attachments || []);
 
         const author = post.author || {};
         const authorName = author.username || 'Deleted user';
@@ -335,12 +614,12 @@
             const av = document.createElement('div');
             av.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-' + authorColor + '-300';
             if (author.avatar) {
-            const img = document.createElement('img');
-            img.src = author.avatar;
-            img.className = 'w-full h-full object-cover';
-            av.appendChild(img);
+                const img = document.createElement('img');
+                img.src = author.avatar;
+                img.className = 'w-full h-full object-cover';
+                av.appendChild(img);
             } else {
-            av.textContent = authorName.slice(0, 1).toUpperCase();
+                av.textContent = authorName.slice(0, 1).toUpperCase();
             }
             return av;
         }
@@ -349,8 +628,9 @@
             row.appendChild(makeAvatar());
         }
 
+        const canManage = isAdmin || isMine;
         const bubble = document.createElement('div');
-        bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words ' +
+        bubble.className = 'px-3 py-2 rounded-lg text-sm max-w-xs break-words ' + (canManage ? 'cursor-pointer ' : '') +
             (isMine ? 'bg-' + authorColor + '-100 text-gray-800' : 'bg-gray-100 text-gray-800');
 
         if (!isMine) {
@@ -372,11 +652,20 @@
         }
 
         const contentDiv = document.createElement('div');
-        contentDiv.textContent = post.content || '';
+        contentDiv.className = 'post-content whitespace-pre-wrap break-words' + (post.content ? '' : ' hidden');
+        contentDiv.innerHTML = autolink(post.content || '');
         bubble.appendChild(contentDiv);
 
+        const attDiv = document.createElement('div');
+        attDiv.className = 'post-attachments flex flex-col gap-1.5' + (post.content && post.attachments && post.attachments.length ? ' mt-2' : '');
+        attDiv.innerHTML = renderAttachmentsHTML(post.attachments);
+        bubble.appendChild(attDiv);
+
+        const footerRow = document.createElement('div');
+        footerRow.className = 'flex items-center justify-between gap-2 mt-1';
+
         const likeRow = document.createElement('div');
-        likeRow.className = 'flex items-center gap-1 mt-1';
+        likeRow.className = 'flex items-center gap-1';
 
         const likeBtn = document.createElement('button');
         likeBtn.type = 'button';
@@ -397,8 +686,9 @@
         likeBtn.appendChild(likeIcon);
         likeBtn.appendChild(likeCount);
         likeRow.appendChild(likeBtn);
-        bubble.appendChild(likeRow);
+        footerRow.appendChild(likeRow);
 
+        bubble.appendChild(footerRow);
         row.appendChild(bubble);
 
         if (isMine) {
@@ -420,6 +710,36 @@
         if (emptyState) emptyState.remove();
         postsDiv.appendChild(renderPost(data.post));
         postsDiv.scrollTop = postsDiv.scrollHeight;
+      } else if (data.type === 'edit_post') {
+        const card = postsDiv.querySelector(`[data-post-id="${data.post_id}"]`);
+        if (card) {
+          card.dataset.attachments = JSON.stringify(data.attachments || []);
+          const contentEl = card.querySelector('.post-content');
+          if (contentEl) {
+              if (data.content) {
+                  contentEl.innerHTML = autolink(data.content);
+                  contentEl.classList.remove('hidden');
+              } else {
+                  contentEl.innerHTML = '';
+                  contentEl.classList.add('hidden');
+              }
+          }
+          const attEl = card.querySelector('.post-attachments');
+          if (attEl) {
+              attEl.innerHTML = renderAttachmentsHTML(data.attachments);
+              if (data.content && data.attachments && data.attachments.length) {
+                  attEl.classList.add('mt-2');
+              } else {
+                  attEl.classList.remove('mt-2');
+              }
+          }
+        }
+      } else if (data.type === 'delete_post') {
+        const card = postsDiv.querySelector(`[data-post-id="${data.post_id}"]`);
+        if (card) {
+          card.remove();
+          checkEmptyPosts();
+        }
       } else if (data.type === 'like') {
         const card = postsDiv.querySelector(`[data-post-id="${data.post_id}"]`);
         if (card) {
@@ -440,29 +760,60 @@
       console.error('Channel socket closed unexpectedly');
     };
 
-    const input = document.getElementById('post-input');
-    const sendBtn = document.getElementById('post-send');
     if (sendBtn && input) {
       const submitPost = async function() {
         const v = input.value.trim();
-        if (!v) return;
-        const res = await fetch(window.location.pathname, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': csrftoken,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: 'message=' + encodeURIComponent(v),
+        const attIds = pendingAttachments.map(a => a.id);
+        if (!v && !attIds.length) return;
+
+        const bodyData = new URLSearchParams({
+            message: v,
+            attachment_ids: attIds.join(',')
         });
-        if (res.ok) {
-          input.value = '';
+
+        if (editingPostId) {
+          const res = await fetch(`/channel/${channelId}/posts/${editingPostId}/edit/`, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrftoken,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: bodyData,
+          });
+          const data = await res.json();
+          if (data.ok) {
+            cancelEditing();
+          } else {
+            showToast(data.error || 'Could not edit post');
+          }
         } else {
-          showToast('Could not publish post');
+          const res = await fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrftoken,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: bodyData,
+          });
+          if (res.ok) {
+            input.value = '';
+            pendingAttachments = [];
+            renderAttachmentTray();
+            adjustTextareaHeight();
+          } else {
+            showToast('Could not publish post');
+          }
         }
       };
+
       sendBtn.addEventListener('click', submitPost);
-      input.addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') submitPost();
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cancelEditing();
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            submitPost();
+        }
       });
     }
   })();

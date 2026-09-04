@@ -95,7 +95,7 @@ class Notification(models.Model):
     def visible_to(cls, user):
         return cls.objects.filter(
             Q(recipient=user) | Q(recipient__isnull=True, notification_type='system')
-        )
+        ).exclude(sender=user)
 
     def clean(self):
         from django.core.exceptions import ValidationError

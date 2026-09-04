@@ -20,8 +20,13 @@ def feed(request):
     feed_items = []
 
     if tab in ('all', 'channel'):
-        from channel.models import ChannelPost, ChannelPostLike
-        channel_posts = ChannelPost.objects.select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
+        from channel.models import Channel, ChannelPost, ChannelPostLike
+        if request.user.is_authenticated:
+            my_channel_ids = Channel.objects.filter(subscribers=request.user).values_list('id', flat=True)
+            channel_posts = ChannelPost.objects.filter(channel_id__in=my_channel_ids).select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
+        else:
+            channel_posts = ChannelPost.objects.select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
+
         liked_post_ids = set()
         if request.user.is_authenticated:
             liked_post_ids = set(ChannelPostLike.objects.filter(creator=request.user).values_list('post_id', flat=True))
@@ -265,10 +270,44 @@ def toggle_mute_view(request):
     return redirect(request.META.get('HTTP_REFERER', 'index'))
 
 
+def cleanup_user_notifications(user):
+    if not user or not user.is_authenticated:
+        return
+    from channel.models import Channel
+    from chat.models import Group
+
+    to_delete_ids = []
+
+    channel_notifs = Notification.objects.filter(recipient=user, notification_type='channel')
+    for notif in channel_notifs:
+        m = re.search(r'/channel/(\d+)/?', notif.link)
+        if m:
+            cid = int(m.group(1))
+            if not Channel.objects.filter(id=cid, subscribers=user).exists():
+                to_delete_ids.append(notif.id)
+        else:
+            to_delete_ids.append(notif.id)
+
+    group_notifs = Notification.objects.filter(recipient=user, notification_type__in=['group', 'invite'])
+    for notif in group_notifs:
+        m = re.search(r'/chat/groups/(\d+)/?', notif.link)
+        if m:
+            gid = int(m.group(1))
+            if not Group.objects.filter(id=gid, members=user).exists():
+                to_delete_ids.append(notif.id)
+        else:
+            to_delete_ids.append(notif.id)
+
+    if to_delete_ids:
+        Notification.objects.filter(id__in=to_delete_ids).delete()
+
+
 def _unread_notification_count(user):
-    personal = Notification.objects.filter(recipient=user, is_read=False).count()
+    cleanup_user_notifications(user)
+    personal = Notification.objects.filter(recipient=user, is_read=False).exclude(sender=user).count()
     broadcast = (
         Notification.objects.filter(recipient__isnull=True, notification_type='system')
+        .exclude(sender=user)
         .exclude(read_by=user)
         .count()
     )
@@ -277,6 +316,7 @@ def _unread_notification_count(user):
 
 @login_required(login_url='login')
 def notifications_list_view(request):
+    cleanup_user_notifications(request.user)
     notifications = Notification.visible_to(request.user).select_related('sender__profile')[:20]
     broadcast_ids = [n.id for n in notifications if n.is_broadcast]
     read_broadcast_ids = set()

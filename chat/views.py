@@ -13,7 +13,10 @@ from django.views.decorators.http import require_POST
 
 from makagram.models import ALLOWED_COLORS, NotificationMute
 
+import os
+
 from .models import (
+    Attachment,
     Friendship,
     Group,
     GroupInvite,
@@ -29,8 +32,8 @@ from .models import (
 
 
 def _private_room_name(user1, user2):
-    names = sorted([user1.username, user2.username])
-    return f'private_{names[0]}_{names[1]}'
+    user_ids = sorted([user1.id, user2.id])
+    return f'private_{user_ids[0]}_{user_ids[1]}'
 
 
 def _get_user(username):
@@ -158,7 +161,7 @@ def group(request, group_id):
 
     messages_qs = GroupMessage.objects.filter(group=group).select_related(
         'author__profile'
-    ).order_by('-created_at')[:50]
+    ).prefetch_related('attachments').order_by('-created_at')[:50]
 
     return render(request, 'group_chat.html', {
         'group': group,
@@ -213,6 +216,11 @@ def delete_group(request, group_id):
         f'group_{group.id}',
         {'type': 'group.deleted'},
     )
+    from makagram.models import Notification
+    Notification.objects.filter(
+        notification_type__in=['group', 'invite'],
+        link=f'/chat/groups/{group.id}/',
+    ).delete()
     group.delete()
     return redirect('chats-list')
 
@@ -224,6 +232,12 @@ def leave_group(request, group_id):
     if request.user == group.owner:
         return HttpResponseBadRequest('Creator cannot leave the group')
     group.members.remove(request.user)
+    from makagram.models import Notification
+    Notification.objects.filter(
+        recipient=request.user,
+        notification_type__in=['group', 'invite'],
+        link=f'/chat/groups/{group.id}/',
+    ).delete()
     return redirect('chats-list')
 
 
@@ -244,6 +258,12 @@ def kick_member(request, group_id, username):
 
     if group.members.filter(id=user_to_kick.id).exists():
         group.members.remove(user_to_kick)
+        from makagram.models import Notification
+        Notification.objects.filter(
+            recipient=user_to_kick,
+            notification_type__in=['group', 'invite'],
+            link=f'/chat/groups/{group.id}/',
+        ).delete()
         async_to_sync(get_channel_layer().group_send)(
             f'group_{group.id}',
             {'type': 'group.kicked', 'user_id': user_to_kick.id},
@@ -345,7 +365,7 @@ def private_chat(request, username):
     messages_qs = PrivateMessage.objects.filter(
         Q(from_user=request.user, to_user=other)
         | Q(from_user=other, to_user=request.user)
-    ).select_related('from_user__profile').order_by('-created_at')[:50]
+    ).select_related('from_user__profile').prefetch_related('attachments').order_by('-created_at')[:50]
 
     pending_invites = GroupInvite.objects.filter(
         Q(invited_by=request.user, invitee=other)
@@ -430,4 +450,49 @@ def join_group(request, group_id):
         return HttpResponseBadRequest('group is private')
     group.members.add(request.user)
     return redirect('group-view', group_id=group.id)
+
+
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'}
+
+
+@login_required(login_url='login')
+@require_POST
+def upload_attachment(request):
+    files = request.FILES.getlist('files') or request.FILES.getlist('file')
+    if not files and 'file' in request.FILES:
+        files = [request.FILES['file']]
+
+    if not files:
+        return JsonResponse({'ok': False, 'error': 'No files provided'}, status=400)
+
+    saved_attachments = []
+    for f in files:
+        file_name = f.name
+        file_size = f.size
+        content_type = getattr(f, 'content_type', '') or ''
+        ext = os.path.splitext(file_name)[1].lower() if file_name else ''
+        is_img = content_type.startswith('image/') or ext in IMAGE_EXTENSIONS
+
+        att = Attachment.objects.create(
+            file=f,
+            original_name=file_name,
+            file_type=content_type,
+            is_image=is_img,
+            file_size=file_size,
+            uploaded_by=request.user,
+        )
+        saved_attachments.append(att.as_dict())
+
+    return JsonResponse({'ok': True, 'attachments': saved_attachments})
+
+
+@login_required(login_url='login')
+@require_POST
+def delete_attachment(request, attachment_id):
+    att = get_object_or_404(Attachment, id=attachment_id, uploaded_by=request.user)
+    if att.file:
+        att.file.delete(save=False)
+    att.delete()
+    return JsonResponse({'ok': True})
+
 

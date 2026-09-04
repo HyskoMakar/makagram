@@ -53,6 +53,20 @@ class ChannelConsumer(AsyncWebsocketConsumer):
             'like_count': event['like_count'],
         }))
 
+    async def channel_post_edited(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'edit_post',
+            'post_id': event['post_id'],
+            'content': event['content'],
+            'attachments': event.get('attachments', []),
+        }))
+
+    async def channel_post_deleted(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'delete_post',
+            'post_id': event['post_id'],
+        }))
+
     async def channel_admins_changed(self, event):
         await self.send(text_data=json.dumps({
             'type': 'admins_changed',

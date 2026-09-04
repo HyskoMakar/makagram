@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load chat_extras %}
 
 {% block title %}# {{ other.profile.username|default:other.username }}{% endblock %}
 
@@ -38,7 +39,6 @@
                             <span>Mute</span>
                             {% endif %}
                         </button>
-
                     </form>
                     <button id="friend-btn" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
                         {% if friends %}Unfriend{% else %}Add friend{% endif %}
@@ -47,7 +47,6 @@
                         {% if i_blocked %}Unblock{% else %}Block{% endif %}
                     </button>
                 </div>
-
             </div>
         </div>
 
@@ -56,7 +55,8 @@
                 {% for m in messages %}
                 {% with msg_user=m.from_user.profile.username|default:m.from_user.username %}
                 <div class="flex items-start gap-2 {% if m.from_user == request.user %}justify-end{% endif %}"
-                     data-username="{{ msg_user }}" data-message-id="{{ m.id }}">
+                     data-username="{{ msg_user }}" data-message-id="{{ m.id }}"
+                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                     {% if m.from_user != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.from_user.profile.color|default:'gray' }}-300">
                         {% if m.from_user.profile.avatar_data %}
@@ -68,7 +68,30 @@
                     {% endif %}
 
                     <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
-                        <span class="msg-content">{{ m.content }}</span>
+                        {% if m.content %}
+                        <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
+                        {% else %}
+                        <div class="msg-content whitespace-pre-wrap break-words hidden"></div>
+                        {% endif %}
+
+                        <div class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
+                            {% for att in m.attachments.all %}
+                            {% if att.is_image %}
+                            <a href="{{ att.file.url }}" target="_blank" class="block">
+                                <img src="{{ att.file.url }}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                            </a>
+                            {% else %}
+                            <a href="{{ att.file.url }}" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                                <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <div class="flex flex-col min-w-0 flex-1">
+                                    <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
+                                    <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
+                                </div>
+                                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
 
                     {% if m.from_user == request.user %}
@@ -130,10 +153,17 @@
             <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
         </div>
 
+        <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
+
         <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <input id="chat-message-input" type="text"
-                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400"
-                placeholder="Write something...">
+            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            </button>
+            <input type="file" id="chat-file-input" multiple class="hidden">
+
+            <textarea id="chat-message-input" rows="1"
+                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
+                placeholder="Write something..."></textarea>
             {% if my_private_groups %}
             <details class="relative flex-shrink-0" id="invite-details">
                 <summary class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
@@ -156,7 +186,7 @@
             </div>
             {% endif %}
             <button id="chat-message-submit"
-                class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0">
                 Send
             </button>
         </div>
@@ -224,10 +254,108 @@
     const cmDeleteBtn = document.getElementById('cm-delete-btn');
     const editBanner = document.getElementById('edit-banner');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const messageInput = document.getElementById('chat-message-input');
+    const attachFileBtn = document.getElementById('attach-file-btn');
+    const chatFileInput = document.getElementById('chat-file-input');
+    const attachmentTray = document.getElementById('attachment-tray');
 
     let selectedMsgWrapper = null;
     let selectedMsgId = null;
     let editingMessageId = null;
+    let pendingAttachments = [];
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function autolink(text) {
+        if (!text) return '';
+        const escaped = escapeHtml(text);
+        const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
+        return escaped.replace(urlPattern, function(match, url, trailing) {
+            let href = url;
+            if (url.toLowerCase().startsWith('www.')) {
+                href = 'http://' + url;
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
+        });
+    }
+
+    function adjustTextareaHeight() {
+        if (!messageInput) return;
+        messageInput.style.height = 'auto';
+        if (messageInput.scrollHeight > 160) {
+            messageInput.style.height = '160px';
+            messageInput.style.overflowY = 'auto';
+        } else {
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+            messageInput.style.overflowY = 'hidden';
+        }
+    }
+
+    if (messageInput) {
+        messageInput.addEventListener('input', adjustTextareaHeight);
+        messageInput.addEventListener('focus', adjustTextareaHeight);
+    }
+
+    function renderAttachmentTray() {
+        if (!attachmentTray) return;
+        if (pendingAttachments.length === 0) {
+            attachmentTray.classList.add('hidden');
+            attachmentTray.innerHTML = '';
+            return;
+        }
+        attachmentTray.classList.remove('hidden');
+        attachmentTray.innerHTML = pendingAttachments.map((att, idx) => `
+            <div class="flex items-center gap-1.5 bg-white border rounded-md px-2 py-1 shadow-sm">
+                ${att.is_image
+                    ? `<img src="${att.url}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
+                    : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
+                }
+                <span class="max-w-[120px] truncate font-medium text-gray-700">${escapeHtml(att.name)}</span>
+                <button type="button" data-remove-att="${idx}" class="text-gray-400 hover:text-red-500 font-bold ml-1">&times;</button>
+            </div>
+        `).join('');
+
+        attachmentTray.querySelectorAll('[data-remove-att]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const i = parseInt(e.target.dataset.removeAtt);
+                pendingAttachments.splice(i, 1);
+                renderAttachmentTray();
+            });
+        });
+    }
+
+    if (attachFileBtn && chatFileInput) {
+        attachFileBtn.addEventListener('click', () => chatFileInput.click());
+        chatFileInput.addEventListener('change', async () => {
+            if (!chatFileInput.files.length) return;
+            const formData = new FormData();
+            for (let i = 0; i < chatFileInput.files.length; i++) {
+                formData.append('files', chatFileInput.files[i]);
+            }
+            try {
+                const res = await fetch('/chat/attachments/upload/', {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrftoken},
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    pendingAttachments.push(...data.attachments);
+                    renderAttachmentTray();
+                } else {
+                    addSystemMessage(data.error || 'Failed to upload attachment');
+                }
+            } catch (err) {
+                console.error(err);
+                addSystemMessage('Upload error');
+            }
+            chatFileInput.value = '';
+        });
+    }
 
     function hideContextMenu() {
         if (contextMenu) contextMenu.classList.add('hidden');
@@ -235,9 +363,13 @@
 
     function cancelEditing() {
         editingMessageId = null;
+        pendingAttachments = [];
+        renderAttachmentTray();
         if (editBanner) editBanner.classList.add('hidden');
-        const messageInput = document.getElementById('chat-message-input');
-        if (messageInput) messageInput.value = '';
+        if (messageInput) {
+            messageInput.value = '';
+            adjustTextareaHeight();
+        }
     }
 
     if (cancelEditBtn) {
@@ -248,6 +380,7 @@
     document.addEventListener('scroll', hideContextMenu, true);
 
     log.addEventListener('click', function(e) {
+        if (e.target.closest('a')) return;
         const msgWrapper = e.target.closest('[data-username]');
         if (!msgWrapper) return;
 
@@ -260,7 +393,7 @@
         selectedMsgId = msgWrapper.dataset.messageId || null;
 
         if (username === currentUser) {
-            if (!selectedMsgId) return; // Cannot edit/delete without ID
+            if (!selectedMsgId) return;
             if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
             if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
         } else {
@@ -289,13 +422,23 @@
             hideContextMenu();
             if (!selectedMsgWrapper || !selectedMsgId) return;
             const contentEl = selectedMsgWrapper.querySelector('.msg-content');
-            const currentContent = contentEl ? contentEl.textContent : '';
+            const currentContent = contentEl ? contentEl.textContent.trim() : '';
+
+            let existingAtts = [];
+            try {
+                if (selectedMsgWrapper.dataset.attachments) {
+                    existingAtts = JSON.parse(selectedMsgWrapper.dataset.attachments);
+                }
+            } catch (err) {}
 
             editingMessageId = selectedMsgId;
-            const messageInput = document.getElementById('chat-message-input');
+            pendingAttachments = [...existingAtts];
+            renderAttachmentTray();
+
             if (messageInput) {
                 messageInput.value = currentContent;
                 messageInput.focus();
+                adjustTextareaHeight();
             }
             if (editBanner) editBanner.classList.remove('hidden');
         });
@@ -322,6 +465,26 @@
         log.scrollTop = log.scrollHeight;
     }
 
+    function renderAttachmentsHTML(attachments) {
+        if (!attachments || !attachments.length) return '';
+        return attachments.map(att => {
+            if (att.is_image) {
+                return `<a href="${att.url}" target="_blank" class="block">
+                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                </a>`;
+            } else {
+                return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                    <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
+                        <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
+                    </div>
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </a>`;
+            }
+        }).join('');
+    }
+
     function renderMessage(data) {
         const user = data.user || {};
         const isMe = user.username === currentUser;
@@ -333,6 +496,7 @@
         if (data.message_id) {
             wrapper.dataset.messageId = data.message_id;
         }
+        wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
 
         const avatar = document.createElement('div');
         avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
@@ -354,10 +518,15 @@
             bubble.classList.add('bg-{{ other.profile.color }}-100', 'text-gray-800');
         }
 
-        const contentSpan = document.createElement('span');
-        contentSpan.className = 'msg-content';
-        contentSpan.textContent = data.message || '';
-        bubble.appendChild(contentSpan);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'msg-content whitespace-pre-wrap break-words' + (data.message ? '' : ' hidden');
+        contentDiv.innerHTML = autolink(data.message || '');
+        bubble.appendChild(contentDiv);
+
+        const attDiv = document.createElement('div');
+        attDiv.className = 'msg-attachments flex flex-col gap-1.5' + (data.message && data.attachments && data.attachments.length ? ' mt-2' : '');
+        attDiv.innerHTML = renderAttachmentsHTML(data.attachments);
+        bubble.appendChild(attDiv);
 
         if (isMe) {
             wrapper.appendChild(bubble);
@@ -497,13 +666,12 @@
             if (blockBtn) {
                 blockBtn.textContent = isBlocked ? 'Unblock' : 'Block';
             }
-            const input = document.getElementById('chat-message-input');
             const submit = document.getElementById('chat-message-submit');
             if (isBlocked) {
-                if (input) input.disabled = true;
+                if (messageInput) messageInput.disabled = true;
                 if (submit) submit.disabled = true;
             } else {
-                if (input) input.disabled = false;
+                if (messageInput) messageInput.disabled = false;
                 if (submit) submit.disabled = false;
             }
             return;
@@ -534,8 +702,26 @@
         } else if (data.type === 'edit_message') {
             const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
             if (wrapper) {
+                wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
                 const contentEl = wrapper.querySelector('.msg-content');
-                if (contentEl) contentEl.textContent = data.message;
+                if (contentEl) {
+                    if (data.message) {
+                        contentEl.innerHTML = autolink(data.message);
+                        contentEl.classList.remove('hidden');
+                    } else {
+                        contentEl.innerHTML = '';
+                        contentEl.classList.add('hidden');
+                    }
+                }
+                const attEl = wrapper.querySelector('.msg-attachments');
+                if (attEl) {
+                    attEl.innerHTML = renderAttachmentsHTML(data.attachments);
+                    if (data.message && data.attachments && data.attachments.length) {
+                        attEl.classList.add('mt-2');
+                    } else {
+                        attEl.classList.remove('mt-2');
+                    }
+                }
             }
         } else if (data.type === 'delete_message') {
             const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
@@ -547,27 +733,41 @@
         console.error('Chat socket closed unexpectedly');
     };
 
-    const messageInput = document.getElementById('chat-message-input');
-    messageInput.focus();
-    messageInput.addEventListener('keyup', function(e) {
-        if (e.key === 'Escape') cancelEditing();
-        if (e.key === 'Enter') document.getElementById('chat-message-submit').click();
-    });
+    if (messageInput) {
+        messageInput.focus();
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cancelEditing();
+            } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chat-message-submit').click();
+            }
+        });
+    }
 
     document.getElementById('chat-message-submit').addEventListener('click', function() {
         if (messageInput.disabled) return;
         const message = messageInput.value.trim();
-        if (message && chatSocket.readyState === WebSocket.OPEN) {
+        const attachmentIds = pendingAttachments.map(a => a.id);
+
+        if ((message || attachmentIds.length) && chatSocket.readyState === WebSocket.OPEN) {
             if (editingMessageId) {
                 chatSocket.send(JSON.stringify({
                     action: 'edit',
                     message_id: editingMessageId,
-                    message: message
+                    message: message,
+                    attachment_ids: attachmentIds
                 }));
                 cancelEditing();
             } else {
-                chatSocket.send(JSON.stringify({'message': message}));
+                chatSocket.send(JSON.stringify({
+                    message: message,
+                    attachment_ids: attachmentIds
+                }));
                 messageInput.value = '';
+                pendingAttachments = [];
+                renderAttachmentTray();
+                adjustTextareaHeight();
             }
         }
     });
@@ -607,7 +807,6 @@
             }
         }
     });
-
 
     const inviteDetails = document.getElementById('invite-details');
 
@@ -656,5 +855,4 @@
         }
     });
 </script>
-
 {% endblock %}

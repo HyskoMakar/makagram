@@ -1,5 +1,8 @@
 {% extends 'base.html' %}
+{% load chat_extras %}
+
 {% block title %}{{ group.name }}{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="bg-white rounded-xl shadow overflow-hidden">
@@ -28,7 +31,6 @@
                         <span>Mute</span>
                         {% endif %}
                     </button>
-
                 </form>
                 {% endif %}
 
@@ -61,125 +63,40 @@
                 </div>
 
                 <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-2">
-                        Privacy Type
-                    </label>
-
+                    <label class="text-xs font-medium text-gray-600 block mb-2">Privacy Type</label>
                     <div class="grid grid-cols-2 gap-3">
-
-                        <!-- Public -->
                         <label class="cursor-pointer">
-                            <input
-                                type="radio"
-                                name="private"
-                                value="0"
-                                class="hidden peer"
-                                {% if not group.private %}checked{% endif %}
-                            >
-
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
-                                        peer-checked:border-blue-500
-                                        peer-checked:bg-blue-50/50
-                                        peer-checked:ring-2
-                                        peer-checked:ring-blue-500/20
-                                        hover:border-gray-300">
-
-                                <div class="font-medium text-sm text-gray-800">
-                                    Public
-                                </div>
-
-                                <span class="text-xs text-gray-500">
-                                    Anyone can see and join
-                                </span>
-
+                            <input type="radio" name="private" value="0" class="hidden peer" {% if not group.private %}checked{% endif %}>
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                                <div class="font-medium text-sm text-gray-800">Public</div>
+                                <span class="text-xs text-gray-500">Anyone can see and join</span>
                             </div>
                         </label>
-
-                        <!-- Private -->
                         <label class="cursor-pointer">
-                            <input
-                                type="radio"
-                                name="private"
-                                value="1"
-                                class="hidden peer"
-                                {% if group.private %}checked{% endif %}
-                            >
-
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
-                                        peer-checked:border-blue-500
-                                        peer-checked:bg-blue-50/50
-                                        peer-checked:ring-2
-                                        peer-checked:ring-blue-500/20
-                                        hover:border-gray-300">
-
-                                <div class="font-medium text-sm text-gray-800">
-                                    Private
-                                </div>
-
-                                <span class="text-xs text-gray-500">
-                                    Invite only in private chat
-                                </span>
+                            <input type="radio" name="private" value="1" class="hidden peer" {% if group.private %}checked{% endif %}>
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                                <div class="font-medium text-sm text-gray-800">Private</div>
+                                <span class="text-xs text-gray-500">Invite only in private chat</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-2">
-                        Member Invitations
-                    </label>
-
+                    <label class="text-xs font-medium text-gray-600 block mb-2">Member Invitations</label>
                     <div class="grid grid-cols-2 gap-3">
                         <label class="cursor-pointer {% if not group.private %}pointer-events-none{% endif %}">
-                            <input
-                                type="radio"
-                                name="members_can_invite"
-                                value="1"
-                                class="hidden peer"
-                                {% if group.members_can_invite %}checked{% endif %}
-                            >
-
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
-                                        {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %}
-                                        peer-checked:border-blue-500
-                                        peer-checked:bg-blue-50/50
-                                        peer-checked:ring-2
-                                        peer-checked:ring-blue-500/20">
-
-                                <div class="font-medium text-sm text-gray-800">
-                                    All members
-                                </div>
-
-                                <span class="text-xs text-gray-500">
-                                    Any group member can invite users
-                                </span>
-
+                            <input type="radio" name="members_can_invite" value="1" class="hidden peer" {% if group.members_can_invite %}checked{% endif %}>
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20">
+                                <div class="font-medium text-sm text-gray-800">All members</div>
+                                <span class="text-xs text-gray-500">Any group member can invite users</span>
                             </div>
                         </label>
                         <label class="cursor-pointer {% if not group.private %}pointer-events-none{% endif %}">
-                            <input
-                                type="radio"
-                                name="members_can_invite"
-                                value="0"
-                                class="hidden peer"
-                                {% if not group.members_can_invite %}checked{% endif %}
-                            >
-
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all
-                                        {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %}
-                                        peer-checked:border-blue-500
-                                        peer-checked:bg-blue-50/50
-                                        peer-checked:ring-2
-                                        peer-checked:ring-blue-500/20">
-
-                                <div class="font-medium text-sm text-gray-800">
-                                    Owner only
-                                </div>
-
-                                <span class="text-xs text-gray-500">
-                                    Only the group owner can invite users
-                                </span>
-
+                            <input type="radio" name="members_can_invite" value="0" class="hidden peer" {% if not group.members_can_invite %}checked{% endif %}>
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20">
+                                <div class="font-medium text-sm text-gray-800">Owner only</div>
+                                <span class="text-xs text-gray-500">Only the group owner can invite users</span>
                             </div>
                         </label>
                     </div>
@@ -190,8 +107,7 @@
                     <div class="flex flex-wrap gap-2">
                         {% for color in colors %}
                         <label class="cursor-pointer">
-                            <input type="radio" name="color" value="{{ color }}" class="hidden peer"
-                                   {% if group.color == color %}checked{% endif %}>
+                            <input type="radio" name="color" value="{{ color }}" class="hidden peer" {% if group.color == color %}checked{% endif %}>
                             <div class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
                         </label>
                         {% endfor %}
@@ -199,18 +115,14 @@
                 </div>
 
                 <div class="flex justify-between items-center pt-2 border-t">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">
-                        Save changes
-                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
                 </div>
             </form>
 
             <form method="post" action="{% url 'group-delete' group.id %}" class="mt-4 pt-3 border-t flex justify-between items-center">
                 {% csrf_token %}
                 <span class="text-xs text-red-500 font-medium">Danger Zone</span>
-                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">
-                    Delete Group
-                </button>
+                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">Delete Group</button>
             </form>
         </div>
         {% endif %}
@@ -220,7 +132,8 @@
                 {% for m in messages %}
                 {% with msg_username=m.author.profile.username|default:m.author.username %}
                 <div class="flex items-start gap-2 {% if m.author == request.user %}justify-end{% endif %}"
-                     data-username="{{ msg_username }}" data-message-id="{{ m.id }}">
+                     data-username="{{ msg_username }}" data-message-id="{{ m.id }}"
+                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                     {% if m.author != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
                         {% if m.author.profile.avatar_data %}
@@ -235,7 +148,31 @@
                         {% if m.author != request.user %}
                         <div class="text-xs font-medium text-{{ m.author.profile.color|default:'gray' }}-500 mb-1">{{ msg_username }}</div>
                         {% endif %}
-                        <span class="msg-content">{{ m.content }}</span>
+                        
+                        {% if m.content %}
+                        <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
+                        {% else %}
+                        <div class="msg-content whitespace-pre-wrap break-words hidden"></div>
+                        {% endif %}
+
+                        <div class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
+                            {% for att in m.attachments.all %}
+                            {% if att.is_image %}
+                            <a href="{{ att.file.url }}" target="_blank" class="block">
+                                <img src="{{ att.file.url }}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                            </a>
+                            {% else %}
+                            <a href="{{ att.file.url }}" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                                <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <div class="flex flex-col min-w-0 flex-1">
+                                    <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
+                                    <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
+                                </div>
+                                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
 
                     {% if m.author == request.user %}
@@ -261,13 +198,20 @@
             <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
         </div>
 
+        <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
+
         {% if is_member %}
         <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <input id="group-input" type="text"
-                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ group.color }}-400"
-                   placeholder="Write to group...">
+            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            </button>
+            <input type="file" id="chat-file-input" multiple class="hidden">
+
+            <textarea id="group-input" rows="1"
+                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ group.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
+                   placeholder="Write to group..."></textarea>
             <button id="group-send"
-                    class="bg-{{ group.color }}-500 hover:bg-{{ group.color }}-600 text-white px-4 py-2 rounded-lg text-sm">
+                    class="bg-{{ group.color }}-500 hover:bg-{{ group.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0">
                 Send
             </button>
         </div>
@@ -354,11 +298,118 @@
     const cmDeleteBtn = document.getElementById('cm-delete-btn');
     const editBanner = document.getElementById('edit-banner');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const input = document.getElementById('group-input');
+    const sendBtn = document.getElementById('group-send');
+    const toast = document.getElementById('toast');
+    const attachFileBtn = document.getElementById('attach-file-btn');
+    const chatFileInput = document.getElementById('chat-file-input');
+    const attachmentTray = document.getElementById('attachment-tray');
 
     let targetUsernameForContextMenu = null;
     let selectedMsgWrapper = null;
     let selectedMsgId = null;
     let editingMessageId = null;
+    let pendingAttachments = [];
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+    }
+
+    function autolink(text) {
+        if (!text) return '';
+        const escaped = escapeHtml(text);
+        const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
+        return escaped.replace(urlPattern, function(match, url, trailing) {
+            let href = url;
+            if (url.toLowerCase().startsWith('www.')) {
+                href = 'http://' + url;
+            }
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
+        });
+    }
+
+    function adjustTextareaHeight() {
+        if (!input) return;
+        input.style.height = 'auto';
+        if (input.scrollHeight > 160) {
+            input.style.height = '160px';
+            input.style.overflowY = 'auto';
+        } else {
+            input.style.height = input.scrollHeight + 'px';
+            input.style.overflowY = 'hidden';
+        }
+    }
+
+    if (input) {
+        input.addEventListener('input', adjustTextareaHeight);
+        input.addEventListener('focus', adjustTextareaHeight);
+    }
+
+    function renderAttachmentTray() {
+        if (!attachmentTray) return;
+        if (pendingAttachments.length === 0) {
+            attachmentTray.classList.add('hidden');
+            attachmentTray.innerHTML = '';
+            return;
+        }
+        attachmentTray.classList.remove('hidden');
+        attachmentTray.innerHTML = pendingAttachments.map((att, idx) => `
+            <div class="flex items-center gap-1.5 bg-white border rounded-md px-2 py-1 shadow-sm">
+                ${att.is_image
+                    ? `<img src="${att.url}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
+                    : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
+                }
+                <span class="max-w-[120px] truncate font-medium text-gray-700">${escapeHtml(att.name)}</span>
+                <button type="button" data-remove-att="${idx}" class="text-gray-400 hover:text-red-500 font-bold ml-1">&times;</button>
+            </div>
+        `).join('');
+
+        attachmentTray.querySelectorAll('[data-remove-att]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const i = parseInt(e.target.dataset.removeAtt);
+                pendingAttachments.splice(i, 1);
+                renderAttachmentTray();
+            });
+        });
+    }
+
+    if (attachFileBtn && chatFileInput) {
+        attachFileBtn.addEventListener('click', () => chatFileInput.click());
+        chatFileInput.addEventListener('change', async () => {
+            if (!chatFileInput.files.length) return;
+            const formData = new FormData();
+            for (let i = 0; i < chatFileInput.files.length; i++) {
+                formData.append('files', chatFileInput.files[i]);
+            }
+            try {
+                const res = await fetch('/chat/attachments/upload/', {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrftoken},
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    pendingAttachments.push(...data.attachments);
+                    renderAttachmentTray();
+                } else {
+                    showToast(data.error || 'Failed to upload attachment');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Upload error');
+            }
+            chatFileInput.value = '';
+        });
+    }
+
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
 
     function hideContextMenu() {
         if (contextMenu) contextMenu.classList.add('hidden');
@@ -366,9 +417,13 @@
 
     function cancelEditing() {
         editingMessageId = null;
+        pendingAttachments = [];
+        renderAttachmentTray();
         if (editBanner) editBanner.classList.add('hidden');
-        const input = document.getElementById('group-input');
-        if (input) input.value = '';
+        if (input) {
+            input.value = '';
+            adjustTextareaHeight();
+        }
     }
 
     if (cancelEditBtn) {
@@ -382,6 +437,7 @@
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     messagesDiv.addEventListener('click', function(e) {
+        if (e.target.closest('a')) return;
         const msgWrapper = e.target.closest('[data-username]');
         if (!msgWrapper) return;
 
@@ -395,7 +451,7 @@
         targetUsernameForContextMenu = username;
 
         if (username === currentUser) {
-            if (!selectedMsgId) return; // Cannot edit/delete without ID
+            if (!selectedMsgId) return;
             if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
             if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
         } else {
@@ -424,13 +480,23 @@
             hideContextMenu();
             if (!selectedMsgWrapper || !selectedMsgId) return;
             const contentEl = selectedMsgWrapper.querySelector('.msg-content');
-            const currentContent = contentEl ? contentEl.textContent : '';
+            const currentContent = contentEl ? contentEl.textContent.trim() : '';
+
+            let existingAtts = [];
+            try {
+                if (selectedMsgWrapper.dataset.attachments) {
+                    existingAtts = JSON.parse(selectedMsgWrapper.dataset.attachments);
+                }
+            } catch (err) {}
 
             editingMessageId = selectedMsgId;
-            const input = document.getElementById('group-input');
+            pendingAttachments = [...existingAtts];
+            renderAttachmentTray();
+
             if (input) {
                 input.value = currentContent;
                 input.focus();
+                adjustTextareaHeight();
             }
             if (editBanner) editBanner.classList.remove('hidden');
         });
@@ -470,15 +536,24 @@
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(wsScheme + '://' + window.location.host + '/ws/group/' + groupId + '/');
 
-    const input = document.getElementById('group-input');
-    const sendBtn = document.getElementById('group-send');
-    const toast = document.getElementById('toast');
-
-    function showToast(msg) {
-      if (!toast) return;
-      toast.textContent = msg;
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3000);
+    function renderAttachmentsHTML(attachments) {
+        if (!attachments || !attachments.length) return '';
+        return attachments.map(att => {
+            if (att.is_image) {
+                return `<a href="${att.url}" target="_blank" class="block">
+                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                </a>`;
+            } else {
+                return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                    <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
+                        <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
+                    </div>
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </a>`;
+            }
+        }).join('');
     }
 
     function renderMessage(data) {
@@ -492,6 +567,7 @@
       if (data.message_id) {
         wrapper.dataset.messageId = data.message_id;
       }
+      wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
 
       const avatar = document.createElement('div');
       avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
@@ -517,10 +593,15 @@
         bubble.appendChild(nameEl);
       }
 
-      const contentSpan = document.createElement('span');
-      contentSpan.className = 'msg-content';
-      contentSpan.textContent = data.message || '';
-      bubble.appendChild(contentSpan);
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'msg-content whitespace-pre-wrap break-words' + (data.message ? '' : ' hidden');
+      contentDiv.innerHTML = autolink(data.message || '');
+      bubble.appendChild(contentDiv);
+
+      const attDiv = document.createElement('div');
+      attDiv.className = 'msg-attachments flex flex-col gap-1.5' + (data.message && data.attachments && data.attachments.length ? ' mt-2' : '');
+      attDiv.innerHTML = renderAttachmentsHTML(data.attachments);
+      bubble.appendChild(attDiv);
 
       if (isMe) {
         wrapper.appendChild(bubble);
@@ -541,8 +622,26 @@
       } else if (data.type === 'edit_message') {
         const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
         if (wrapper) {
+            wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
             const contentEl = wrapper.querySelector('.msg-content');
-            if (contentEl) contentEl.textContent = data.message;
+            if (contentEl) {
+                if (data.message) {
+                    contentEl.innerHTML = autolink(data.message);
+                    contentEl.classList.remove('hidden');
+                } else {
+                    contentEl.innerHTML = '';
+                    contentEl.classList.add('hidden');
+                }
+            }
+            const attEl = wrapper.querySelector('.msg-attachments');
+            if (attEl) {
+                attEl.innerHTML = renderAttachmentsHTML(data.attachments);
+                if (data.message && data.attachments && data.attachments.length) {
+                    attEl.classList.add('mt-2');
+                } else {
+                    attEl.classList.remove('mt-2');
+                }
+            }
         }
       } else if (data.type === 'delete_message') {
         const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
@@ -559,23 +658,35 @@
     if (sendBtn && input) {
       sendBtn.addEventListener('click', function() {
         const v = input.value.trim();
-        if (!v) return;
+        const attachmentIds = pendingAttachments.map(a => a.id);
+        if (!v && !attachmentIds.length) return;
         if (socket.readyState !== WebSocket.OPEN) return;
         if (editingMessageId) {
             socket.send(JSON.stringify({
                 action: 'edit',
                 message_id: editingMessageId,
-                message: v
+                message: v,
+                attachment_ids: attachmentIds
             }));
             cancelEditing();
         } else {
-            socket.send(JSON.stringify({message: v}));
+            socket.send(JSON.stringify({
+                message: v,
+                attachment_ids: attachmentIds
+            }));
             input.value = '';
+            pendingAttachments = [];
+            renderAttachmentTray();
+            adjustTextareaHeight();
         }
       });
-      input.addEventListener('keyup', function(e) {
-        if (e.key === 'Escape') cancelEditing();
-        if (e.key === 'Enter') sendBtn.click();
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cancelEditing();
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendBtn.click();
+        }
       });
       input.focus();
     }
@@ -583,4 +694,3 @@
 </script>
 {% endif %}
 {% endblock %}
-

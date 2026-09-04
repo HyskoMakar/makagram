@@ -73,13 +73,13 @@
 
             {% if item.type == 'channel' %}
             <div class="flex items-center justify-between mt-3 pt-2 border-t text-xs text-gray-400">
-                <form method="post" action="{% url 'channel-post-like' item.channel_id item.post_id %}" class="inline">
+                <form method="post" action="{% url 'channel-post-like' item.channel_id item.post_id %}" class="feed-like-form inline">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center gap-1 hover:text-red-500 transition-colors {% if item.liked %}text-red-500 font-semibold{% endif %}">
+                    <button type="submit" class="feed-like-btn flex items-center gap-1 hover:text-red-500 transition-colors {% if item.liked %}text-red-500 font-semibold{% endif %}">
                         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                         </svg>
-                        <span>{{ item.like_count }}</span>
+                        <span class="like-count">{{ item.like_count }}</span>
                     </button>
                 </form>
             </div>
@@ -96,4 +96,38 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.feed-like-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const action = form.getAttribute('action');
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        const btn = form.querySelector('.feed-like-btn');
+        const countSpan = form.querySelector('.like-count');
+
+        try {
+            const res = await fetch(action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await res.json();
+            if (data.ok) {
+                if (countSpan) countSpan.textContent = data.like_count;
+                if (data.liked) {
+                    btn.classList.add('text-red-500', 'font-semibold');
+                } else {
+                    btn.classList.remove('text-red-500', 'font-semibold');
+                }
+            }
+        } catch (err) {
+            form.submit();
+        }
+    });
+});
+</script>
 {% endblock %}

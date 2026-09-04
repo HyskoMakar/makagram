@@ -20,5 +20,9 @@ urlpatterns = [
     
     path('toggle-friend/<str:username>/', views.toggle_friend, name='toggle-friend'),
     path('toggle-block/<str:username>/', views.toggle_block, name='toggle-block'),
+
+    path('attachments/upload/', views.upload_attachment, name='upload-attachment'),
+    path('attachments/<int:attachment_id>/delete/', views.delete_attachment, name='delete-attachment'),
 ]
+
 

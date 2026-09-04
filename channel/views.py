@@ -119,12 +119,20 @@ def channel(request, channel_id):
 
     if request.method == 'POST' and is_admin:
         content = request.POST.get('message', '').strip()
-        if content:
+        attachment_ids_raw = request.POST.get('attachment_ids', '')
+        attachment_ids = [int(x) for x in attachment_ids_raw.split(',') if x.strip().isdigit()]
+        if content or attachment_ids:
             post = ChannelPost.objects.create(
                 channel=channel,
                 author=request.user,
                 content=content[:4000],
             )
+            if attachment_ids:
+                from chat.models import Attachment
+                Attachment.objects.filter(id__in=attachment_ids, uploaded_by=request.user).update(channel_post=post)
+
+            attachments = [att.as_dict() for att in post.attachments.all()]
+
             _send_channel_event(channel.id, {
                 'type': 'channel.post',
                 'post': {
@@ -132,28 +140,30 @@ def channel(request, channel_id):
                     'content': post.content,
                     'created_at': post.created_at.strftime('%b %d, %H:%M'),
                     'author': _author_payload(request.user),
+                    'attachments': attachments,
                 },
             })
 
             from makagram.views import create_notification_if_not_muted
+            notif_msg = content[:100] if content else 'Sent an attachment'
             for sub in channel.subscribers.exclude(id=request.user.id):
                 create_notification_if_not_muted(
                     recipient=sub,
                     sender=request.user,
                     title=f'New post in channel "{channel.name}"',
-                    message=f'{content[:100]}',
+                    message=f'{notif_msg}',
                     notification_type='channel',
                     link=f'/channel/{channel.id}/',
                     chat_type='channel',
                     target_id=channel.id,
                 )
 
-
             return redirect('channel-view', channel_id=channel.id)
 
     posts_qs = ChannelPost.objects.filter(channel=channel).select_related(
         'author__profile'
-    ).prefetch_related('likes').order_by('-created_at')[:50]
+    ).prefetch_related('likes', 'attachments').order_by('-created_at')[:50]
+
     posts = list(reversed(posts_qs))
 
     liked_post_ids = set(
@@ -230,6 +240,11 @@ def delete_channel(request, channel_id):
         return HttpResponseBadRequest('Only the creator can delete the channel')
 
     _send_channel_event(channel.id, {'type': 'channel.deleted'})
+    from makagram.models import Notification
+    Notification.objects.filter(
+        notification_type='channel',
+        link=f'/channel/{channel.id}/',
+    ).delete()
     channel.delete()
     return redirect('channels-list')
 
@@ -253,6 +268,13 @@ def unsubscribe_channel(request, channel_id):
         channel.subscribers.remove(request.user)
         # losing subscription always revokes admin rights, even for admins
         channel.admins.remove(request.user)
+
+    from makagram.models import Notification
+    Notification.objects.filter(
+        recipient=request.user,
+        notification_type='channel',
+        link=f'/channel/{channel.id}/',
+    ).delete()
 
     _send_channel_event(channel.id, {'type': 'channel.admins_changed'})
     return redirect('channels-list')
@@ -296,8 +318,17 @@ def toggle_like(request, channel_id, post_id):
     channel = get_object_or_404(Channel, id=channel_id)
     post = get_object_or_404(ChannelPost, id=post_id, channel=channel)
 
+    is_ajax = (
+        request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        or 'application/json' in request.headers.get('accept', '')
+        or request.content_type == 'application/json'
+    )
+
     if not channel.subscribers.filter(id=request.user.id).exists():
-        return JsonResponse({'ok': False, 'error': 'only subscribers can like posts'})
+        if is_ajax:
+            return JsonResponse({'ok': False, 'error': 'only subscribers can like posts'})
+        messages.error(request, 'Only subscribers can like posts.')
+        return redirect(request.META.get('HTTP_REFERER', 'feed'))
 
     like = ChannelPostLike.objects.filter(post=post, creator=request.user).first()
     if like:
@@ -313,4 +344,70 @@ def toggle_like(request, channel_id, post_id):
         'post_id': post.id,
         'like_count': like_count,
     })
-    return JsonResponse({'ok': True, 'liked': liked, 'like_count': like_count})
+
+    if is_ajax:
+        return JsonResponse({'ok': True, 'liked': liked, 'like_count': like_count})
+
+    return redirect(request.META.get('HTTP_REFERER', 'feed'))
+
+
+@login_required(login_url='login')
+@require_POST
+def edit_post(request, channel_id, post_id):
+    channel = get_object_or_404(Channel, id=channel_id)
+    post = get_object_or_404(ChannelPost, id=post_id, channel=channel)
+
+    is_owner = request.user == channel.owner
+    is_admin = is_owner or channel.admins.filter(id=request.user.id).exists()
+    if not (is_admin or post.author == request.user):
+        return JsonResponse({'ok': False, 'error': 'Permission denied'}, status=403)
+
+    content = request.POST.get('message', '').strip()
+    attachment_ids_raw = request.POST.get('attachment_ids', '')
+    attachment_ids = [int(x) for x in attachment_ids_raw.split(',') if x.strip().isdigit()] if attachment_ids_raw else None
+
+    if not content and not attachment_ids:
+        return JsonResponse({'ok': False, 'error': 'Post content cannot be empty'})
+    if len(content) > 4000:
+        return JsonResponse({'ok': False, 'error': 'Post is too long'})
+
+    post.content = content
+    post.save()
+
+    if attachment_ids is not None:
+        from chat.models import Attachment
+        post.attachments.exclude(id__in=attachment_ids).delete()
+        Attachment.objects.filter(id__in=attachment_ids, uploaded_by=request.user).update(channel_post=post)
+
+    attachments = [att.as_dict() for att in post.attachments.all()]
+
+    _send_channel_event(channel.id, {
+        'type': 'channel.post_edited',
+        'post_id': post.id,
+        'content': post.content,
+        'attachments': attachments,
+    })
+
+    return JsonResponse({'ok': True, 'content': post.content, 'attachments': attachments})
+
+
+@login_required(login_url='login')
+@require_POST
+def delete_post(request, channel_id, post_id):
+    channel = get_object_or_404(Channel, id=channel_id)
+    post = get_object_or_404(ChannelPost, id=post_id, channel=channel)
+
+    is_owner = request.user == channel.owner
+    is_admin = is_owner or channel.admins.filter(id=request.user.id).exists()
+    if not (is_admin or post.author == request.user):
+        return JsonResponse({'ok': False, 'error': 'Permission denied'}, status=403)
+
+    post_id = post.id
+    post.delete()
+
+    _send_channel_event(channel.id, {
+        'type': 'channel.post_deleted',
+        'post_id': post_id,
+    })
+
+    return JsonResponse({'ok': True})

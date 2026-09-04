@@ -111,3 +111,48 @@ class GroupMessage(models.Model):
 
     def __str__(self):
         return f'{self.author.username} in {self.group.name}: {self.content[:50]}'
+
+
+class Attachment(models.Model):
+    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
+    original_name = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=100, default='')
+    is_image = models.BooleanField(default=False)
+    file_size = models.BigIntegerField(default=0)
+
+    private_message = models.ForeignKey(
+        PrivateMessage, on_delete=models.CASCADE, related_name='attachments', null=True, blank=True
+    )
+    group_message = models.ForeignKey(
+        GroupMessage, on_delete=models.CASCADE, related_name='attachments', null=True, blank=True
+    )
+    channel_post = models.ForeignKey(
+        'channel.ChannelPost', on_delete=models.CASCADE, related_name='attachments', null=True, blank=True
+    )
+
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_attachments')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def formatted_size(self):
+        size = self.file_size
+        if size < 1024:
+            return f'{size} B'
+        elif size < 1024 * 1024:
+            return f'{size / 1024:.1f} KB'
+        else:
+            return f'{size / (1024 * 1024):.1f} MB'
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'url': self.file.url,
+            'name': self.original_name,
+            'is_image': self.is_image,
+            'size': self.formatted_size,
+            'file_type': self.file_type,
+        }
+
+    def __str__(self):
+        return f'{self.original_name} ({self.formatted_size})'
+
