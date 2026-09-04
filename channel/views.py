@@ -118,6 +118,8 @@ def channel(request, channel_id):
     is_subscriber = channel.subscribers.filter(id=request.user.id).exists()
 
     if request.method == 'POST' and is_admin:
+        is_fetch = request.headers.get('x-fetch') == '1'
+
         content = request.POST.get('message', '').strip()
         attachment_ids_raw = request.POST.get('attachment_ids', '')
         attachment_ids = [int(x) for x in attachment_ids_raw.split(',') if x.strip().isdigit()]
@@ -158,7 +160,11 @@ def channel(request, channel_id):
                     target_id=channel.id,
                 )
 
+            if is_fetch:
+                return JsonResponse({'ok': True})
             return redirect('channel-view', channel_id=channel.id)
+        elif is_fetch:
+            return JsonResponse({'ok': False, 'error': 'Post cannot be empty'})
 
     posts_qs = ChannelPost.objects.filter(channel=channel).select_related(
         'author__profile'

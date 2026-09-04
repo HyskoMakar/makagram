@@ -792,16 +792,18 @@
             headers: {
               'X-CSRFToken': csrftoken,
               'Content-Type': 'application/x-www-form-urlencoded',
+              'X-Fetch': '1',
             },
             body: bodyData,
           });
-          if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
             input.value = '';
             pendingAttachments = [];
             renderAttachmentTray();
             adjustTextareaHeight();
           } else {
-            showToast('Could not publish post');
+            showToast(data.error || 'Could not publish post');
           }
         }
       };

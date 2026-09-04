@@ -133,7 +133,7 @@
                 {% with msg_username=m.author.profile.username|default:m.author.username %}
                 <div class="flex items-start gap-2 {% if m.author == request.user %}justify-end{% endif %}"
                      data-username="{{ msg_username }}" data-message-id="{{ m.id }}"
-                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                     {% if m.author != request.user %}
                     <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
                         {% if m.author.profile.avatar_data %}
@@ -536,16 +536,40 @@
     const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const socket = new WebSocket(wsScheme + '://' + window.location.host + '/ws/group/' + groupId + '/');
 
+    function getFileIcon(fileType, fileName) {
+        const ft = (fileType || '').toLowerCase();
+        const ext = (fileName || '').split('.').pop().toLowerCase();
+        if (ft.startsWith('video/') || ['mp4','mov','avi','mkv','webm'].includes(ext)) {
+            return `<svg class="w-6 h-6 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>`;
+        }
+        if (ft.startsWith('audio/') || ['mp3','wav','ogg','flac','aac','m4a'].includes(ext)) {
+            return `<svg class="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>`;
+        }
+        if (ft === 'application/pdf' || ext === 'pdf') {
+            return `<svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
+        }
+        if (['zip','rar','7z','tar','gz','bz2'].includes(ext) || ft.includes('zip') || ft.includes('compressed')) {
+            return `<svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>`;
+        }
+        if (['doc','docx','odt'].includes(ext) || ft.includes('word') || ft.includes('document')) {
+            return `<svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
+        }
+        if (['xls','xlsx','csv','ods'].includes(ext) || ft.includes('spreadsheet') || ft.includes('excel')) {
+            return `<svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>`;
+        }
+        return `<svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
+    }
+
     function renderAttachmentsHTML(attachments) {
         if (!attachments || !attachments.length) return '';
         return attachments.map(att => {
             if (att.is_image) {
                 return `<a href="${att.url}" target="_blank" class="block">
-                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm" loading="lazy">
                 </a>`;
             } else {
                 return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                    <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    ${getFileIcon(att.file_type, att.name)}
                     <div class="flex flex-col min-w-0 flex-1">
                         <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
                         <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
