@@ -133,9 +133,9 @@
                 {% with msg_username=m.author.profile.username|default:m.author.username %}
                 <div class="flex items-start gap-2 {% if m.author == request.user %}justify-end{% endif %}"
                      data-username="{{ msg_username }}" data-message-id="{{ m.id }}"
-                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                     {% if m.author != request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ m.author.profile.color|default:'gray' }}-300">
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not m.author.profile.avatar_data %}bg-{{ m.author.profile.color|default:'gray' }}-300{% endif %}">
                         {% if m.author.profile.avatar_data %}
                         <img src="{% url 'avatar' m.author.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -158,11 +158,11 @@
                         <div class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
                             {% for att in m.attachments.all %}
                             {% if att.is_image %}
-                            <a href="{{ att.file.url }}" target="_blank" class="block">
-                                <img src="{{ att.file.url }}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                            <a href="/chat/attachments/{{ att.id }}/" target="_blank" class="block">
+                                <img src="/chat/attachments/{{ att.id }}/" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
                             </a>
                             {% else %}
-                            <a href="{{ att.file.url }}" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                            <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
                                 <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 <div class="flex flex-col min-w-0 flex-1">
                                     <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
@@ -176,7 +176,7 @@
                     </div>
 
                     {% if m.author == request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
+                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
                         {% if request.user.profile.avatar_data %}
                         <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -259,10 +259,12 @@
 {% if is_member %}
 {{ request.user.profile.username|default:request.user.username|json_script:"current-user" }}
 {{ group.id|json_script:"group-id" }}
+{{ known_usernames|json_script:"known-usernames" }}
 <script>
   (function(){
     const groupId = JSON.parse(document.getElementById('group-id').textContent);
     const currentUser = JSON.parse(document.getElementById('current-user').textContent);
+    const knownUsers = new Set(JSON.parse(document.getElementById('known-usernames').textContent));
     const myColor = "{{ request.user.profile.color|default:'gray' }}";
 
     function getCookie(name) {
@@ -317,17 +319,23 @@
         return div.innerHTML;
     }
 
+    const URL_PATTERN = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
+    const MENTION_PATTERN = /@([A-Za-z0-9_-]{1,50})/g;
+
     function autolink(text) {
         if (!text) return '';
-        const escaped = escapeHtml(text);
-        const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
-        return escaped.replace(urlPattern, function(match, url, trailing) {
-            let href = url;
-            if (url.toLowerCase().startsWith('www.')) {
-                href = 'http://' + url;
-            }
+        let result = escapeHtml(text);
+        result = result.replace(URL_PATTERN, (match, url, trailing) => {
+            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
             return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
         });
+        result = result.replace(MENTION_PATTERN, (match, username) => {
+            if (knownUsers.has(username)) {
+                return `<a href="/chat/private/${username}/" class="text-blue-600 font-medium hover:underline" onclick="event.stopPropagation();">@${username}</a>`;
+            }
+            return match;
+        });
+        return result;
     }
 
     function adjustTextareaHeight() {

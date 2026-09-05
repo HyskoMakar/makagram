@@ -20,109 +20,112 @@ def feed(request):
     feed_items = []
 
     if tab in ('all', 'channel'):
-        from channel.models import Channel, ChannelPost, ChannelPostLike
-        if request.user.is_authenticated:
-            my_channel_ids = Channel.objects.filter(subscribers=request.user).values_list('id', flat=True)
-            channel_posts = ChannelPost.objects.filter(channel_id__in=my_channel_ids).select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
-        else:
-            channel_posts = ChannelPost.objects.select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
-
-        liked_post_ids = set()
-        if request.user.is_authenticated:
-            liked_post_ids = set(ChannelPostLike.objects.filter(creator=request.user).values_list('post_id', flat=True))
-
-        for post in channel_posts:
-            feed_items.append({
-                'id': f'channel_{post.id}',
-                'type': 'channel',
-                'type_label': 'Channel',
-                'title': post.channel.name,
-                'channel_id': post.channel.id,
-                'color': post.channel.color or 'blue',
-                'content': post.content,
-                'created_at': post.created_at,
-                'author': post.author,
-                'like_count': post.likes.count(),
-                'liked': post.id in liked_post_ids,
-                'post_id': post.id,
-                'link': f'/channel/{post.channel.id}/',
-            })
-
+        feed_items += _get_channel_items(request)
     if tab in ('all', 'group'):
-        from chat.models import GroupMessage, Group
-        if request.user.is_authenticated:
-            my_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
-            group_msgs = GroupMessage.objects.filter(group_id__in=my_group_ids).select_related('group', 'author__profile').order_by('-created_at')[:30]
-        else:
-            public_group_ids = Group.objects.filter(private=False).values_list('id', flat=True)
-            group_msgs = GroupMessage.objects.filter(group_id__in=public_group_ids).select_related('group', 'author__profile').order_by('-created_at')[:30]
-
-        for msg in group_msgs:
-            feed_items.append({
-                'id': f'group_{msg.id}',
-                'type': 'group',
-                'type_label': 'Group',
-                'title': msg.group.name,
-                'color': msg.group.color or 'purple',
-                'content': msg.content,
-                'created_at': msg.created_at,
-                'author': msg.author,
-                'link': f'/chat/groups/{msg.group.id}/',
-            })
-
+        feed_items += _get_group_items(request)
     if tab in ('all', 'private') and request.user.is_authenticated:
-        from chat.models import PrivateMessage
-        from django.db.models import Q
-        private_msgs = PrivateMessage.objects.filter(
-            Q(from_user=request.user) | Q(to_user=request.user)
-        ).select_related('from_user__profile', 'to_user__profile').order_by('-created_at')[:20]
-
-        for msg in private_msgs:
-            other = msg.to_user if msg.from_user == request.user else msg.from_user
-            other_username = (other.profile.username if hasattr(other, 'profile') and other.profile.username else other.username) if other else 'User'
-            other_color = getattr(getattr(other, 'profile', None), 'color', 'emerald') or 'emerald'
-            feed_items.append({
-                'id': f'private_{msg.id}',
-                'type': 'private',
-                'type_label': 'Direct Message',
-                'title': f'@{other_username}',
-                'color': other_color,
-                'content': msg.content,
-                'created_at': msg.created_at,
-                'author': msg.from_user,
-                'link': f'/chat/private/{other.username}/' if other else '#',
-            })
-
+        feed_items += _get_private_items(request)
     if tab in ('all', 'system'):
-        if request.user.is_authenticated:
-            sys_notifs = Notification.visible_to(request.user).filter(
-                notification_type='system'
-            )[:10]
-        else:
-            sys_notifs = Notification.objects.filter(
-                recipient__isnull=True,
-                notification_type='system',
-            )[:10]
-
-        for n in sys_notifs:
-            feed_items.append({
-                'id': f'sys_{n.id}',
-                'type': 'system',
-                'type_label': 'Community',
-                'title': n.title,
-                'color': 'indigo',
-                'content': n.message,
-                'created_at': n.created_at,
-                'author': n.sender,
-                'link': n.link or '/',
-            })
+        feed_items += _get_system_items(request)
 
     feed_items.sort(key=lambda x: x['created_at'], reverse=True)
+    return render(request, 'feed.html', {'feed_items': feed_items[:50], 'tab': tab})
 
-    return render(request, 'feed.html', {
-        'feed_items': feed_items[:50],
-        'tab': tab,
-    })
+
+def _get_channel_items(request):
+    from channel.models import Channel, ChannelPost, ChannelPostLike
+    if request.user.is_authenticated:
+        my_channel_ids = Channel.objects.filter(subscribers=request.user).values_list('id', flat=True)
+        posts = ChannelPost.objects.filter(channel_id__in=my_channel_ids).exclude(author=request.user)
+    else:
+        posts = ChannelPost.objects.all()
+    posts = posts.select_related('channel', 'author__profile').prefetch_related('likes').order_by('-created_at')[:30]
+
+    liked_ids = set()
+    if request.user.is_authenticated:
+        liked_ids = set(ChannelPostLike.objects.filter(creator=request.user).values_list('post_id', flat=True))
+
+    return [{
+        'id': f'channel_{post.id}',
+        'type': 'channel',
+        'type_label': 'Channel',
+        'title': post.channel.name,
+        'channel_id': post.channel.id,
+        'color': post.channel.color or 'blue',
+        'content': post.content,
+        'created_at': post.created_at,
+        'author': post.author,
+        'like_count': post.likes.count(),
+        'liked': post.id in liked_ids,
+        'post_id': post.id,
+        'link': f'/channel/{post.channel.id}/',
+    } for post in posts]
+
+
+def _get_group_items(request):
+    from chat.models import GroupMessage, Group
+    if request.user.is_authenticated:
+        my_group_ids = Group.objects.filter(members=request.user).values_list('id', flat=True)
+        msgs = GroupMessage.objects.filter(group_id__in=my_group_ids).exclude(author=request.user)
+    else:
+        public_ids = Group.objects.filter(private=False).values_list('id', flat=True)
+        msgs = GroupMessage.objects.filter(group_id__in=public_ids)
+    msgs = msgs.select_related('group', 'author__profile').order_by('-created_at')[:30]
+
+    return [{
+        'id': f'group_{msg.id}',
+        'type': 'group',
+        'type_label': 'Group',
+        'title': msg.group.name,
+        'color': msg.group.color or 'purple',
+        'content': msg.content,
+        'created_at': msg.created_at,
+        'author': msg.author,
+        'link': f'/chat/groups/{msg.group.id}/',
+    } for msg in msgs]
+
+
+def _get_private_items(request):
+    from chat.models import PrivateMessage
+    msgs = PrivateMessage.objects.filter(
+        to_user=request.user
+    ).select_related('from_user__profile', 'to_user__profile').order_by('-created_at')[:20]
+
+    items = []
+    for msg in msgs:
+        other = msg.to_user if msg.from_user == request.user else msg.from_user
+        other_profile = getattr(other, 'profile', None)
+        items.append({
+            'id': f'private_{msg.id}',
+            'type': 'private',
+            'type_label': 'Direct Message',
+            'title': f'@{other_profile.display_name if other_profile else other.username}',
+            'color': (other_profile.color if other_profile else None) or 'emerald',
+            'content': msg.content,
+            'created_at': msg.created_at,
+            'author': msg.from_user,
+            'link': f'/chat/private/{other_profile.display_name if other_profile else other.username}/' if other else '#',
+        })
+    return items
+
+
+def _get_system_items(request):
+    if request.user.is_authenticated:
+        notifs = Notification.visible_to(request.user).filter(notification_type='system')[:10]
+    else:
+        notifs = Notification.objects.filter(recipient__isnull=True, notification_type='system')[:10]
+
+    return [{
+        'id': f'sys_{n.id}',
+        'type': 'system',
+        'type_label': 'Community',
+        'title': n.title,
+        'color': 'indigo',
+        'content': n.message,
+        'created_at': n.created_at,
+        'author': n.sender,
+        'link': n.link or '/',
+    } for n in notifs]
 
 
 def login_view(request):
@@ -278,24 +281,17 @@ def cleanup_user_notifications(user):
 
     to_delete_ids = []
 
-    channel_notifs = Notification.objects.filter(recipient=user, notification_type='channel')
-    for notif in channel_notifs:
-        m = re.search(r'/channel/(\d+)/?', notif.link)
-        if m:
-            cid = int(m.group(1))
-            if not Channel.objects.filter(id=cid, subscribers=user).exists():
-                to_delete_ids.append(notif.id)
-        else:
-            to_delete_ids.append(notif.id)
+    checks = [
+        (r'/channel/(\d+)/?', 'channel', lambda cid: Channel.objects.filter(id=cid, subscribers=user).exists()),
+        (r'/chat/groups/(\d+)/?', ('group', 'invite'), lambda gid: Group.objects.filter(id=gid, members=user).exists()),
+    ]
 
-    group_notifs = Notification.objects.filter(recipient=user, notification_type__in=['group', 'invite'])
-    for notif in group_notifs:
-        m = re.search(r'/chat/groups/(\d+)/?', notif.link)
-        if m:
-            gid = int(m.group(1))
-            if not Group.objects.filter(id=gid, members=user).exists():
-                to_delete_ids.append(notif.id)
-        else:
+    for pattern, notif_types, is_valid in checks:
+        types = (notif_types,) if isinstance(notif_types, str) else notif_types
+        for notif in Notification.objects.filter(recipient=user, notification_type__in=types):
+            m = re.search(pattern, notif.link)
+            if m and is_valid(int(m.group(1))):
+                continue
             to_delete_ids.append(notif.id)
 
     if to_delete_ids:
@@ -331,8 +327,8 @@ def notifications_list_view(request):
     data = []
     for n in notifications:
         sender_name = (
-            (n.sender.profile.username if hasattr(n.sender, 'profile') and n.sender.profile.username else n.sender.username)
-            if n.sender else 'MaKaGram Community'
+            n.sender.profile.display_name if n.sender and hasattr(n.sender, 'profile')
+            else (n.sender.username if n.sender else 'MaKaGram Community')
         )
         is_read = n.is_read if n.recipient_id else n.id in read_broadcast_ids
         data.append({
@@ -354,8 +350,23 @@ def notifications_list_view(request):
 
 @login_required(login_url='login')
 @require_POST
+def mark_one_notification_read_view(request, notif_id):
+    n = Notification.objects.filter(id=notif_id).first()
+    if not n:
+        return JsonResponse({'ok': False})
+    if n.recipient_id:
+        if n.recipient_id == request.user.id:
+            n.is_read = True
+            n.save(update_fields=['is_read'])
+    else:
+        n.read_by.add(request.user)
+    return JsonResponse({'ok': True})
+
+
+@login_required(login_url='login')
+@require_POST
 def mark_notifications_read_view(request):
-    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    Notification.objects.filter(recipient=request.user).exclude(notification_type='system').delete()
 
     through = Notification.read_by.through
     unread_broadcast_ids = list(

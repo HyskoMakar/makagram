@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static chat_extras %}
 
 {% block title %}News Feed{% endblock %}
 
@@ -36,8 +36,8 @@
         <div class="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 p-4 transition-all">
             <div class="flex items-center justify-between gap-3 mb-2">
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ item.color }}-400 text-sm select-none shadow-sm">
-                        {% if item.author.profile.avatar_data %}
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 {% if item.author and not item.author.profile.avatar_data %}bg-{{ item.color }}-400{% elif not item.author %}bg-{{ item.color }}-400{% endif %} text-sm select-none shadow-sm">
+                        {% if item.author and item.author.profile.avatar_data %}
                         <img src="{% url 'avatar' item.author.id %}" class="w-full h-full rounded-full object-cover">
                         {% else %}
                         {{ item.title|slice:":1"|upper }}
@@ -68,7 +68,7 @@
             </div>
 
             <div class="text-sm text-gray-700 mt-2 whitespace-pre-line break-words pl-1 border-l-2 border-{{ item.color }}-300">
-                {{ item.content }}
+                {{ item.content|autolink }}
             </div>
 
             {% if item.type == 'channel' %}

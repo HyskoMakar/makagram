@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/mute/', views.toggle_mute_view, name='toggle-mute'),
     path('api/notifications/', views.notifications_list_view, name='notifications-list'),
     path('api/notifications/mark-read/', views.mark_notifications_read_view, name='notifications-mark-read'),
+    path('api/notifications/<int:notif_id>/read/', views.mark_one_notification_read_view, name='notification-read-one'),
 
     # admin
     path('admin/', admin.site.urls),

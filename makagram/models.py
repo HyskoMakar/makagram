@@ -22,8 +22,12 @@ class Profile(models.Model):
     avatar_data = models.BinaryField(blank=True, null=True)
     avatar_type = models.CharField(max_length=50, blank=True)
 
-    def __str__(self):
+    @property
+    def display_name(self):
         return self.username or self.user.username
+
+    def __str__(self):
+        return self.display_name
 
 
 @receiver(post_save, sender=User)

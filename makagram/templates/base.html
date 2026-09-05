@@ -107,14 +107,19 @@
         function autolinkNotif(text) {
             if (!text) return '';
             const escaped = escapeHtml(text);
-            const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
-            return escaped.replace(urlPattern, function(match, url, trailing) {
-                let href = url;
-                if (url.toLowerCase().startsWith('www.')) {
-                    href = 'http://' + url;
-                }
+            const urlPattern = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
+            return escaped.replace(urlPattern, (match, url, trailing) => {
+                const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
                 return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
             });
+        }
+
+        function markNotifRead(id, link, event) {
+            if (event.target.tagName === 'A') return;
+            fetch(`/api/notifications/${id}/read/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            }).finally(() => { window.location.href = link; });
         }
 
         function fetchNotifications() {
@@ -135,7 +140,7 @@
                     }
 
                     notifList.innerHTML = data.notifications.map(n => `
-                        <div onclick="if (event.target.tagName !== 'A') window.location.href='${n.link || '#'}';" class="block px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${n.is_read ? 'opacity-70' : 'bg-blue-50/40'}">
+                        <div onclick="markNotifRead(${n.id}, '${n.link || '#'}', event)" class="block px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${n.is_read ? 'opacity-70' : 'bg-blue-50/40'}" data-notif-id="${n.id}">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-xs font-semibold text-gray-800">${escapeHtml(n.title)}</span>
                                 <span class="text-[10px] text-gray-400">${n.created_at}</span>

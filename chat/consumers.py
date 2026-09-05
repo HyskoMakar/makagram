@@ -6,7 +6,44 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 MAX_MESSAGE_LENGTH = 4000
 
 
-class GroupChatConsumer(AsyncWebsocketConsumer):
+class BaseChatConsumer(AsyncWebsocketConsumer):
+
+    async def _send_error(self, message):
+        await self.send(text_data=json.dumps({'type': 'error', 'message': message}))
+
+    @sync_to_async
+    def _get_user_data(self, user):
+        profile = getattr(user, 'profile', None)
+        avatar = f'/avatar/{user.id}/' if profile and profile.avatar_data else None
+        return {
+            'username': profile.display_name if profile else user.username,
+            'color': (profile.color if profile else None) or 'gray',
+            'avatar': avatar,
+        }
+
+    @sync_to_async
+    def _get_user_by_username(self, username):
+        from django.contrib.auth.models import User
+        return (
+            User.objects.select_related('profile').filter(profile__username=username).first()
+            or User.objects.select_related('profile').filter(username=username).first()
+        )
+
+    def _do_edit_message(self, msg, new_content, attachment_ids):
+        from .models import Attachment
+        msg.content = new_content
+        msg.save()
+        if attachment_ids is not None:
+            msg.attachments.exclude(id__in=attachment_ids).delete()
+            Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(
+                **{self._attachment_fk: msg}
+            )
+        return [att.as_dict() for att in msg.attachments.all()]
+
+
+class GroupChatConsumer(BaseChatConsumer):
+    _attachment_fk = 'group_message'
+
     async def connect(self):
         self.me = self.scope['user']
         self.group_id = self.scope['url_route']['kwargs']['group_id']
@@ -48,18 +85,14 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
             if not await self._is_member(self.me, self.group_id):
                 await self._send_error('You are not a member of this group')
                 return
-
             ok, attachments = await self._edit_message(message_id, new_content, attachment_ids)
             if ok:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'group.message_edited',
-                        'message_id': message_id,
-                        'message': new_content,
-                        'attachments': attachments,
-                    },
-                )
+                await self.channel_layer.group_send(self.room_group_name, {
+                    'type': 'group.message_edited',
+                    'message_id': message_id,
+                    'message': new_content,
+                    'attachments': attachments,
+                })
             else:
                 await self._send_error('Cannot edit this message')
             return
@@ -71,16 +104,12 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
             if not await self._is_member(self.me, self.group_id):
                 await self._send_error('You are not a member of this group')
                 return
-
             ok = await self._delete_message(message_id)
             if ok:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'group.message_deleted',
-                        'message_id': message_id,
-                    },
-                )
+                await self.channel_layer.group_send(self.room_group_name, {
+                    'type': 'group.message_deleted',
+                    'message_id': message_id,
+                })
             else:
                 await self._send_error('Cannot delete this message')
             return
@@ -92,22 +121,18 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         if len(message) > MAX_MESSAGE_LENGTH:
             await self._send_error(f'Message is too long (max {MAX_MESSAGE_LENGTH} characters)')
             return
-
         if not await self._is_member(self.me, self.group_id):
             await self._send_error('You are not a member of this group')
             return
 
         msg_obj, attachments = await self._save_message(message, attachment_ids)
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'group.message',
-                'message_id': msg_obj.id if msg_obj else None,
-                'message': message,
-                'attachments': attachments,
-                'user': await self._get_user_data(self.me),
-            },
-        )
+        await self.channel_layer.group_send(self.room_group_name, {
+            'type': 'group.message',
+            'message_id': msg_obj.id if msg_obj else None,
+            'message': message,
+            'attachments': attachments,
+            'user': await self._get_user_data(self.me),
+        })
 
     async def group_message(self, event):
         await self.send(text_data=json.dumps({
@@ -142,67 +167,39 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         await self._send_error('This group was deleted')
         await self.close(code=4404)
 
-    async def _send_error(self, message):
-        await self.send(text_data=json.dumps({'type': 'error', 'message': message}))
-
     @sync_to_async
     def _is_member(self, user, group_id):
         from .models import Group
         return Group.objects.filter(id=group_id, members=user).exists()
 
     @sync_to_async
-    def _get_user_data(self, user):
-        profile = getattr(user, 'profile', None)
-        avatar = None
-        if profile and profile.avatar_data:
-            avatar = f'/avatar/{user.id}/'
-        return {
-            'username': (profile.username if profile else '') or user.username,
-            'color': (profile.color if profile else '') or 'gray',
-            'avatar': avatar,
-        }
-
-    @sync_to_async
     def _save_message(self, content, attachment_ids):
         from .models import Attachment, Group, GroupMessage
         from makagram.views import create_notification_if_not_muted
         group = Group.objects.filter(id=self.group_id).first()
-        if group:
-            msg = GroupMessage.objects.create(group=group, author=self.me, content=content)
-            if attachment_ids:
-                Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(group_message=msg)
-            attachments = [att.as_dict() for att in msg.attachments.all()]
-
-            notif_msg = content[:100] if content else 'Sent an attachment'
-            for member in group.members.exclude(id=self.me.id):
-                create_notification_if_not_muted(
-                    recipient=member,
-                    sender=self.me,
-                    title=f'Message in group "{group.name}"',
-                    message=f'{notif_msg}',
-                    notification_type='group',
-                    link=f'/chat/groups/{group.id}/',
-                    chat_type='group',
-                    target_id=group.id,
-                )
-            return msg, attachments
-        return None, []
+        if not group:
+            return None, []
+        msg = GroupMessage.objects.create(group=group, author=self.me, content=content)
+        if attachment_ids:
+            Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(group_message=msg)
+        attachments = [att.as_dict() for att in msg.attachments.all()]
+        notif_msg = content[:100] if content else 'Sent an attachment'
+        for member in group.members.exclude(id=self.me.id):
+            create_notification_if_not_muted(
+                recipient=member, sender=self.me,
+                title=f'Message in group "{group.name}"', message=notif_msg,
+                notification_type='group', link=f'/chat/groups/{group.id}/',
+                chat_type='group', target_id=group.id,
+            )
+        return msg, attachments
 
     @sync_to_async
     def _edit_message(self, message_id, new_content, attachment_ids):
-        from .models import Attachment, GroupMessage
+        from .models import GroupMessage
         msg = GroupMessage.objects.filter(id=message_id, group_id=self.group_id, author=self.me).first()
         if not msg:
             return False, []
-        msg.content = new_content
-        msg.save()
-        if attachment_ids is not None:
-            # Delete removed attachments
-            msg.attachments.exclude(id__in=attachment_ids).delete()
-            # Link new attachments
-            Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(group_message=msg)
-        attachments = [att.as_dict() for att in msg.attachments.all()]
-        return True, attachments
+        return True, self._do_edit_message(msg, new_content, attachment_ids)
 
     @sync_to_async
     def _delete_message(self, message_id):
@@ -217,9 +214,9 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
         return False
 
 
+class PrivateChatConsumer(BaseChatConsumer):
+    _attachment_fk = 'private_message'
 
-
-class PrivateChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.me = self.scope['user']
         self.other_username = self.scope['url_route']['kwargs']['username']
@@ -235,7 +232,6 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
 
         user_ids = sorted([self.me.id, other_user.id])
         self.room_group_name = f'private_{user_ids[0]}_{user_ids[1]}'
-
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
@@ -263,15 +259,12 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
                 return
             ok, attachments = await self._edit_message(message_id, new_content, attachment_ids)
             if ok:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'chat.message_edited',
-                        'message_id': message_id,
-                        'message': new_content,
-                        'attachments': attachments,
-                    },
-                )
+                await self.channel_layer.group_send(self.room_group_name, {
+                    'type': 'chat.message_edited',
+                    'message_id': message_id,
+                    'message': new_content,
+                    'attachments': attachments,
+                })
             else:
                 await self._send_error('Cannot edit this message')
             return
@@ -282,13 +275,10 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
                 return
             ok = await self._delete_message(message_id)
             if ok:
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'chat.message_deleted',
-                        'message_id': message_id,
-                    },
-                )
+                await self.channel_layer.group_send(self.room_group_name, {
+                    'type': 'chat.message_deleted',
+                    'message_id': message_id,
+                })
             else:
                 await self._send_error('Cannot delete this message')
             return
@@ -306,21 +296,18 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             await self._send_error('User not found')
             return
 
-        if await self._is_blocked_by(to_user, self.me) or await self._is_blocked_by(self.me, to_user):
+        if await self._is_blocked(to_user, self.me) or await self._is_blocked(self.me, to_user):
             await self._send_error('Messaging is blocked')
             return
 
         msg_obj, attachments = await self._save_message(to_user, message, attachment_ids)
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat.message',
-                'message_id': msg_obj.id if msg_obj else None,
-                'message': message,
-                'attachments': attachments,
-                'user': await self._get_user_data(self.me),
-            },
-        )
+        await self.channel_layer.group_send(self.room_group_name, {
+            'type': 'chat.message',
+            'message_id': msg_obj.id if msg_obj else None,
+            'message': message,
+            'attachments': attachments,
+            'user': await self._get_user_data(self.me),
+        })
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
@@ -360,6 +347,7 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             'group_id': event.get('group_id'),
             'group_name': event.get('group_name'),
             'inviter': event.get('inviter'),
+            'invitee': event.get('invitee'),
         }))
 
     async def chat_invite_response(self, event):
@@ -370,65 +358,35 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
             'group_id': event.get('group_id'),
             'group_name': event.get('group_name'),
             'user': event.get('user'),
+            'invitee': event.get('invitee'),
         }))
-
-    async def _send_error(self, message):
-        await self.send(text_data=json.dumps({'type': 'error', 'message': message}))
-
-    @sync_to_async
-    def _get_user_data(self, user):
-        profile = getattr(user, 'profile', None)
-        avatar = None
-        if profile and profile.avatar_data:
-            avatar = f'/avatar/{user.id}/'
-        return {
-            'username': (profile.username if profile else '') or user.username,
-            'color': (profile.color if profile else '') or 'gray',
-            'avatar': avatar,
-        }
 
     @sync_to_async
     def _save_message(self, to_user, content, attachment_ids):
         from .models import Attachment, PrivateMessage
         from makagram.views import create_notification_if_not_muted
-        msg = PrivateMessage.objects.create(
-            from_user=self.me,
-            to_user=to_user,
-            content=content,
-        )
+        msg = PrivateMessage.objects.create(from_user=self.me, to_user=to_user, content=content)
         if attachment_ids:
             Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(private_message=msg)
         attachments = [att.as_dict() for att in msg.attachments.all()]
-
         notif_msg = content[:100] if content else 'Sent an attachment'
-        sender_name = self.me.profile.username if hasattr(self.me, 'profile') and self.me.profile.username else self.me.username
+        profile = getattr(self.me, 'profile', None)
+        sender_name = profile.display_name if profile else self.me.username
         create_notification_if_not_muted(
-            recipient=to_user,
-            sender=self.me,
-            title=f'New message from @{sender_name}',
-            message=f'{notif_msg}',
-            notification_type='private',
-            link=f'/chat/private/{sender_name}/',
-            chat_type='private',
-            target_id=self.me.id,
+            recipient=to_user, sender=self.me,
+            title=f'New message from @{sender_name}', message=notif_msg,
+            notification_type='private', link=f'/chat/private/{sender_name}/',
+            chat_type='private', target_id=self.me.id,
         )
         return msg, attachments
 
     @sync_to_async
     def _edit_message(self, message_id, new_content, attachment_ids):
-        from .models import Attachment, PrivateMessage
+        from .models import PrivateMessage
         msg = PrivateMessage.objects.filter(id=message_id, from_user=self.me).first()
         if not msg:
             return False, []
-        msg.content = new_content
-        msg.save()
-        if attachment_ids is not None:
-            # Delete removed attachments
-            msg.attachments.exclude(id__in=attachment_ids).delete()
-            # Link new attachments
-            Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(private_message=msg)
-        attachments = [att.as_dict() for att in msg.attachments.all()]
-        return True, attachments
+        return True, self._do_edit_message(msg, new_content, attachment_ids)
 
     @sync_to_async
     def _delete_message(self, message_id):
@@ -440,16 +398,6 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         return True
 
     @sync_to_async
-    def _get_user_by_username(self, username):
-        from django.contrib.auth.models import User
-        return (
-            User.objects.select_related('profile')
-            .filter(profile__username=username)
-            .first()
-            or User.objects.select_related('profile').filter(username=username).first()
-        )
-
-    @sync_to_async
-    def _is_blocked_by(self, blocker, blocked_user):
+    def _is_blocked(self, blocker, blocked_user):
         from .models import Block
         return Block.objects.filter(blocker=blocker, blocked=blocked_user).exists()

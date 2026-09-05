@@ -163,6 +163,13 @@ def group(request, group_id):
         'author__profile'
     ).prefetch_related('attachments').order_by('-created_at')[:50]
 
+    from django.contrib.auth.models import User as AuthUser
+    all_usernames = list(
+        AuthUser.objects.exclude(id=request.user.id)
+        .values_list('profile__username', 'username')
+    )
+    known_usernames = list({pn or un for pn, un in all_usernames})
+
     return render(request, 'group_chat.html', {
         'group': group,
         'messages': reversed(list(messages_qs)) if is_member or not group.private else [],
@@ -171,6 +178,7 @@ def group(request, group_id):
         'invited': bool(invite),
         'invite': invite,
         'colors': ALLOWED_COLORS,
+        'known_usernames': known_usernames,
     })
 
 
@@ -305,7 +313,8 @@ def invite_to_group(request, group_id):
         'invite_id': invite.id,
         'group_id': group.id,
         'group_name': group.name,
-        'inviter': request.user.username,
+        'inviter': request.user.profile.display_name if hasattr(request.user, 'profile') else request.user.username,
+        'invitee': other.username,
     })
     return JsonResponse({'ok': True, 'invite_id': invite.id})
 
@@ -327,7 +336,8 @@ def accept_invite(request, invite_id):
         'accepted': True,
         'group_id': group.id,
         'group_name': group.name,
-        'user': request.user.username,
+        'user': request.user.profile.display_name if hasattr(request.user, 'profile') else request.user.username,
+        'invitee': request.user.profile.display_name if hasattr(request.user, 'profile') else request.user.username,
     })
     return JsonResponse({'ok': True})
 
@@ -346,7 +356,8 @@ def decline_invite(request, invite_id):
         'accepted': False,
         'group_id': group.id,
         'group_name': group.name,
-        'user': request.user.username,
+        'user': request.user.profile.display_name if hasattr(request.user, 'profile') else request.user.username,
+        'invitee': request.user.profile.display_name if hasattr(request.user, 'profile') else request.user.username,
     })
     return JsonResponse({'ok': True})
 
@@ -374,6 +385,13 @@ def private_chat(request, username):
 
     is_muted = NotificationMute.objects.filter(user=request.user, chat_type='private', target_id=other.id).exists()
 
+    from django.contrib.auth.models import User as AuthUser
+    all_usernames = list(
+        AuthUser.objects.exclude(id=request.user.id)
+        .values_list('profile__username', 'username')
+    )
+    known_usernames = list({pn or un for pn, un in all_usernames})
+
     return render(request, 'private_chat.html', {
         'other': other,
         'blocked_by_other': blocked_by_other,
@@ -384,6 +402,7 @@ def private_chat(request, username):
         'my_private_groups': my_private_groups,
         'messages': reversed(list(messages_qs)),
         'pending_invites': pending_invites,
+        'known_usernames': known_usernames,
     })
 
 
@@ -474,7 +493,7 @@ def upload_attachment(request):
         is_img = content_type.startswith('image/') or ext in IMAGE_EXTENSIONS
 
         att = Attachment.objects.create(
-            file=f,
+            file_data=f.read(),
             original_name=file_name,
             file_type=content_type,
             is_image=is_img,
@@ -490,9 +509,14 @@ def upload_attachment(request):
 @require_POST
 def delete_attachment(request, attachment_id):
     att = get_object_or_404(Attachment, id=attachment_id, uploaded_by=request.user)
-    if att.file:
-        att.file.delete(save=False)
     att.delete()
     return JsonResponse({'ok': True})
+
+
+@login_required(login_url='login')
+def attachment_view(request, attachment_id):
+    from django.http import HttpResponse
+    att = get_object_or_404(Attachment, id=attachment_id)
+    return HttpResponse(bytes(att.file_data), content_type=att.file_type or 'application/octet-stream')
 
 

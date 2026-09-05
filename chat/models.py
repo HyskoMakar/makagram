@@ -114,7 +114,7 @@ class GroupMessage(models.Model):
 
 
 class Attachment(models.Model):
-    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
+    file_data = models.BinaryField(null=True)
     original_name = models.CharField(max_length=255)
     file_type = models.CharField(max_length=100, default='')
     is_image = models.BooleanField(default=False)
@@ -146,7 +146,7 @@ class Attachment(models.Model):
     def as_dict(self):
         return {
             'id': self.id,
-            'url': self.file.url,
+            'url': f'/chat/attachments/{self.id}/',
             'name': self.original_name,
             'is_image': self.is_image,
             'size': self.formatted_size,

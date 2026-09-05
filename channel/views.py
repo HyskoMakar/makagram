@@ -29,8 +29,8 @@ def _author_payload(user):
         avatar = f'/avatar/{user.id}/'
     return {
         'id': user.id,
-        'username': (profile.username if profile else '') or user.username,
-        'color': (profile.color if profile else '') or 'gray',
+        'username': profile.display_name if profile else user.username,
+        'color': (profile.color if profile else None) or 'gray',
         'avatar': avatar,
     }
 

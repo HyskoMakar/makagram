@@ -62,7 +62,7 @@
                 {% with sub_username=subscriber.profile.username|default:subscriber.username %}
                 <div class="flex items-center justify-between gap-3 bg-white border rounded-lg px-3 py-2">
                     <div class="flex items-center gap-2 min-w-0">
-                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 bg-{{ subscriber.profile.color|default:'gray' }}-300">
+                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 {% if not subscriber.profile.avatar_data %}bg-{{ subscriber.profile.color|default:'gray' }}-300{% endif %}">
                             {% if subscriber.profile.avatar_data %}
                             <img src="{% url 'avatar' subscriber.id %}" class="w-full h-full object-cover">
                             {% else %}
@@ -124,7 +124,7 @@
                 </div>
             </form>
 
-            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center" onsubmit="return confirm('Delete this channel? This cannot be undone.');">
+            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center">
                 {% csrf_token %}
                 <span class="text-xs text-red-500 font-medium">Danger Zone</span>
                 <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">Delete Channel</button>
@@ -136,9 +136,9 @@
             {% for entry in posts %}
             {% with post=entry.post author_username=entry.post.author.profile.username|default:entry.post.author.username %}
             <div class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}" data-post-id="{{ post.id }}" data-author-id="{{ post.author.id|default:'' }}"
-                 data-attachments='[{% for att in post.attachments.all %}{"id":{{ att.id }},"url":"{{ att.file.url|escapejs }}","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                 data-attachments='[{% for att in post.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                 {% if post.author != request.user %}
-                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ post.author.profile.color|default:'gray' }}-300">
+                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not post.author.profile.avatar_data %}bg-{{ post.author.profile.color|default:'gray' }}-300{% endif %}">
                     {% if post.author.profile.avatar_data %}
                     <img src="{% url 'avatar' post.author.id %}" class="w-full h-full object-cover">
                     {% else %}
@@ -166,11 +166,11 @@
                     <div class="post-attachments flex flex-col gap-1.5 {% if post.content and post.attachments.all %}mt-2{% endif %}">
                         {% for att in post.attachments.all %}
                         {% if att.is_image %}
-                        <a href="{{ att.file.url }}" target="_blank" class="block">
-                            <img src="{{ att.file.url }}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                        <a href="/chat/attachments/{{ att.id }}/" target="_blank" class="block">
+                            <img src="/chat/attachments/{{ att.id }}/" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
                         </a>
                         {% else %}
-                        <a href="{{ att.file.url }}" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                        <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
                             <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             <div class="flex flex-col min-w-0 flex-1">
                                 <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
@@ -197,7 +197,7 @@
                 </div>
 
                 {% if post.author == request.user %}
-                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 bg-{{ request.user.profile.color|default:'gray' }}-300">
+                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
                     {% if request.user.profile.avatar_data %}
                     <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                     {% else %}
@@ -309,17 +309,18 @@
         return div.innerHTML;
     }
 
+    const URL_PATTERN = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
+
+    const FIXED_URL_PATTERN = /((?:https?:\/\/|www\.|\\b(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
+
     function autolink(text) {
         if (!text) return '';
-        const escaped = escapeHtml(text);
-        const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+?)([\.,\)\!\?;\:]?(?:\s|<|$))/gi;
-        return escaped.replace(urlPattern, function(match, url, trailing) {
-            let href = url;
-            if (url.toLowerCase().startsWith('www.')) {
-                href = 'http://' + url;
-            }
+        let result = escapeHtml(text);
+        result = result.replace(FIXED_URL_PATTERN, (match, url, trailing) => {
+            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
             return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
         });
+        return result;
     }
 
     function adjustTextareaHeight() {
@@ -478,7 +479,6 @@
       cmDeleteBtn.addEventListener('click', async function() {
         hideContextMenu();
         if (!selectedPostId || !selectedPostCard) return;
-        if (!confirm('Delete this post?')) return;
 
         const res = await fetch(`/channel/${channelId}/posts/${selectedPostId}/delete/`, {
           method: 'POST',
@@ -529,12 +529,13 @@
     }
 
     function wireLikeButton(btn) {
-      btn.addEventListener('click', async function() {
+      btn.addEventListener('click', async function(e) {
+        e.stopPropagation();
         if (btn.disabled) return;
         const postId = btn.dataset.postId;
         const res = await fetch(`/channel/${channelId}/posts/${postId}/like/`, {
           method: 'POST',
-          headers: {'X-CSRFToken': csrftoken},
+          headers: {'X-CSRFToken': csrftoken, 'Accept': 'application/json'},
         });
         const data = await res.json();
         if (!data.ok) {
@@ -548,10 +549,12 @@
           btn.classList.remove('text-gray-400');
           btn.classList.add('text-red-500');
           icon.innerHTML = '&#9829;';
+          btn.dataset.liked = '1';
         } else {
           btn.classList.remove('text-red-500');
           btn.classList.add('text-gray-400');
           icon.innerHTML = '&#9825;';
+          btn.dataset.liked = '0';
         }
       });
     }
@@ -600,7 +603,6 @@
 
         const row = document.createElement('div');
         row.className = 'flex items-start gap-2' + (isMine ? ' justify-end' : '');
-        row.dataset.postId = post.id;
         if (post.author && post.author.id) {
           row.dataset.authorId = post.author.id;
         }

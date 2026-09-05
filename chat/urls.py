@@ -23,6 +23,7 @@ urlpatterns = [
 
     path('attachments/upload/', views.upload_attachment, name='upload-attachment'),
     path('attachments/<int:attachment_id>/delete/', views.delete_attachment, name='delete-attachment'),
+    path('attachments/<int:attachment_id>/', views.attachment_view, name='attachment-view'),
 ]
 
 
