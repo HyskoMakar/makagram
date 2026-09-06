@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from channel.models import Channel, ChannelPost
 from chat.models import Group
-from makagram.models import Notification
+from notifications.models import Notification
 
 class NotificationCleanupTest(TestCase):
     def setUp(self):

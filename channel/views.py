@@ -146,7 +146,7 @@ def channel(request, channel_id):
                 },
             })
 
-            from makagram.views import create_notification_if_not_muted
+            from notifications.views import create_notification_if_not_muted
             notif_msg = content[:100] if content else 'Sent an attachment'
             for sub in channel.subscribers.exclude(id=request.user.id):
                 create_notification_if_not_muted(
@@ -186,7 +186,7 @@ def channel(request, channel_id):
         )
         admin_ids = set(channel.admins.values_list('id', flat=True))
 
-    from makagram.models import NotificationMute
+    from notifications.models import NotificationMute
     is_muted = NotificationMute.objects.filter(user=request.user, chat_type='channel', target_id=channel.id).exists()
 
     return render(request, 'channel.html', {
@@ -246,7 +246,7 @@ def delete_channel(request, channel_id):
         return HttpResponseBadRequest('Only the creator can delete the channel')
 
     _send_channel_event(channel.id, {'type': 'channel.deleted'})
-    from makagram.models import Notification
+    from notifications.models import Notification
     Notification.objects.filter(
         notification_type='channel',
         link=f'/channel/{channel.id}/',
@@ -275,7 +275,7 @@ def unsubscribe_channel(request, channel_id):
         # losing subscription always revokes admin rights, even for admins
         channel.admins.remove(request.user)
 
-    from makagram.models import Notification
+    from notifications.models import Notification
     Notification.objects.filter(
         recipient=request.user,
         notification_type='channel',

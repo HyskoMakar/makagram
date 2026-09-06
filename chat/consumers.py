@@ -175,7 +175,7 @@ class GroupChatConsumer(BaseChatConsumer):
     @sync_to_async
     def _save_message(self, content, attachment_ids):
         from .models import Attachment, Group, GroupMessage
-        from makagram.views import create_notification_if_not_muted
+        from notifications.views import create_notification_if_not_muted
         group = Group.objects.filter(id=self.group_id).first()
         if not group:
             return None, []
@@ -364,7 +364,7 @@ class PrivateChatConsumer(BaseChatConsumer):
     @sync_to_async
     def _save_message(self, to_user, content, attachment_ids):
         from .models import Attachment, PrivateMessage
-        from makagram.views import create_notification_if_not_muted
+        from notifications.views import create_notification_if_not_muted
         msg = PrivateMessage.objects.create(from_user=self.me, to_user=to_user, content=content)
         if attachment_ids:
             Attachment.objects.filter(id__in=attachment_ids, uploaded_by=self.me).update(private_message=msg)

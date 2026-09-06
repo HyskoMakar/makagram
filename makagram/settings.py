@@ -22,6 +22,8 @@ CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'http://localhost')
 INSTALLED_APPS = [
     'daphne',
     'makagram',
+    'feed',
+    'notifications',
     'lobby',
     'chat',
     'channel',

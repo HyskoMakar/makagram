@@ -11,7 +11,8 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from makagram.models import ALLOWED_COLORS, NotificationMute
+from makagram.models import ALLOWED_COLORS
+from notifications.models import NotificationMute
 
 import os
 
@@ -224,7 +225,7 @@ def delete_group(request, group_id):
         f'group_{group.id}',
         {'type': 'group.deleted'},
     )
-    from makagram.models import Notification
+    from notifications.models import Notification
     Notification.objects.filter(
         notification_type__in=['group', 'invite'],
         link=f'/chat/groups/{group.id}/',
@@ -240,7 +241,7 @@ def leave_group(request, group_id):
     if request.user == group.owner:
         return HttpResponseBadRequest('Creator cannot leave the group')
     group.members.remove(request.user)
-    from makagram.models import Notification
+    from notifications.models import Notification
     Notification.objects.filter(
         recipient=request.user,
         notification_type__in=['group', 'invite'],
@@ -266,7 +267,7 @@ def kick_member(request, group_id, username):
 
     if group.members.filter(id=user_to_kick.id).exists():
         group.members.remove(user_to_kick)
-        from makagram.models import Notification
+        from notifications.models import Notification
         Notification.objects.filter(
             recipient=user_to_kick,
             notification_type__in=['group', 'invite'],

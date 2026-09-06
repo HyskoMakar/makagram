@@ -10,22 +10,22 @@
             <h1 class="text-2xl font-semibold text-gray-800">Channels</h1>
             <p class="text-xs text-gray-500 mt-0.5">Explore, subscribe, and manage channels</p>
         </div>
-        <a href="{% url 'channel-create' %}" class="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+        <a href="{% url 'channel-create' %}" class="px-3.5 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
             + Create channel
         </a>
     </div>
 
     <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-        <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             All
         </a>
-        <a href="?tab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'mine' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             Subscribed
         </a>
-        <a href="?tab=opped" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'opped' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=opped" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'opped' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             Admin
         </a>
-        <a href="?tab=owned" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'owned' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=owned" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'owned' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             Owned
         </a>
     </div>
@@ -39,7 +39,7 @@
                     {{ channel.name|slice:":1"|upper }}
                 </div>
                 <div class="min-w-0">
-                    <div class="font-semibold text-gray-900 hover:text-blue-600 truncate">{{ channel.name }}</div>
+                    <div class="font-semibold text-gray-900 hover:text-purple-600 truncate">{{ channel.name }}</div>
                     <div class="text-xs text-gray-500 truncate mt-0.5">
                         {% if entry.last_post %}{{ entry.last_post.content|truncatechars:50 }}{% else %}{{ channel.description|default:"No posts yet"|truncatechars:50 }}{% endif %}
                     </div>
@@ -50,7 +50,7 @@
                 {% if channel.id not in my_channel_ids %}
                 <form method="post" action="{% url 'channel-subscribe' channel.id %}" class="inline">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Subscribe</button>
+                    <button type="submit" class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Subscribe</button>
                 </form>
                 {% else %}
                 <span class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100">Subscribed</span>

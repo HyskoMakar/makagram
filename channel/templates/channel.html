@@ -48,7 +48,7 @@
                 {% else %}
                 <form method="post" action="{% url 'channel-subscribe' channel.id %}">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm">Subscribe</button>
+                    <button type="submit" class="px-3 py-1 rounded bg-purple-500 hover:bg-purple-600 text-white text-sm">Subscribe</button>
                 </form>
                 {% endif %}
             </div>
@@ -82,7 +82,7 @@
                         {% if subscriber.id in admin_ids %}
                         <button type="button" data-user-id="{{ subscriber.id }}" class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50">Remove admin</button>
                         {% else %}
-                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-blue-600 hover:bg-blue-50">Make admin</button>
+                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-purple-600 hover:bg-purple-50">Make admin</button>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -102,11 +102,11 @@
                 {% csrf_token %}
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Channel Name</label>
-                    <input type="text" name="name" value="{{ channel.name }}" required class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <input type="text" name="name" value="{{ channel.name }}" required class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Description</label>
-                    <input type="text" name="description" value="{{ channel.description }}" class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                    <input type="text" name="description" value="{{ channel.description }}" class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
                 </div>
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Channel Color</label>
@@ -120,7 +120,7 @@
                     </div>
                 </div>
                 <div class="flex justify-between items-center pt-2 border-t">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
+                    <button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
                 </div>
             </form>
 

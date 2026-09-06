@@ -12,11 +12,11 @@
         {% for room in rooms %}
         <a href="{% url 'room' room.name %}" class="bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4 flex justify-between items-center hover:shadow-md transition-all">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-blue-400 text-sm select-none shadow-sm">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-orange-400 text-sm select-none shadow-sm">
                     #
                 </div>
                 <div>
-                    <div class="font-semibold text-gray-900 hover:text-blue-600"># {{ room.name }}</div>
+                    <div class="font-semibold text-gray-900 hover:text-orange-600"># {{ room.name }}</div>
                     <div class="text-xs text-gray-400 mt-0.5">Public room</div>
                 </div>
             </div>

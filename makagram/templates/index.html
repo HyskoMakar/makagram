@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}MaKaGram{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-900">Welcome to MaKaGram</h1>
+        <p class="text-gray-500 mt-2">A platform for chats, channels, and communities</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="{% url 'guide' %}" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group sm:col-span-2">
+            <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-indigo-600">How to use MaKaGram</div>
+                <div class="text-sm text-gray-500 mt-0.5">A complete guide to all features and how to get started</div>
+            </div>
+            <div class="mt-auto pt-2">
+                <span class="text-xs font-medium text-indigo-600 group-hover:underline">Read guide →</span>
+            </div>
+        </a>
+
+        <a href="{% url 'feed' %}" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group">
+            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-blue-600">Feed</div>
+                <div class="text-sm text-gray-500 mt-0.5">All updates from channels, groups, and direct messages in one place</div>
+            </div>
+        </a>
+
+        <a href="{% url 'chats-list' %}" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-emerald-600">Chats</div>
+                <div class="text-sm text-gray-500 mt-0.5">Private messages with users and group chats with friends</div>
+            </div>
+        </a>
+
+        <a href="{% url 'channels-list' %}" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group">
+            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-purple-600">Channels</div>
+                <div class="text-sm text-gray-500 mt-0.5">Subscribe to channels and follow posts from creators</div>
+            </div>
+        </a>
+
+        <a href="{% url 'room-index' %}" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group">
+            <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-orange-600">Lobbies</div>
+                <div class="text-sm text-gray-500 mt-0.5">Public rooms for open discussions with anyone on the platform</div>
+            </div>
+        </a>
+
+        {% if request.user.is_superuser %}
+        <a href="/admin" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group col-span-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-semibold text-gray-900 group-hover:text-slate-600">Admin Page</div>
+                <div class="text-sm text-gray-500 mt-0.5">Commiunity messages and full access to database</div>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

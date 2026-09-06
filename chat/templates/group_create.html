@@ -21,7 +21,7 @@
             <div>
                 <label class="text-sm font-medium text-gray-700 block mb-1">Group Name</label>
                 <input type="text" name="name" required placeholder="My Awesome Group"
-                       class="w-full border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                       class="w-full border rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
             </div>
 
             <div>
@@ -29,7 +29,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <label class="cursor-pointer">
                         <input type="radio" name="private" value="0" class="hidden peer" checked>
-                        <div class="p-3.5 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                        <div class="p-3.5 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20 hover:border-gray-300">
                             <div class="font-semibold text-sm text-gray-800">
                                 Public
                             </div>
@@ -39,7 +39,7 @@
 
                     <label class="cursor-pointer">
                         <input type="radio" name="private" value="1" class="hidden peer">
-                        <div class="p-3.5 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                        <div class="p-3.5 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20 hover:border-gray-300">
                             <div class="font-semibold text-sm text-gray-800">
                                 Private
                             </div>
@@ -63,7 +63,7 @@
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t">
-                <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-sm transition-colors">
+                <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg py-2.5 text-sm font-semibold shadow-sm transition-colors">
                     Create Group
                 </button>
                 <a href="{% url 'chats-list' %}" class="px-5 py-2.5 border rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium">

@@ -11,10 +11,10 @@
     </div>
 
     <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-        <a href="?tab=all&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab != 'friends' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=all&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab != 'friends' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             All Users
         </a>
-        <a href="?tab=friends&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'friends' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <a href="?tab=friends&gtab={{ gtab }}" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'friends' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
             Friends
         </a>
     </div>
@@ -60,16 +60,16 @@
                 <h2 class="text-xl font-semibold text-gray-800">Groups</h2>
                 <p class="text-xs text-gray-500 mt-0.5">Public and private group chats</p>
             </div>
-            <a href="{% url 'group-create' %}" class="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
+            <a href="{% url 'group-create' %}" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
                 + Create group
             </a>
         </div>
 
         <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-            <a href="?tab={{ tab }}&gtab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            <a href="?tab={{ tab }}&gtab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
                 All Groups
             </a>
-            <a href="?tab={{ tab }}&gtab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+            <a href="?tab={{ tab }}&gtab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
                 My Groups
             </a>
         </div>
@@ -83,7 +83,7 @@
                         {{ group.name|slice:":1"|upper }}
                     </div>
                     <div class="min-w-0">
-                        <div class="font-semibold text-gray-900 hover:text-blue-600 truncate">{{ group.name }}</div>
+                        <div class="font-semibold text-gray-900 hover:text-emerald-600 truncate">{{ group.name }}</div>
                         {% if g.last_message %}
                         <div class="text-xs text-gray-500 truncate mt-0.5">{{ g.last_message|truncatechars:50 }}</div>
                         {% endif %}
@@ -96,7 +96,7 @@
                     {% if not group.private and group.id not in my_group_ids %}
                     <form method="post" action="{% url 'group-join' group.id %}" class="inline">
                         {% csrf_token %}
-                        <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Join</button>
+                        <button type="submit" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg shadow-sm transition-all">Join</button>
                     </form>
                     {% elif group.id in my_group_ids %}
                     <span class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100">Joined</span>

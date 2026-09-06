@@ -59,7 +59,7 @@
                 <div>
                     <label class="text-xs font-medium text-gray-600 block mb-1">Group Name</label>
                     <input type="text" name="name" value="{{ group.name }}" required
-                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                           class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
                 </div>
 
                 <div>
@@ -67,14 +67,14 @@
                     <div class="grid grid-cols-2 gap-3">
                         <label class="cursor-pointer">
                             <input type="radio" name="private" value="0" class="hidden peer" {% if not group.private %}checked{% endif %}>
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20 hover:border-gray-300">
                                 <div class="font-medium text-sm text-gray-800">Public</div>
                                 <span class="text-xs text-gray-500">Anyone can see and join</span>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="private" value="1" class="hidden peer" {% if group.private %}checked{% endif %}>
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20 hover:border-gray-300">
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20 hover:border-gray-300">
                                 <div class="font-medium text-sm text-gray-800">Private</div>
                                 <span class="text-xs text-gray-500">Invite only in private chat</span>
                             </div>
@@ -87,14 +87,14 @@
                     <div class="grid grid-cols-2 gap-3">
                         <label class="cursor-pointer {% if not group.private %}pointer-events-none{% endif %}">
                             <input type="radio" name="members_can_invite" value="1" class="hidden peer" {% if group.members_can_invite %}checked{% endif %}>
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20">
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20">
                                 <div class="font-medium text-sm text-gray-800">All members</div>
                                 <span class="text-xs text-gray-500">Any group member can invite users</span>
                             </div>
                         </label>
                         <label class="cursor-pointer {% if not group.private %}pointer-events-none{% endif %}">
                             <input type="radio" name="members_can_invite" value="0" class="hidden peer" {% if not group.members_can_invite %}checked{% endif %}>
-                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-blue-500 peer-checked:bg-blue-50/50 peer-checked:ring-2 peer-checked:ring-blue-500/20">
+                            <div class="p-3 border rounded-xl flex flex-col gap-1 transition-all {% if not group.private %}opacity-50 bg-gray-50{% else %}hover:border-gray-300{% endif %} peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 peer-checked:ring-2 peer-checked:ring-emerald-500/20">
                                 <div class="font-medium text-sm text-gray-800">Owner only</div>
                                 <span class="text-xs text-gray-500">Only the group owner can invite users</span>
                             </div>
@@ -115,7 +115,7 @@
                 </div>
 
                 <div class="flex justify-between items-center pt-2 border-t">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
                 </div>
             </form>
 
@@ -168,7 +168,7 @@
                                     <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
                                     <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
                                 </div>
-                                <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             </a>
                             {% endif %}
                             {% endfor %}
@@ -190,19 +190,19 @@
             </div>
         </div>
 
-        <div id="edit-banner" class="hidden px-4 py-1.5 bg-blue-50 border-t flex items-center justify-between text-xs text-blue-700">
+        <div id="edit-banner" class="hidden px-4 py-1.5 bg-emerald-50 border-t flex items-center justify-between text-xs text-emerald-700">
             <div class="flex items-center gap-1.5 truncate">
-                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 <span>Editing message</span>
             </div>
-            <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
+            <button id="cancel-edit-btn" type="button" class="text-emerald-500 hover:text-emerald-800 font-medium">Cancel</button>
         </div>
 
         <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
 
         {% if is_member %}
         <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
+            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
             </button>
             <input type="file" id="chat-file-input" multiple class="hidden">
@@ -327,11 +327,11 @@
         let result = escapeHtml(text);
         result = result.replace(URL_PATTERN, (match, url, trailing) => {
             const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline hover:text-emerald-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
         });
         result = result.replace(MENTION_PATTERN, (match, username) => {
             if (knownUsers.has(username)) {
-                return `<a href="/chat/private/${username}/" class="text-blue-600 font-medium hover:underline" onclick="event.stopPropagation();">@${username}</a>`;
+                return `<a href="/chat/private/${username}/" class="text-emerald-600 font-medium hover:underline" onclick="event.stopPropagation();">@${username}</a>`;
             }
             return match;
         });
@@ -560,7 +560,7 @@
             return `<svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>`;
         }
         if (['doc','docx','odt'].includes(ext) || ft.includes('word') || ft.includes('document')) {
-            return `<svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
+            return `<svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
         }
         if (['xls','xlsx','csv','ods'].includes(ext) || ft.includes('spreadsheet') || ft.includes('excel')) {
             return `<svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>`;
@@ -582,7 +582,7 @@
                         <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
                         <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
                     </div>
-                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 </a>`;
             }
         }).join('');

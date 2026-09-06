@@ -6,7 +6,10 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
-    path('', views.feed, name='feed'),
+    path('', views.index_view, name='index'),
+    path('guide/', views.guide_view, name='guide'),
+
+    path('feed/', include('feed.urls')),
 
     # auth
     path('login/', views.login_view, name='login'),
@@ -17,16 +20,11 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('avatar/<int:user_id>/', views.avatar_view, name='avatar'),
 
-    # another apps
+    # apps
     path('lobby/', include('lobby.urls')),
     path('chat/', include('chat.urls')),
     path('channel/', include('channel.urls')),
-
-    # notifications
-    path('api/mute/', views.toggle_mute_view, name='toggle-mute'),
-    path('api/notifications/', views.notifications_list_view, name='notifications-list'),
-    path('api/notifications/mark-read/', views.mark_notifications_read_view, name='notifications-mark-read'),
-    path('api/notifications/<int:notif_id>/read/', views.mark_one_notification_read_view, name='notification-read-one'),
+    path('api/notifications/', include('notifications.urls')),
 
     # admin
     path('admin/', admin.site.urls),
