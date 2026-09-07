@@ -17,11 +17,8 @@
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-indigo-600">How to use MaKaGram</div>
+                <div class="font-semibold text-gray-900 group-hover:text-indigo-600 dark:group-hover:text-indigo-300">How to use MaKaGram</div>
                 <div class="text-sm text-gray-500 mt-0.5">A complete guide to all features and how to get started</div>
-            </div>
-            <div class="mt-auto pt-2">
-                <span class="text-xs font-medium text-indigo-600 group-hover:underline">Read guide →</span>
             </div>
         </a>
 
@@ -32,7 +29,7 @@
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-blue-600">Feed</div>
+                <div class="font-semibold text-gray-900 group-hover:text-blue-600 dark:group-hover:text-blue-300">Feed</div>
                 <div class="text-sm text-gray-500 mt-0.5">All updates from channels, groups, and direct messages in one place</div>
             </div>
         </a>
@@ -44,7 +41,7 @@
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-emerald-600">Chats</div>
+                <div class="font-semibold text-gray-900 group-hover:text-emerald-600 dark:group-hover:text-emerald-300">Chats</div>
                 <div class="text-sm text-gray-500 mt-0.5">Private messages with users and group chats with friends</div>
             </div>
         </a>
@@ -56,7 +53,7 @@
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-purple-600">Channels</div>
+                <div class="font-semibold text-gray-900 group-hover:text-purple-600 dark:group-hover:text-purple-300">Channels</div>
                 <div class="text-sm text-gray-500 mt-0.5">Subscribe to channels and follow posts from creators</div>
             </div>
         </a>
@@ -68,7 +65,7 @@
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-orange-600">Lobbies</div>
+                <div class="font-semibold text-gray-900 group-hover:text-orange-600 dark:group-hover:text-orange-300">Lobbies</div>
                 <div class="text-sm text-gray-500 mt-0.5">Public rooms for open discussions with anyone on the platform</div>
             </div>
         </a>
@@ -76,12 +73,12 @@
         {% if request.user.is_superuser %}
         <a href="/admin" class="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex flex-col gap-2 group col-span-3">
             <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
                 </svg>
             </div>
             <div>
-                <div class="font-semibold text-gray-900 group-hover:text-slate-600">Admin Page</div>
+                <div class="font-semibold text-gray-900 group-hover:text-slate-600 dark:group-hover:text-slate-300">Admin Page</div>
                 <div class="text-sm text-gray-500 mt-0.5">Commiunity messages and full access to database</div>
             </div>
         </a>

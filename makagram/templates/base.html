@@ -1,26 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
+    <script>
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+    </script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        * { transition: all 150ms ease-in-out; }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.4);
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(107, 114, 128, 0.7);
-        }
+    <style type="text/tailwindcss">
+        * { @apply transition-all duration-150 ease-in-out; }
+        ::-webkit-scrollbar { @apply w-1.5 h-1.5; }
+        ::-webkit-scrollbar-track { @apply bg-transparent; }
+        ::-webkit-scrollbar-thumb { @apply bg-slate-400/40 rounded-full; }
+        ::-webkit-scrollbar-thumb:hover { @apply bg-slate-500/70; }
+
+        /* Mist palette for legacy utility classes that do not have dark variants. */
+        .dark ::-webkit-scrollbar-thumb { @apply bg-neutral-400/40; }
+        .dark ::-webkit-scrollbar-thumb:hover { @apply bg-neutral-500/70; }
+        .dark body { @apply bg-neutral-950 text-neutral-100; }
+        .dark .bg-white { @apply bg-neutral-900; }
+        .dark .bg-gray-50 { @apply bg-neutral-900/70; }
+        .dark .bg-gray-100 { @apply bg-neutral-950; }
+        .dark .bg-gray-200 { @apply bg-neutral-800; }
+        .dark .bg-blue-100 { @apply bg-blue-400/15; }
+        .dark .bg-sky-100 { @apply bg-sky-400/20; }
+        .dark .bg-green-50 { @apply bg-green-400/15; }
+        .dark .bg-red-50 { @apply bg-red-400/15; }
+        .dark .bg-red-100 { @apply bg-red-400/20; }
+        .dark .bg-amber-50 { @apply bg-amber-400/15; }
+        .dark .bg-emerald-50 { @apply bg-emerald-400/15; }
+        .dark .bg-emerald-100 { @apply bg-emerald-400/20; }
+        .dark .bg-purple-50 { @apply bg-purple-400/15; }
+        .dark .bg-purple-100 { @apply bg-purple-400/20; }
+        .dark .bg-orange-50 { @apply bg-orange-400/15; }
+        .dark .bg-orange-100 { @apply bg-orange-400/20; }
+        .dark .bg-indigo-100 { @apply bg-indigo-400/20; }
+        .dark .bg-slate-100 { @apply bg-neutral-400/20; }
+        .dark .bg-blue-50\/40 { @apply bg-neutral-950/10; }
+
+        .dark .text-gray-900,
+        .dark .text-gray-800,
+        .dark .text-gray-700 { @apply text-neutral-100; }
+        .dark .text-gray-600 { @apply text-neutral-200; }
+        .dark .text-gray-500 { @apply text-neutral-300; }
+        .dark .text-gray-400 { @apply text-neutral-400; }
+        .dark .text-slate-600 { @apply text-neutral-300; }
+        .dark .text-slate-500 { @apply text-neutral-400; }
+        .dark .border,
+        .dark .border-gray-100,
+        .dark .border-gray-200 { @apply border-neutral-700; }
+        .dark .border-b { @apply border-neutral-700; }
+        .dark .border-t { @apply border-neutral-700; }
+        .dark .border-blue-200 { @apply border-blue-700; }
+        .dark .border-red-200 { @apply border-red-800; }
+        .dark .border-emerald-200 { @apply border-emerald-800; }
+
+        .dark input,
+        .dark textarea,
+        .dark select { @apply bg-neutral-900/70 text-neutral-100 border-neutral-700; }
+        .dark input::file-selector-button { @apply bg-neutral-800 text-neutral-200 border-0; }
+        .dark input:hover::file-selector-button { @apply bg-neutral-700; }
+        .dark input::placeholder,
+        .dark textarea::placeholder { @apply placeholder-neutral-400; }
+        .dark .hover\:bg-gray-50:hover { @apply bg-neutral-800; }
+        .dark .hover\:bg-gray-100:hover { @apply bg-neutral-700; }
+        .dark .hover\:bg-white:hover { @apply bg-neutral-800; }
+        .dark .divide-y > :not([hidden]) ~ :not([hidden]) { @apply border-neutral-700; }
+        .dark .ring-white { @apply ring-neutral-900; }
+        .dark svg[role="img"] { --on: #e2e8f0; --off: #475569; }
+
+        .dark .shadow-sm,
+        .dark .shadow { @apply shadow-xl; }
+        .dark .shadow-lg { @apply shadow-2xl; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -28,10 +81,10 @@
         <div class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4">
             <a href="{% url 'index' %}" class="font-medium text-xl">MaKaGram</a>
             <nav class="items-center sm:flex gap-4 hidden ">
-                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'feed' %}">Feed</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'room-index' %}">Lobbies</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'chats-list' %}">Chats</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900" href="{% url 'channels-list' %}">Channels</a>
+                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'feed' %}">Feed</a>
+                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'room-index' %}">Lobbies</a>
+                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'chats-list' %}">Chats</a>
+                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'channels-list' %}">Channels</a>
             </nav>
             <div class="flex flex-1 items-center justify-end gap-3">
                 {% if request.user.is_authenticated %}
@@ -67,6 +120,14 @@
                             {{ request.user.profile.username|default:request.user.username }}
                         </div>
                         <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">Profile</a>
+                        <button type="button" id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 flex items-center justify-between">
+                            <span id="theme-label">Dark mode</span>
+                            <span id="theme-icon" class="inline-flex w-4 h-4 shrink-0" aria-hidden="true">
+                                <svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75a9.75 9.75 0 01-9.75-9.75c0-1.33.266-2.598.748-3.752A9.753 9.753 0 101.998 18.75 9.75 9.75 0 0021.752 15.002z" />
+                                </svg>
+                            </span>
+                        </button>
                         <form method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Exit</button>
@@ -188,6 +249,35 @@
             if (dropdown) dropdown.classList.add('hidden');
             if (notifDropdown) notifDropdown.classList.add('hidden');
         });
+
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeLabel = document.getElementById('theme-label');
+        const themeIcon = document.getElementById('theme-icon');
+        const moonIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /></svg>';
+        const sunIcon = '<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364-6.364l-1.06 1.06M6.697 17.303l-1.06 1.06m12.727 0l-1.06-1.06M6.697 6.697l-1.06-1.06M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /></svg>';
+
+        function applyTheme(dark) {
+            if (dark) {
+                document.documentElement.classList.add('dark');
+                if (themeLabel) themeLabel.textContent = 'Dark mode';
+                if (themeIcon) themeIcon.innerHTML = moonIcon;
+            } else {
+                document.documentElement.classList.remove('dark');
+                if (themeLabel) themeLabel.textContent = 'Light mode';
+                if (themeIcon) themeIcon.innerHTML = sunIcon;
+            }
+        }
+
+        applyTheme(localStorage.getItem('theme') === 'dark');
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                applyTheme(isDark);
+            });
+        }
     </script>
 </body>
 </html>
