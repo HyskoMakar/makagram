@@ -16,11 +16,27 @@
         ::-webkit-scrollbar-thumb { @apply bg-slate-400/40 rounded-full; }
         ::-webkit-scrollbar-thumb:hover { @apply bg-slate-500/70; }
 
-        /* Mist palette for legacy utility classes that do not have dark variants. */
         .dark ::-webkit-scrollbar-thumb { @apply bg-neutral-400/40; }
         .dark ::-webkit-scrollbar-thumb:hover { @apply bg-neutral-500/70; }
         .dark body { @apply bg-neutral-950 text-neutral-100; }
         .dark .bg-white { @apply bg-neutral-900; }
+        .dark .chat-message-bubble {
+            position: relative;
+            isolation: isolate;
+        }
+        .dark .chat-message-bubble::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: rgb(0 0 0 / 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .dark .chat-message-bubble > * {
+            position: relative;
+            z-index: 1;
+        }
         .dark .bg-gray-50 { @apply bg-neutral-900/70; }
         .dark .bg-gray-100 { @apply bg-neutral-950; }
         .dark .bg-gray-200 { @apply bg-neutral-800; }
@@ -70,10 +86,6 @@
         .dark .divide-y > :not([hidden]) ~ :not([hidden]) { @apply border-neutral-700; }
         .dark .ring-white { @apply ring-neutral-900; }
         .dark svg[role="img"] { --on: #e2e8f0; --off: #475569; }
-
-        .dark .shadow-sm,
-        .dark .shadow { @apply shadow-xl; }
-        .dark .shadow-lg { @apply shadow-2xl; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -89,7 +101,7 @@
             <div class="flex flex-1 items-center justify-end gap-3">
                 {% if request.user.is_authenticated %}
                 <div class="relative">
-                    <button id="notif-btn" type="button" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full focus:outline-none transition-colors">
+                    <button id="notif-btn" type="button" class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>

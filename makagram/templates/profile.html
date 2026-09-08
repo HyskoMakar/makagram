@@ -37,7 +37,7 @@
                         class="w-full text-sm text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-50 file:text-slate-600 hover:file:bg-slate-100">
                     {% if profile.avatar_data %}
                     <button type="submit" name="clear_avatar" value="1"
-                    class="text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg py-1 px-3">Remove</button>
+                    class="text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:dark:bg-red-300/20 rounded-lg py-1 px-3">Remove</button>
                     {% endif %}
                 </div>
             </div>
@@ -48,7 +48,7 @@
                     <label class="cursor-pointer">
                         <input type="radio" name="color" value="{{ color }}" class="hidden peer"
                             {% if profile.color == color %}checked{% endif %}>
-                        <div class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
+                        <div class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-400"></div>
                     </label>
                     {% endfor %}
                 </div>

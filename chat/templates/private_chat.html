@@ -67,7 +67,7 @@
                     </div>
                     {% endif %}
 
-                    <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
+                    <div class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
                         {% if m.content %}
                         <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
                         {% else %}
@@ -119,7 +119,7 @@
                     </div>
                     {% endif %}
 
-                    <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
+                    <div class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
                         {% if inv.invited_by == request.user %}
                         <div>You invited <strong>{{ other.profile.username|default:other.username }}</strong> to <em>{{ inv.group.name }}</em> — waiting for response</div>
                         {% else %}

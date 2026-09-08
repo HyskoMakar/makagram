@@ -144,7 +144,7 @@
                     </div>
                     {% endif %}
 
-                    <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                    <div class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
                         {% if m.author != request.user %}
                         <div class="text-xs font-medium text-{{ m.author.profile.color|default:'gray' }}-500 mb-1">{{ msg_username }}</div>
                         {% endif %}
