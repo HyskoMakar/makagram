@@ -1,10 +1,13 @@
 import re
+import pyotp
+import qrcode
+from io import BytesIO
 from datetime import timedelta
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth.models import User
+from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -14,7 +17,7 @@ from chat.models import Group, GroupMessage, PrivateMessage
 from notifications.models import Notification
 
 from .forms import LoginForm, RegisterForm
-from .models import ALLOWED_COLORS, DEFAULT_COLOR
+from .models import ALLOWED_COLORS, DEFAULT_COLOR, Profile
 
 MAX_AVATAR_SIZE = 5 * 1024 * 1024
 MAX_AVATAR_DIMENSION = 2000
@@ -76,13 +79,47 @@ def guide_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('feed')
+        return redirect('index')
 
     form = LoginForm(data=request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        login(request, form.get_user())
-        return redirect('feed')
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            profile = getattr(user, 'profile', None)
+
+            if profile and profile.mfa_enabled:
+                if not 'mfa_token' in request.POST:
+                    request.session['pre_mfa_user_id'] = user.id
+
+                    return redirect('verify_mfa_login')
+                else:
+                    login(request, user)
+                    return redirect('index')
+                
     return render(request, 'login.html', {'form': form})
+
+def verify_mfa_login(request):
+    user_id = request.session.get('pre_mfa_user_id')
+    if not user_id:
+        return redirect('login')
+        
+    user = User.objects.get(id=user_id)
+    
+    if request.method == "POST":
+        user_code = request.POST.get("otp_code")
+        totp = pyotp.TOTP(user.profile.mfa_secret)
+        
+        if totp.verify(user_code):
+            login(request, user)
+            del request.session['pre_mfa_user_id']
+            return redirect('index')
+        else:
+            messages.error(request, "Incorrect. Try again")
+            
+    return render(request, "verify_mfa_login.html")
 
 
 def register_view(request):
@@ -177,3 +214,44 @@ def avatar_view(request, user_id):
         profile.avatar_data,
         content_type=profile.avatar_type or 'image/jpeg'
     )
+
+@login_required
+def generate_qr_code(request):
+    user_profile, created = Profile.objects.get_or_create(user=request.user)
+
+    totp = pyotp.TOTP(user_profile.mfa_secret)
+    auth_url = totp.provisioning_uri(name=request.user.email, issuer_name="MaKaGram")
+
+    img = qrcode.make(auth_url)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+def verify_mfa(request):
+    if request.method == "POST":
+        user_code = request.POST.get("otp_code")
+        user_profile = request.user.profile
+        
+        totp = pyotp.TOTP(user_profile.mfa_secret)
+        
+        if totp.verify(user_code):
+            user_profile.mfa_enabled = True
+            user_profile.save()
+            return redirect('index')
+        else:
+            messages.error(request, "Invalid authentication token. Try again.")
+            
+    return render(request, "verify_mfa.html")
+
+@login_required
+def setup_mfa_view(request):
+    return render(request, 'setup_mfa.html')
+
+@login_required
+def remove_mfa(request):
+    user_profile = request.user.profile
+    user_profile.mfa_enabled = False
+    user_profile.save()
+    
+    return redirect('profile')

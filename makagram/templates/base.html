@@ -1,301 +1,507 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}{% endblock %}</title>
     <script>
-        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+      if (localStorage.getItem("theme") === "dark")
+        document.documentElement.classList.add("dark");
     </script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+      tailwind.config = { darkMode: "class" };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style type="text/tailwindcss">
-        * { @apply transition-all duration-150 ease-in-out; }
-        ::-webkit-scrollbar { @apply w-1.5 h-1.5; }
-        ::-webkit-scrollbar-track { @apply bg-transparent; }
-        ::-webkit-scrollbar-thumb { @apply bg-slate-400/40 rounded-full; }
-        ::-webkit-scrollbar-thumb:hover { @apply bg-slate-500/70; }
+      * {
+        @apply transition-all duration-150 ease-in-out;
+      }
+      ::-webkit-scrollbar {
+        @apply w-1.5 h-1.5;
+      }
+      ::-webkit-scrollbar-track {
+        @apply bg-transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        @apply bg-slate-400/40 rounded-full;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-500/70;
+      }
 
-        .dark ::-webkit-scrollbar-thumb { @apply bg-neutral-400/40; }
-        .dark ::-webkit-scrollbar-thumb:hover { @apply bg-neutral-500/70; }
-        .dark body { @apply bg-neutral-950 text-neutral-100; }
-        .dark .bg-white { @apply bg-neutral-900; }
-        .dark .chat-message-bubble {
-            position: relative;
-            isolation: isolate;
-        }
-        .dark .chat-message-bubble::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: rgb(0 0 0 / 55%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .dark .chat-message-bubble > * {
-            position: relative;
-            z-index: 1;
-        }
-        .dark .bg-gray-50 { @apply bg-neutral-900/70; }
-        .dark .bg-gray-100 { @apply bg-neutral-950; }
-        .dark .bg-gray-200 { @apply bg-neutral-800; }
-        .dark .bg-blue-100 { @apply bg-blue-400/15; }
-        .dark .bg-sky-100 { @apply bg-sky-400/20; }
-        .dark .bg-green-50 { @apply bg-green-400/15; }
-        .dark .bg-red-50 { @apply bg-red-400/15; }
-        .dark .bg-red-100 { @apply bg-red-400/20; }
-        .dark .bg-amber-50 { @apply bg-amber-400/15; }
-        .dark .bg-emerald-50 { @apply bg-emerald-400/15; }
-        .dark .bg-emerald-100 { @apply bg-emerald-400/20; }
-        .dark .bg-purple-50 { @apply bg-purple-400/15; }
-        .dark .bg-purple-100 { @apply bg-purple-400/20; }
-        .dark .bg-orange-50 { @apply bg-orange-400/15; }
-        .dark .bg-orange-100 { @apply bg-orange-400/20; }
-        .dark .bg-indigo-100 { @apply bg-indigo-400/20; }
-        .dark .bg-slate-100 { @apply bg-neutral-400/20; }
-        .dark .bg-blue-50\/40 { @apply bg-neutral-950/10; }
+      .dark ::-webkit-scrollbar-thumb {
+        @apply bg-neutral-400/40;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        @apply bg-neutral-500/70;
+      }
+      .dark body {
+        @apply bg-neutral-950 text-neutral-100;
+      }
+      .dark .bg-white {
+        @apply bg-neutral-900;
+      }
+      .dark .chat-message-bubble {
+        position: relative;
+        isolation: isolate;
+      }
+      .dark .chat-message-bubble::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: rgb(0 0 0 / 55%);
+        pointer-events: none;
+        z-index: 0;
+      }
+      .dark .chat-message-bubble > * {
+        position: relative;
+        z-index: 1;
+      }
+      .dark .bg-gray-50 {
+        @apply bg-neutral-900/70;
+      }
+      .dark .bg-gray-100 {
+        @apply bg-neutral-950;
+      }
+      .dark .bg-gray-200 {
+        @apply bg-neutral-800;
+      }
+      .dark .bg-blue-100 {
+        @apply bg-blue-400/15;
+      }
+      .dark .bg-sky-100 {
+        @apply bg-sky-400/20;
+      }
+      .dark .bg-green-50 {
+        @apply bg-green-400/15;
+      }
+      .dark .bg-red-50 {
+        @apply bg-red-400/15;
+      }
+      .dark .bg-red-100 {
+        @apply bg-red-400/20;
+      }
+      .dark .bg-amber-50 {
+        @apply bg-amber-400/15;
+      }
+      .dark .bg-emerald-50 {
+        @apply bg-emerald-400/15;
+      }
+      .dark .bg-emerald-100 {
+        @apply bg-emerald-400/20;
+      }
+      .dark .bg-purple-50 {
+        @apply bg-purple-400/15;
+      }
+      .dark .bg-purple-100 {
+        @apply bg-purple-400/20;
+      }
+      .dark .bg-orange-50 {
+        @apply bg-orange-400/15;
+      }
+      .dark .bg-orange-100 {
+        @apply bg-orange-400/20;
+      }
+      .dark .bg-indigo-100 {
+        @apply bg-indigo-400/20;
+      }
+      .dark .bg-slate-100 {
+        @apply bg-neutral-400/20;
+      }
+      .dark .bg-blue-50\/40 {
+        @apply bg-neutral-950/10;
+      }
 
-        .dark .text-gray-900,
-        .dark .text-gray-800,
-        .dark .text-gray-700 { @apply text-neutral-100; }
-        .dark .text-gray-600 { @apply text-neutral-200; }
-        .dark .text-gray-500 { @apply text-neutral-300; }
-        .dark .text-gray-400 { @apply text-neutral-400; }
-        .dark .text-slate-600 { @apply text-neutral-300; }
-        .dark .text-slate-500 { @apply text-neutral-400; }
-        .dark .border,
-        .dark .border-gray-100,
-        .dark .border-gray-200 { @apply border-neutral-700; }
-        .dark .border-b { @apply border-neutral-700; }
-        .dark .border-t { @apply border-neutral-700; }
-        .dark .border-blue-200 { @apply border-blue-700; }
-        .dark .border-red-200 { @apply border-red-800; }
-        .dark .border-emerald-200 { @apply border-emerald-800; }
+      .dark .text-gray-900,
+      .dark .text-gray-800,
+      .dark .text-gray-700 {
+        @apply text-neutral-100;
+      }
+      .dark .text-gray-600 {
+        @apply text-neutral-200;
+      }
+      .dark .text-gray-500 {
+        @apply text-neutral-300;
+      }
+      .dark .text-gray-400 {
+        @apply text-neutral-400;
+      }
+      .dark .text-slate-600 {
+        @apply text-neutral-300;
+      }
+      .dark .text-slate-500 {
+        @apply text-neutral-400;
+      }
+      .dark .border,
+      .dark .border-gray-100,
+      .dark .border-gray-200 {
+        @apply border-neutral-700;
+      }
+      .dark .border-b {
+        @apply border-neutral-700;
+      }
+      .dark .border-t {
+        @apply border-neutral-700;
+      }
+      .dark .border-blue-200 {
+        @apply border-blue-700;
+      }
+      .dark .border-red-200 {
+        @apply border-red-800;
+      }
+      .dark .border-emerald-200 {
+        @apply border-emerald-800;
+      }
 
-        .dark input,
-        .dark textarea,
-        .dark select { @apply bg-neutral-900/70 text-neutral-100 border-neutral-700; }
-        .dark input::file-selector-button { @apply bg-neutral-800 text-neutral-200 border-0; }
-        .dark input:hover::file-selector-button { @apply bg-neutral-700; }
-        .dark input::placeholder,
-        .dark textarea::placeholder { @apply placeholder-neutral-400; }
-        .dark .hover\:bg-gray-50:hover { @apply bg-neutral-800; }
-        .dark .hover\:bg-gray-100:hover { @apply bg-neutral-700; }
-        .dark .hover\:bg-white:hover { @apply bg-neutral-800; }
-        .dark .hover\:bg-red-50:hover { @apply bg-red-500/10; }
-        .dark .hover\:bg-red-100:hover { @apply bg-red-500/15; }
-        .dark .text-red-600 { @apply text-red-400; }
-        .dark .text-red-500 { @apply text-red-400; }
-        .dark .divide-y > :not([hidden]) ~ :not([hidden]) { @apply border-neutral-700; }
-        .dark .ring-white { @apply ring-neutral-900; }
-        .dark svg[role="img"] { --on: #e2e8f0; --off: #475569; }
+      .dark input,
+      .dark textarea,
+      .dark select {
+        @apply bg-neutral-900/70 text-neutral-100 border-neutral-700;
+      }
+      .dark input::file-selector-button {
+        @apply bg-neutral-800 text-neutral-200 border-0;
+      }
+      .dark input:hover::file-selector-button {
+        @apply bg-neutral-700;
+      }
+      .dark input::placeholder,
+      .dark textarea::placeholder {
+        @apply placeholder-neutral-400;
+      }
+      .dark .hover\:bg-gray-50:hover {
+        @apply bg-neutral-800;
+      }
+      .dark .hover\:bg-gray-100:hover {
+        @apply bg-neutral-700;
+      }
+      .dark .hover\:bg-white:hover {
+        @apply bg-neutral-800;
+      }
+      .dark .hover\:bg-red-50:hover {
+        @apply bg-red-500/10;
+      }
+      .dark .hover\:bg-red-100:hover {
+        @apply bg-red-500/15;
+      }
+      .dark .text-red-600 {
+        @apply text-red-400;
+      }
+      .dark .text-red-500 {
+        @apply text-red-400;
+      }
+      .dark .divide-y > :not([hidden]) ~ :not([hidden]) {
+        @apply border-neutral-700;
+      }
+      .dark .ring-white {
+        @apply ring-neutral-900;
+      }
+      .dark svg[role="img"] {
+        --on: #e2e8f0;
+        --off: #475569;
+      }
     </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
+  </head>
+  <body class="bg-gray-100 min-h-screen">
     <header class="sticky top-0 z-50 w-full bg-white border-b">
-        <div class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4">
-            <a href="{% url 'index' %}" class="font-medium text-xl">MaKaGram</a>
-            <nav class="items-center sm:flex gap-4 hidden ">
-                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'feed' %}">Feed</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'room-index' %}">Lobbies</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'chats-list' %}">Chats</a>
-                <a class="text-sm font-medium text-gray-600 transition-colors" href="{% url 'channels-list' %}">Channels</a>
-            </nav>
-            <div class="flex flex-1 items-center justify-end gap-3">
-                {% if request.user.is_authenticated %}
-                <div class="relative">
-                    <button id="notif-btn" type="button" class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                        <span id="notif-badge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
-                    </button>
+      <div class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4">
+        <a href="{% url 'index' %}" class="font-medium text-xl">MaKaGram</a>
+        <nav class="items-center sm:flex gap-4 hidden">
+          <a
+            class="text-sm font-medium text-gray-600 transition-colors"
+            href="{% url 'feed' %}"
+            >Feed</a
+          >
+          <a
+            class="text-sm font-medium text-gray-600 transition-colors"
+            href="{% url 'room-index' %}"
+            >Lobbies</a
+          >
+          <a
+            class="text-sm font-medium text-gray-600 transition-colors"
+            href="{% url 'chats-list' %}"
+            >Chats</a
+          >
+          <a
+            class="text-sm font-medium text-gray-600 transition-colors"
+            href="{% url 'channels-list' %}"
+            >Channels</a
+          >
+        </nav>
+        <div class="flex flex-1 items-center justify-end gap-3">
+          {% if request.user.is_authenticated %}
+          <div class="relative">
+            <button
+              id="notif-btn"
+              type="button"
+              class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none transition-colors"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              <span
+                id="notif-badge"
+                class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"
+              ></span>
+            </button>
 
-                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border py-2 z-50">
-                        <div class="px-4 py-2 border-b flex items-center justify-between">
-                            <span class="font-semibold text-sm text-gray-800">Notifications</span>
-                            <button id="notif-read-all" class="text-xs text-blue-600 hover:underline">Mark all as read</button>
-                        </div>
-                        <div id="notif-list" class="max-h-80 overflow-y-auto divide-y">
-                            <div class="px-4 py-3 text-sm text-gray-400 text-center">Loading...</div>
-                        </div>
-                    </div>
+            <div
+              id="notif-dropdown"
+              class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border py-2 z-50"
+            >
+              <div class="px-4 py-2 border-b flex items-center justify-between">
+                <span class="font-semibold text-sm text-gray-800"
+                  >Notifications</span
+                >
+                <button
+                  id="notif-read-all"
+                  class="text-xs text-blue-600 hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+              <div id="notif-list" class="max-h-80 overflow-y-auto divide-y">
+                <div class="px-4 py-3 text-sm text-gray-400 text-center">
+                  Loading...
                 </div>
-
-                <div class="relative">
-                    {% with profile=request.user.profile %}
-                    <button id="profile-btn" class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none {% if not profile.avatar_data %}bg-{{ profile.color|default:'blue' }}-300{% endif %}">
-                        {% if profile.avatar_data %}
-                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ profile.username|default:request.user.username|slice:":1"|upper }}
-                        {% endif %}
-                    </button>
-                    <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
-                        <div class="px-4 py-2 text-sm font-medium text-{{ profile.color|default:'blue' }}-600 border-b">
-                            {{ profile.username|default:request.user.username }}
-                        </div>
-                        <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">Profile</a>
-                        <button type="button" id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 flex items-center justify-between">
-                            <span id="theme-label">Dark mode</span>
-                            <span id="theme-icon" class="inline-flex w-4 h-4 shrink-0" aria-hidden="true">
-                                <svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75a9.75 9.75 0 01-9.75-9.75c0-1.33.266-2.598.748-3.752A9.753 9.753 0 101.998 18.75 9.75 9.75 0 0021.752 15.002z" />
-                                </svg>
-                            </span>
-                        </button>
-                        <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Exit</button>
-                        </form>
-                    </div>
-                    {% endwith %}
-                </div>
-                {% else %}
-                <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-md">Sign in</a>
-                {% endif %}
+              </div>
             </div>
+          </div>
+
+          <div class="relative">
+            {% with profile=request.user.profile %}
+            <button
+              id="profile-btn"
+              class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none {% if not profile.avatar_data %}bg-{{ profile.color|default:'blue' }}-300{% endif %}"
+            >
+              {% if profile.avatar_data %}
+              <img
+                src="{% url 'avatar' request.user.id %}"
+                class="w-full h-full object-cover"
+              />
+              {% else %} {{ profile.username|default:request.user.username|slice:":1"|upper }}
+              {% endif %}
+            </button>
+            <div
+              id="profile-dropdown"
+              class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50"
+            >
+              <div
+                class="px-4 py-2 text-sm font-medium text-{{ profile.color|default:'blue' }}-600 border-b"
+              >
+                {{ profile.username|default:request.user.username }}
+              </div>
+              <a
+                href="{% url 'profile' %}"
+                class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+                >Profile</a
+              >
+              <button
+                type="button"
+                id="theme-toggle"
+                class="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 flex items-center justify-between"
+              >
+                <span id="theme-label">Dark mode</span>
+                <span
+                  id="theme-icon"
+                  class="inline-flex w-4 h-4 shrink-0"
+                  aria-hidden="true"
+                >
+                  <svg
+                    class="w-full h-full"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M21.752 15.002A9.718 9.718 0 0118 15.75a9.75 9.75 0 01-9.75-9.75c0-1.33.266-2.598.748-3.752A9.753 9.753 0 101.998 18.75 9.75 9.75 0 0021.752 15.002z"
+                    />
+                  </svg>
+                </span>
+              </button>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50"
+                >
+                  Exit
+                </button>
+              </form>
+            </div>
+            {% endwith %}
+          </div>
+          {% else %}
+          <a
+            href="{% url 'login' %}"
+            class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-md"
+            >Sign in</a
+          >
+          {% endif %}
         </div>
+      </div>
     </header>
     <div class="container mx-auto px-4 py-6">
-        {% block content %}{% endblock %}
+      {% block content %}{% endblock %}
     </div>
     <script>
-        const btn = document.getElementById('profile-btn');
-        const dropdown = document.getElementById('profile-dropdown');
-        if (btn && dropdown) {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (notifDropdown) notifDropdown.classList.add('hidden');
-                dropdown.classList.toggle('hidden');
-            });
-        }
+      const btn = document.getElementById("profile-btn");
+      const dropdown = document.getElementById("profile-dropdown");
+      if (btn && dropdown) {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (notifDropdown) notifDropdown.classList.add("hidden");
+          dropdown.classList.toggle("hidden");
+        });
+      }
 
-        const notifBtn = document.getElementById('notif-btn');
-        const notifDropdown = document.getElementById('notif-dropdown');
-        const notifBadge = document.getElementById('notif-badge');
-        const notifList = document.getElementById('notif-list');
-        const notifReadAll = document.getElementById('notif-read-all');
+      const notifBtn = document.getElementById("notif-btn");
+      const notifDropdown = document.getElementById("notif-dropdown");
+      const notifBadge = document.getElementById("notif-badge");
+      const notifList = document.getElementById("notif-list");
+      const notifReadAll = document.getElementById("notif-read-all");
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str || '';
-            return div.innerHTML;
-        }
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str || "";
+        return div.innerHTML;
+      }
 
-        function autolinkNotif(text) {
-            if (!text) return '';
-            const escaped = escapeHtml(text);
-            const urlPattern = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
-            return escaped.replace(urlPattern, (match, url, trailing) => {
-                const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-                return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
-            });
-        }
+      function autolinkNotif(text) {
+        if (!text) return "";
+        const escaped = escapeHtml(text);
+        const urlPattern =
+          /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
+        return escaped.replace(urlPattern, (match, url, trailing) => {
+          const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
+        });
+      }
 
-        function markNotifRead(id, link, event) {
-            if (event.target.tagName === 'A') return;
-            fetch(`/api/notifications/${id}/read/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            }).finally(() => { window.location.href = link; });
-        }
+      function markNotifRead(id, link, event) {
+        if (event.target.tagName === "A") return;
+        fetch(`/api/notifications/${id}/read/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": "{{ csrf_token }}" },
+        }).finally(() => {
+          window.location.href = link;
+        });
+      }
 
-        function fetchNotifications() {
-            if (!notifBtn) return;
-            fetch('{% url "notifications-list" %}')
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.ok) return;
-                    if (data.unread_count > 0) {
-                        notifBadge.classList.remove('hidden');
-                    } else {
-                        notifBadge.classList.add('hidden');
-                    }
+      function fetchNotifications() {
+        if (!notifBtn) return;
+        fetch('{% url "notifications-list" %}')
+          .then((r) => r.json())
+          .then((data) => {
+            if (!data.ok) return;
+            if (data.unread_count > 0) {
+              notifBadge.classList.remove("hidden");
+            } else {
+              notifBadge.classList.add("hidden");
+            }
 
-                    if (data.notifications.length === 0) {
-                        notifList.innerHTML = '<div class="px-4 py-4 text-xs text-gray-400 text-center">No new notifications</div>';
-                        return;
-                    }
+            if (data.notifications.length === 0) {
+              notifList.innerHTML =
+                '<div class="px-4 py-4 text-xs text-gray-400 text-center">No new notifications</div>';
+              return;
+            }
 
-                    notifList.innerHTML = data.notifications.map(n => `
-                        <div onclick="markNotifRead(${n.id}, '${n.link || '#'}', event)" class="block px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${n.is_read ? 'opacity-70' : 'bg-blue-50/40'}" data-notif-id="${n.id}">
+            notifList.innerHTML = data.notifications
+              .map(
+                (n) => `
+                        <div onclick="markNotifRead(${n.id}, '${n.link || "#"}', event)" class="block px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${n.is_read ? "opacity-70" : "bg-blue-50/40"}" data-notif-id="${n.id}">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-xs font-semibold text-gray-800">${escapeHtml(n.title)}</span>
                                 <span class="text-[10px] text-gray-400">${n.created_at}</span>
                             </div>
                             <div class="text-xs text-gray-600 line-clamp-3 leading-snug">${autolinkNotif(n.message)}</div>
                         </div>
-                    `).join('');
-                })
-                .catch(e => console.error('Notifications fetch error:', e));
-        }
+                    `,
+              )
+              .join("");
+          })
+          .catch((e) => console.error("Notifications fetch error:", e));
+      }
 
-        if (notifBtn && notifDropdown) {
-            notifBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (dropdown) dropdown.classList.add('hidden');
-                notifDropdown.classList.toggle('hidden');
-                if (!notifDropdown.classList.contains('hidden')) {
-                    fetchNotifications();
-                }
-            });
-
-            if (notifReadAll) {
-                notifReadAll.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    fetch('{% url "notifications-mark-read" %}', {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.ok) {
-                            notifBadge.classList.add('hidden');
-                            fetchNotifications();
-                        }
-                    });
-                });
-            }
-
+      if (notifBtn && notifDropdown) {
+        notifBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (dropdown) dropdown.classList.add("hidden");
+          notifDropdown.classList.toggle("hidden");
+          if (!notifDropdown.classList.contains("hidden")) {
             fetchNotifications();
-            setInterval(fetchNotifications, 15000);
-        }
-
-        document.addEventListener('click', () => {
-            if (dropdown) dropdown.classList.add('hidden');
-            if (notifDropdown) notifDropdown.classList.add('hidden');
+          }
         });
 
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeLabel = document.getElementById('theme-label');
-        const themeIcon = document.getElementById('theme-icon');
-        const moonIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /></svg>';
-        const sunIcon = '<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364-6.364l-1.06 1.06M6.697 17.303l-1.06 1.06m12.727 0l-1.06-1.06M6.697 6.697l-1.06-1.06M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /></svg>';
-
-        function applyTheme(dark) {
-            if (dark) {
-                document.documentElement.classList.add('dark');
-                if (themeLabel) themeLabel.textContent = 'Dark mode';
-                if (themeIcon) themeIcon.innerHTML = moonIcon;
-            } else {
-                document.documentElement.classList.remove('dark');
-                if (themeLabel) themeLabel.textContent = 'Light mode';
-                if (themeIcon) themeIcon.innerHTML = sunIcon;
-            }
+        if (notifReadAll) {
+          notifReadAll.addEventListener("click", (e) => {
+            e.stopPropagation();
+            fetch('{% url "notifications-mark-read" %}', {
+              method: "POST",
+              headers: { "X-CSRFToken": "{{ csrf_token }}" },
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.ok) {
+                  notifBadge.classList.add("hidden");
+                  fetchNotifications();
+                }
+              });
+          });
         }
 
-        applyTheme(localStorage.getItem('theme') === 'dark');
+        fetchNotifications();
+        setInterval(fetchNotifications, 15000);
+      }
 
-        if (themeToggle) {
-            themeToggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isDark = document.documentElement.classList.toggle('dark');
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
-                applyTheme(isDark);
-            });
+      document.addEventListener("click", () => {
+        if (dropdown) dropdown.classList.add("hidden");
+        if (notifDropdown) notifDropdown.classList.add("hidden");
+      });
+
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeLabel = document.getElementById("theme-label");
+      const themeIcon = document.getElementById("theme-icon");
+      const moonIcon =
+        '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /></svg>';
+      const sunIcon =
+        '<svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364-6.364l-1.06 1.06M6.697 17.303l-1.06 1.06m12.727 0l-1.06-1.06M6.697 6.697l-1.06-1.06M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /></svg>';
+
+      function applyTheme(dark) {
+        if (dark) {
+          document.documentElement.classList.add("dark");
+          if (themeLabel) themeLabel.textContent = "Dark mode";
+          if (themeIcon) themeIcon.innerHTML = moonIcon;
+        } else {
+          document.documentElement.classList.remove("dark");
+          if (themeLabel) themeLabel.textContent = "Light mode";
+          if (themeIcon) themeIcon.innerHTML = sunIcon;
         }
+      }
+
+      applyTheme(localStorage.getItem("theme") === "dark");
+
+      if (themeToggle) {
+        themeToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isDark = document.documentElement.classList.toggle("dark");
+          localStorage.setItem("theme", isDark ? "dark" : "light");
+          applyTheme(isDark);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>

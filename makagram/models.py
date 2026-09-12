@@ -1,3 +1,4 @@
+import pyotp
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -6,8 +7,7 @@ from django.dispatch import receiver
 ALLOWED_COLORS = [
     'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
     'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink',
-    'rose', 'slate', 'gray', 'zinc', 'neutral', 'stone', 'taupe', 'mauve',
-    'mist', 'olive',
+    'rose',
 ]
 DEFAULT_COLOR = 'blue'
 
@@ -20,6 +20,9 @@ class Profile(models.Model):
     avatar = models.ImageField(blank=True, default=None)
     avatar_data = models.BinaryField(blank=True, null=True)
     avatar_type = models.CharField(max_length=50, blank=True)
+
+    mfa_secret = models.CharField(db_index=True, max_length=32, default=pyotp.random_base32)
+    mfa_enabled = models.BooleanField(default=False)
 
     @property
     def display_name(self):

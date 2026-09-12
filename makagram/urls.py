@@ -13,11 +13,16 @@ urlpatterns = [
 
     # auth
     path('login/', views.login_view, name='login'),
+    path('login/mfa', views.verify_mfa_login, name='verify_mfa_login'),
     path('register/', views.register_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
 
     # profile
     path('profile/', views.profile_view, name='profile'),
+    path('profile/mfa/', views.setup_mfa_view, name='setup_mfa'),
+    path('profile/mfa/qr-code/', views.generate_qr_code, name='generate_qr_code'),
+    path('profile/mfa/verify/', views.verify_mfa, name='verify_mfa'),
+    path('profile/mfa/remove/', views.remove_mfa, name='remove_mfa'),
     path('avatar/<int:user_id>/', views.avatar_view, name='avatar'),
 
     # apps
