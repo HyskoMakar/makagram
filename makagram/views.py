@@ -19,7 +19,7 @@ from .models import ALLOWED_COLORS, DEFAULT_COLOR
 MAX_AVATAR_SIZE = 5 * 1024 * 1024
 MAX_AVATAR_DIMENSION = 2000
 
-
+@login_required(login_url='login')
 def index_view(request):
     return render(request, 'index.html')
 
@@ -27,7 +27,7 @@ def index_view(request):
 @login_required(login_url='login')
 def admin_abuse_page_view(request):
     if not request.user.is_superuser:
-        return HttpResponseForbidden('Only admins can send community announcements.')
+        return HttpResponseForbidden('Only admins can access abuse page!')
 
     stats = {
         'total_users': User.objects.count(),
@@ -65,7 +65,7 @@ def admin_abuse_page_view(request):
             notification_type='system',
             link=link,
         )
-        return redirect('community-broadcast')
+        return redirect('admin-abuse')
 
     return render(request, 'admin_abuse_page.html', {'stats': stats})
 

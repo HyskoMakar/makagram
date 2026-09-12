@@ -124,16 +124,17 @@
                 </div>
 
                 <div class="relative">
-                    <button id="profile-btn" class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color }}-300{% endif %}">
-                        {% if request.user.profile.avatar_data %}
+                    {% with profile=request.user.profile %}
+                    <button id="profile-btn" class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white focus:outline-none {% if not profile.avatar_data %}bg-{{ profile.color|default:'blue' }}-300{% endif %}">
+                        {% if profile.avatar_data %}
                         <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
-                        {{ request.user.profile.username|default:request.user.username|slice:":1"|upper }}
+                        {{ profile.username|default:request.user.username|slice:":1"|upper }}
                         {% endif %}
                     </button>
                     <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
-                        <div class="px-4 py-2 text-sm font-medium text-{{ request.user.profile.color }}-600 border-b">
-                            {{ request.user.profile.username|default:request.user.username }}
+                        <div class="px-4 py-2 text-sm font-medium text-{{ profile.color|default:'blue' }}-600 border-b">
+                            {{ profile.username|default:request.user.username }}
                         </div>
                         <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">Profile</a>
                         <button type="button" id="theme-toggle" class="w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 flex items-center justify-between">
@@ -149,6 +150,7 @@
                             <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">Exit</button>
                         </form>
                     </div>
+                    {% endwith %}
                 </div>
                 {% else %}
                 <a href="{% url 'login' %}" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-md">Sign in</a>
