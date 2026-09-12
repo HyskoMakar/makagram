@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Abuse Page{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900">Admin Abuse Page</h1>
+                <p class="text-sm text-gray-500 mt-1">Community alerts and platform overview</p>
+            </div>
+            <a href="{% url 'index' %}" class="text-sm text-gray-600">Back to home</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Users</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_users }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Private messages</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_private_messages }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Group messages</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_group_messages }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Channel posts</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_channel_posts }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Groups</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_groups }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Broadcasts</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_broadcasts }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Active last 7 days</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.active_last_7_days }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Active users today</div>
+            <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.active_users_today }}</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Send community alert</h2>
+            <p class="text-sm text-gray-500 mt-1">This goes to every user as a system notification.</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input id="title" name="title" type="text" value="{{ title|default:'' }}" required
+                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    placeholder="Admin awakens..">
+            </div>
+
+            <div>
+                <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                <textarea id="message" name="message" rows="6" required
+                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
+                    placeholder="Write the announcement for all users..">{{ message|default:'' }}</textarea>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    Send to all users
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

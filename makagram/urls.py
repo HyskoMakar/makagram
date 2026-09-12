@@ -25,6 +25,7 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('channel/', include('channel.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('admin/community/', views.admin_abuse_page_view, name='community-broadcast'),
 
     # admin
     path('admin/', admin.site.urls),

@@ -1,9 +1,17 @@
 import re
+from datetime import timedelta
 
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render
-from django.http import HttpResponse
+from django.utils import timezone
+
+from channel.models import ChannelPost
+from chat.models import Group, GroupMessage, PrivateMessage
+from notifications.models import Notification
 
 from .forms import LoginForm, RegisterForm
 from .models import ALLOWED_COLORS, DEFAULT_COLOR
@@ -14,6 +22,52 @@ MAX_AVATAR_DIMENSION = 2000
 
 def index_view(request):
     return render(request, 'index.html')
+
+
+@login_required(login_url='login')
+def admin_abuse_page_view(request):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden('Only admins can send community announcements.')
+
+    stats = {
+        'total_users': User.objects.count(),
+        'total_private_messages': PrivateMessage.objects.count(),
+        'total_group_messages': GroupMessage.objects.count(),
+        'total_channel_posts': ChannelPost.objects.count(),
+        'total_groups': Group.objects.count(),
+        'total_broadcasts': Notification.objects.filter(recipient__isnull=True, notification_type='system').count(),
+        'active_last_7_days': User.objects.filter(last_login__gte=timezone.now() - timedelta(days=7)).count(),
+        'active_users_today': User.objects.filter(last_login__gte=timezone.now() - timedelta(days=1)).count(),
+    }
+
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()[:255]
+        message = (request.POST.get('message') or '').strip()
+        link = ''
+
+        if not title or not message:
+            return render(request, 'admin_abuse_page.html', {
+                'error': 'Title and message are required.',
+                'title': title,
+                'message': message,
+                'stats': stats,
+            })
+
+        match = re.search(r'https?://\S+|/\S+', message)
+        if match:
+            link = match.group(0)[:255]
+
+        Notification.objects.create(
+            recipient=None,
+            sender=request.user,
+            title=title,
+            message=message,
+            notification_type='system',
+            link=link,
+        )
+        return redirect('community-broadcast')
+
+    return render(request, 'admin_abuse_page.html', {'stats': stats})
 
 
 def guide_view(request):
