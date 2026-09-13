@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Lobbies{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="mb-4">
-        <h1 class="text-2xl font-semibold text-gray-800">Lobbies</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Public real-time chat rooms</p>
+        <image src="{% static 'images/lobbies_logo.png' %}"></image>
     </div>
 
     <div class="grid gap-3">

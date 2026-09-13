@@ -1,15 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Guide — MaKaGram{% endblock %}
 
 {% block content %}
 <div class="max-w-3xl mx-auto">
-    <div class="mb-6 flex items-center gap-3 justify-between">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-800">How to use MaKaGram</h1>
-            <p class="text-xs text-gray-500 mt-0.5">Learn all about MaKaGram and get started here</p>
-        </div>
-        <a href="{% url 'index' %}" class="text-sm text-gray-500 hover:text-gray-800">← Back</a>
+    <div class="mb-6">
+        <image src="{% static 'images/guide_logo.png' %}"></image>
     </div>
 
     <div class="flex flex-col gap-4">
@@ -27,6 +24,7 @@
                 <li>Register an account or sign in if you already have one</li>
                 <li>Go to <strong>Profile</strong> to set your nickname, avatar, and color</li>
                 <li>Your nickname is used everywhere — in chats, channels, and groups</li>
+                <li>You can also setup <strong>2FA verification</strong> by your <strong>authenticator app</strong>, so if someone gets your password, they still can't access to your accout</li>
             </ul>
         </div>
 

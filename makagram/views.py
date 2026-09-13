@@ -22,7 +22,6 @@ from .models import ALLOWED_COLORS, DEFAULT_COLOR, Profile
 MAX_AVATAR_SIZE = 5 * 1024 * 1024
 MAX_AVATAR_DIMENSION = 2000
 
-@login_required(login_url='login')
 def index_view(request):
     return render(request, 'index.html')
 
@@ -253,5 +252,5 @@ def remove_mfa(request):
     user_profile = request.user.profile
     user_profile.mfa_enabled = False
     user_profile.save()
-    
+
     return redirect('profile')

@@ -1,8 +1,11 @@
+{% load static %}
 <!doctype html>
 <html lang="en" class="">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="{% static 'images/favicon.ico' %}?v=2" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}?v=2" type="image/x-icon">
     <title>{% block title %}{% endblock %}</title>
     <script>
       if (localStorage.getItem("theme") === "dark")
@@ -57,6 +60,9 @@
       .dark .chat-message-bubble > * {
         position: relative;
         z-index: 1;
+      }
+      .dark .bg-slate-50 {
+        @apply bg-slate-400/15;
       }
       .dark .bg-gray-50 {
         @apply bg-neutral-900/70;

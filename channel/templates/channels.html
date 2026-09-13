@@ -5,28 +5,30 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="flex justify-between items-center mb-4">
-        <div>
-            <h1 class="text-2xl font-semibold text-gray-800">Channels</h1>
-            <p class="text-xs text-gray-500 mt-0.5">Explore, subscribe, and manage channels</p>
-        </div>
-        <a href="{% url 'channel-create' %}" class="px-3.5 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
-            + Create channel
-        </a>
+    <div class="mb-4">
+        <image src="{% static 'images/channels_logo.png' %}"></image>
     </div>
 
-    <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-        <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
-            All
-        </a>
-        <a href="?tab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'mine' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
-            Subscribed
-        </a>
-        <a href="?tab=opped" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'opped' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
-            Admin
-        </a>
-        <a href="?tab=owned" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'owned' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
-            Owned
+    <div class="flex items-center justify-between gap-2 mb-4 overflow-x-auto pb-1">
+        <div class="flex items-center gap-2">
+            <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                All
+            </a>
+            <a href="?tab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'mine' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                Subscribed
+            </a>
+            <a href="?tab=opped" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'opped' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                Admin
+            </a>
+            <a href="?tab=owned" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'owned' %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                Owned
+            </a>
+        </div>
+        
+
+        <a href="{% url 'channel-create' %}"
+            class="px-3.5 py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold rounded-lg shadow-sm transition-all">
+            + Create channel
         </a>
     </div>
 

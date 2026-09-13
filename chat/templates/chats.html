@@ -6,8 +6,7 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="mb-4">
-        <h1 class="text-2xl font-semibold text-gray-800">Chats</h1>
-        <p class="text-xs text-gray-500 mt-0.5">Manage direct conversations and group discussions</p>
+        <image src="{% static 'images/chats_logo.png' %}"></image>
     </div>
 
     <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
@@ -54,23 +53,25 @@
         {% endfor %}
     </div>
 
-    <div class="mt-8">
-        <div class="flex justify-between items-center mb-4">
-            <div>
-                <h2 class="text-xl font-semibold text-gray-800">Groups</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Public and private group chats</p>
-            </div>
-            <a href="{% url 'group-create' %}" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all">
-                + Create group
-            </a>
+    <div class="mt-8 border-t">
+        <div class="mb-4 mt-4">
+            
         </div>
 
-        <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-            <a href="?tab={{ tab }}&gtab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+        <div class="flex items-center justify-between gap-2 mb-4 overflow-x-auto pb-1">
+            <div class="flex items-center gap-2">
+                <a href="?tab={{ tab }}&gtab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
                 All Groups
-            </a>
-            <a href="?tab={{ tab }}&gtab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
-                My Groups
+                </a>
+                <a href="?tab={{ tab }}&gtab=mine" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
+                    My Groups
+                </a>
+            </div>
+            
+
+            <a href="{% url 'group-create' %}"
+                class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-sm transition-all">
+                + Create group
             </a>
         </div>
 
