@@ -22,7 +22,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="chat_type" value="group">
                     <input type="hidden" name="target_id" value="{{ group.id }}">
-                    <button type="submit" class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 {% if is_muted %}text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100{% else %}text-gray-500 hover:bg-gray-50{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
+                    <button type="submit" class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
                         {% if is_muted %}
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
                         <span>Muted</span>
@@ -313,30 +313,8 @@
     let editingMessageId = null;
     let pendingAttachments = [];
 
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str || '';
-        return div.innerHTML;
-    }
-
     const URL_PATTERN = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
     const MENTION_PATTERN = /@([A-Za-z0-9_-]{1,50})/g;
-
-    function autolink(text) {
-        if (!text) return '';
-        let result = escapeHtml(text);
-        result = result.replace(URL_PATTERN, (match, url, trailing) => {
-            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline hover:text-emerald-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
-        });
-        result = result.replace(MENTION_PATTERN, (match, username) => {
-            if (knownUsers.has(username)) {
-                return `<a href="/chat/private/${username}/" class="text-emerald-600 font-medium hover:underline" onclick="event.stopPropagation();">@${username}</a>`;
-            }
-            return match;
-        });
-        return result;
-    }
 
     function adjustTextareaHeight() {
         if (!input) return;
@@ -541,143 +519,32 @@
         });
     }
 
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const socket = new WebSocket(wsScheme + '://' + window.location.host + '/ws/group/' + groupId + '/');
-
-    function getFileIcon(fileType, fileName) {
-        const ft = (fileType || '').toLowerCase();
-        const ext = (fileName || '').split('.').pop().toLowerCase();
-        if (ft.startsWith('video/') || ['mp4','mov','avi','mkv','webm'].includes(ext)) {
-            return `<svg class="w-6 h-6 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>`;
-        }
-        if (ft.startsWith('audio/') || ['mp3','wav','ogg','flac','aac','m4a'].includes(ext)) {
-            return `<svg class="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>`;
-        }
-        if (ft === 'application/pdf' || ext === 'pdf') {
-            return `<svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
-        }
-        if (['zip','rar','7z','tar','gz','bz2'].includes(ext) || ft.includes('zip') || ft.includes('compressed')) {
-            return `<svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>`;
-        }
-        if (['doc','docx','odt'].includes(ext) || ft.includes('word') || ft.includes('document')) {
-            return `<svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
-        }
-        if (['xls','xlsx','csv','ods'].includes(ext) || ft.includes('spreadsheet') || ft.includes('excel')) {
-            return `<svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>`;
-        }
-        return `<svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
-    }
-
-    function renderAttachmentsHTML(attachments) {
-        if (!attachments || !attachments.length) return '';
-        return attachments.map(att => {
-            if (att.is_image) {
-                return `<a href="${att.url}" target="_blank" class="block">
-                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm" loading="lazy">
-                </a>`;
-            } else {
-                return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                    ${getFileIcon(att.file_type, att.name)}
-                    <div class="flex flex-col min-w-0 flex-1">
-                        <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
-                        <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
-                    </div>
-                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                </a>`;
-            }
-        }).join('');
-    }
-
-    function renderMessage(data) {
-      const user = data.user || {};
-      const isMe = user.username === currentUser;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'flex items-start gap-2';
-      if (isMe) wrapper.classList.add('justify-end');
-      wrapper.dataset.username = user.username || '?';
-      if (data.message_id) {
-        wrapper.dataset.messageId = data.message_id;
-      }
-      wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
-
-      const avatar = document.createElement('div');
-      avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
-      if (user.avatar) {
-        const img = document.createElement('img');
-        img.src = user.avatar;
-        img.className = 'w-full h-full object-cover';
-        avatar.appendChild(img);
-      } else {
-        avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
-        avatar.textContent = (user.username || '?').slice(0, 1).toUpperCase();
-      }
-
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words';
-      if (isMe) {
-        bubble.classList.add('bg-' + myColor + '-100', 'text-gray-800');
-      } else {
-        bubble.classList.add('bg-gray-100', 'text-gray-800');
-        const nameEl = document.createElement('div');
-        nameEl.className = 'text-xs font-medium text-' + (user.color || 'gray') + '-500 mb-1';
-        nameEl.textContent = user.username || '?';
-        bubble.appendChild(nameEl);
-      }
-
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'msg-content whitespace-pre-wrap break-words' + (data.message ? '' : ' hidden');
-      contentDiv.innerHTML = autolink(data.message || '');
-      bubble.appendChild(contentDiv);
-
-      const attDiv = document.createElement('div');
-      attDiv.className = 'msg-attachments flex flex-col gap-1.5' + (data.message && data.attachments && data.attachments.length ? ' mt-2' : '');
-      attDiv.innerHTML = renderAttachmentsHTML(data.attachments);
-      bubble.appendChild(attDiv);
-
-      if (isMe) {
-        wrapper.appendChild(bubble);
-        wrapper.appendChild(avatar);
-      } else {
-        wrapper.appendChild(avatar);
-        wrapper.appendChild(bubble);
-      }
-
-      messagesDiv.appendChild(wrapper);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
+    const socket = MakaSockets.createGroupSocket(groupId);
 
     socket.onmessage = function(e) {
       const data = JSON.parse(e.data);
       if (data.type === 'message') {
-        renderMessage(data);
-      } else if (data.type === 'edit_message') {
-        const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
-        if (wrapper) {
-            wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
-            const contentEl = wrapper.querySelector('.msg-content');
-            if (contentEl) {
-                if (data.message) {
-                    contentEl.innerHTML = autolink(data.message);
-                    contentEl.classList.remove('hidden');
-                } else {
-                    contentEl.innerHTML = '';
-                    contentEl.classList.add('hidden');
-                }
+        MakaMessages.appendMessage(
+            messagesDiv,
+            data,
+            {
+                currentUser: currentUser,
+                knownUsers: knownUsers,
+                myColor: myColor
             }
-            const attEl = wrapper.querySelector('.msg-attachments');
-            if (attEl) {
-                attEl.innerHTML = renderAttachmentsHTML(data.attachments);
-                if (data.message && data.attachments && data.attachments.length) {
-                    attEl.classList.add('mt-2');
-                } else {
-                    attEl.classList.remove('mt-2');
-                }
+        );
+      }  else if (data.type === 'edit_message') {
+        MakaMessages.updateMessage(
+            data.message_id,
+            data,
+            {
+                knownUsers: knownUsers
             }
-        }
+        );
       } else if (data.type === 'delete_message') {
-        const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
-        if (wrapper) wrapper.remove();
+          MakaMessages.deleteMessage(
+              data.message_id
+          );
       } else if (data.type === 'error') {
         showToast(data.message || 'Error');
       }

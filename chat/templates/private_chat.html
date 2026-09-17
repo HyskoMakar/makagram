@@ -10,7 +10,8 @@
         <div class="px-4 py-3 border-b flex justify-between items-center w-full">
             <div class="flex items-center justify-between gap-3 w-full">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold {% if not other.profile.avatar_data %}bg-{{ other.profile.color }}-300{% endif %}">
+                    <div
+                        class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold {% if not other.profile.avatar_data %}bg-{{ other.profile.color }}-300{% endif %}">
                         {% if other.profile.avatar_data %}
                         <img src="{% url 'avatar' other.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -30,12 +31,21 @@
                         {% csrf_token %}
                         <input type="hidden" name="chat_type" value="private">
                         <input type="hidden" name="target_id" value="{{ other.id }}">
-                        <button type="submit" class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 {% if is_muted %}text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100{% else %}text-gray-500 hover:bg-gray-50{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
+                        <button type="submit"
+                            class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
                             {% if is_muted %}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                            </svg>
                             <span>Muted</span>
                             {% else %}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
                             <span>Mute</span>
                             {% endif %}
                         </button>
@@ -55,10 +65,11 @@
                 {% for m in messages %}
                 {% with msg_user=m.from_user.profile.username|default:m.from_user.username %}
                 <div class="flex items-start gap-2 {% if m.from_user == request.user %}justify-end{% endif %}"
-                     data-username="{{ msg_user }}" data-message-id="{{ m.id }}"
-                     data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                    data-username="{{ msg_user }}" data-message-id="{{ m.id }}"
+                    data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
                     {% if m.from_user != request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not m.from_user.profile.avatar_data %}bg-{{ m.from_user.profile.color|default:'gray' }}-300{% endif %}">
+                    <div
+                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not m.from_user.profile.avatar_data %}bg-{{ m.from_user.profile.color|default:'gray' }}-300{% endif %}">
                         {% if m.from_user.profile.avatar_data %}
                         <img src="{% url 'avatar' m.from_user.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -67,27 +78,40 @@
                     </div>
                     {% endif %}
 
-                    <div class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
+                    <div
+                        class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
                         {% if m.content %}
                         <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
                         {% else %}
                         <div class="msg-content whitespace-pre-wrap break-words hidden"></div>
                         {% endif %}
 
-                        <div class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
+                        <div
+                            class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
                             {% for att in m.attachments.all %}
                             {% if att.is_image %}
                             <a href="/chat/attachments/{{ att.id }}/" target="_blank" class="block">
-                                <img src="/chat/attachments/{{ att.id }}/" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
+                                <img src="/chat/attachments/{{ att.id }}/"
+                                    class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
                             </a>
                             {% else %}
-                            <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                                <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank"
+                                class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
+                                <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
                                 <div class="flex flex-col min-w-0 flex-1">
-                                    <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
+                                    <span class="text-xs font-medium truncate group-hover:underline">{{
+                                        att.original_name }}</span>
                                     <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
                                 </div>
-                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
                             </a>
                             {% endif %}
                             {% endfor %}
@@ -95,7 +119,8 @@
                     </div>
 
                     {% if m.from_user == request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
+                    <div
+                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
                         {% if request.user.profile.avatar_data %}
                         <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -108,9 +133,11 @@
                 {% endfor %}
 
                 {% for inv in pending_invites %}
-                <div class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}" data-invite-id="{{ inv.id }}">
+                <div class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}"
+                    data-invite-id="{{ inv.id }}">
                     {% if inv.invited_by != request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not inv.invited_by.profile.avatar_data %}bg-{{ inv.invited_by.profile.color|default:'gray' }}-300{% endif %}">
+                    <div
+                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not inv.invited_by.profile.avatar_data %}bg-{{ inv.invited_by.profile.color|default:'gray' }}-300{% endif %}">
                         {% if inv.invited_by.profile.avatar_data %}
                         <img src="{% url 'avatar' inv.invited_by.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -119,20 +146,28 @@
                     </div>
                     {% endif %}
 
-                    <div class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
+                    <div
+                        class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
                         {% if inv.invited_by == request.user %}
-                        <div>You invited <strong>{{ other.profile.username|default:other.username }}</strong> to <em>{{ inv.group.name }}</em> — waiting for response</div>
+                        <div>You invited <strong>{{ other.profile.username|default:other.username }}</strong> to <em>{{
+                                inv.group.name }}</em> — waiting for response</div>
                         {% else %}
-                        <div><strong>{{ inv.invited_by.profile.username|default:inv.invited_by.username }}</strong> invited you to <em>{{ inv.group.name }}</em></div>
+                        <div><strong>{{ inv.invited_by.profile.username|default:inv.invited_by.username }}</strong>
+                            invited you to <em>{{ inv.group.name }}</em></div>
                         <div class="flex gap-2 mt-2">
-                            <button type="button" data-action="accept-invite" data-invite-id="{{ inv.id }}" data-group-name="{{ inv.group.name }}" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">Accept</button>
-                            <button type="button" data-action="decline-invite" data-invite-id="{{ inv.id }}" data-group-name="{{ inv.group.name }}" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">Decline</button>
+                            <button type="button" data-action="accept-invite" data-invite-id="{{ inv.id }}"
+                                data-group-name="{{ inv.group.name }}"
+                                class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">Accept</button>
+                            <button type="button" data-action="decline-invite" data-invite-id="{{ inv.id }}"
+                                data-group-name="{{ inv.group.name }}"
+                                class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">Decline</button>
                         </div>
                         {% endif %}
                     </div>
 
                     {% if inv.invited_by == request.user %}
-                    <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
+                    <div
+                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
                         {% if request.user.profile.avatar_data %}
                         <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
                         {% else %}
@@ -145,19 +180,29 @@
             </div>
         </div>
 
-        <div id="edit-banner" class="hidden px-4 py-1.5 bg-emerald-50 border-t flex items-center justify-between text-xs text-emerald-700">
+        <div id="edit-banner"
+            class="hidden px-4 py-1.5 bg-emerald-50 border-t flex items-center justify-between text-xs text-emerald-700">
             <div class="flex items-center gap-1.5 truncate">
-                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 <span>Editing message</span>
             </div>
-            <button id="cancel-edit-btn" type="button" class="text-emerald-500 hover:text-emerald-800 font-medium">Cancel</button>
+            <button id="cancel-edit-btn" type="button"
+                class="text-emerald-500 hover:text-emerald-800 font-medium">Cancel</button>
         </div>
 
         <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
 
         <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            <button id="attach-file-btn" type="button"
+                class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                title="Attach file">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
             </button>
             <input type="file" id="chat-file-input" multiple class="hidden">
 
@@ -166,21 +211,23 @@
                 placeholder="Write something..."></textarea>
             {% if my_private_groups %}
             <details class="relative flex-shrink-0" id="invite-details">
-                <summary class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
+                <summary
+                    class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
                     Invite
                 </summary>
-                <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10" style="min-width: 11rem;">
+                <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10"
+                    style="min-width: 11rem;">
                     {% for group in my_private_groups %}
                     <button type="button"
                         class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-                        data-group-id="{{ group.id }}"
-                        data-group-name="{{ group.name }}">{{ group.name }}</button>
+                        data-group-id="{{ group.id }}" data-group-name="{{ group.name }}">{{ group.name }}</button>
                     {% endfor %}
                 </div>
             </details>
             {% else %}
             <div class="relative flex-shrink-0" title="You have no private groups to invite to">
-                <button type="button" disabled class="px-3 py-2 rounded-lg border text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none">
+                <button type="button" disabled
+                    class="px-3 py-2 rounded-lg border text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none">
                     Invite
                 </button>
             </div>
@@ -201,12 +248,20 @@
         </a>
     </div>
     <div id="cm-own-options" class="hidden">
-        <button id="cm-edit-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        <button id="cm-edit-btn" type="button"
+            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
             Edit
         </button>
-        <button id="cm-delete-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2">
-            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <button id="cm-delete-btn" type="button"
+            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Delete
         </button>
     </div>
@@ -221,12 +276,11 @@
     const otherName = JSON.parse(document.getElementById('private-name').textContent);
     const currentUser = JSON.parse(document.getElementById('current-user').textContent);
     const knownUsers = new Set(JSON.parse(document.getElementById('known-usernames').textContent));
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const chatSocket = new WebSocket(
-        wsScheme + '://' + window.location.host + '/ws/privatechat/' + encodeURIComponent(otherName) + '/'
-    );
+    const chatSocket = MakaSockets.createPrivateChatSocket(otherName);
 
-    window.addEventListener('beforeunload', () => chatSocket.close());
+    window.addEventListener('beforeunload', () => {
+        chatSocket.close();
+    });
 
     function getCookie(name) {
         let cookieValue = null;
@@ -245,7 +299,9 @@
 
     const csrftoken = getCookie('csrftoken');
     const log = document.getElementById('chat-log');
-    log.scrollTop = log.scrollHeight;
+    if (log) {
+        log.scrollTop = log.scrollHeight;
+    }
 
     const contextMenu = document.getElementById('context-menu');
     const cmOtherOptions = document.getElementById('cm-other-options');
@@ -264,31 +320,6 @@
     let selectedMsgId = null;
     let editingMessageId = null;
     let pendingAttachments = [];
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str || '';
-        return div.innerHTML;
-    }
-
-    const URL_PATTERN = /((?:https?:\/\/|www\.|(?:[a-zA-Z0-9-]+\.)+(?:com|org|net|io|dev|app|co|ai|ru|uk|de|fr|me|tv|gg|ly|sh|to|cloud|online|site|store|tech|info|biz|xyz))(?:\/[^\s<]*)?)([.,\)!?;:]?(?:\s|<|$))/gi;
-    const MENTION_PATTERN = /@([A-Za-z0-9_-]{1,50})/g;
-
-    function autolink(text) {
-        if (!text) return '';
-        let result = escapeHtml(text);
-        result = result.replace(URL_PATTERN, (match, url, trailing) => {
-            const href = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 underline hover:text-blue-800 break-all" onclick="event.stopPropagation();">${url}</a>${trailing}`;
-        });
-        result = result.replace(MENTION_PATTERN, (match, username) => {
-            if (knownUsers.has(username)) {
-                return `<a href="/chat/private/${username}/" class="text-emerald-600 font-medium hover:underline" onclick="event.stopPropagation();">@${username}</a>`;
-            }
-            return match;
-        });
-        return result;
-    }
 
     function adjustTextareaHeight() {
         if (!messageInput) return;
@@ -314,21 +345,26 @@
             attachmentTray.innerHTML = '';
             return;
         }
+
         attachmentTray.classList.remove('hidden');
         attachmentTray.innerHTML = pendingAttachments.map((att, idx) => `
             <div class="flex items-center gap-1.5 bg-white border rounded-md px-2 py-1 shadow-sm">
                 ${att.is_image
-                    ? `<img src="${att.url}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
-                    : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
-                }
-                <span class="max-w-[120px] truncate font-medium text-gray-700">${escapeHtml(att.name)}</span>
-                <button type="button" data-remove-att="${idx}" class="text-gray-400 hover:text-red-500 font-bold ml-1">&times;</button>
+                ? `<img src="${MakaMessages.escapeHtml(att.url)}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
+                : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
+            }
+                <span class="max-w-[120px] truncate font-medium text-gray-700">
+                    ${MakaMessages.escapeHtml(att.name)}
+                </span>
+                <button type="button" data-remove-att="${idx}" class="text-gray-400 hover:text-red-500 font-bold ml-1">
+                    &times;
+                </button>
             </div>
         `).join('');
 
         attachmentTray.querySelectorAll('[data-remove-att]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const i = parseInt(e.target.dataset.removeAtt);
+            btn.addEventListener('click', e => {
+                const i = parseInt(e.currentTarget.dataset.removeAtt);
                 pendingAttachments.splice(i, 1);
                 renderAttachmentTray();
             });
@@ -339,40 +375,46 @@
         attachFileBtn.addEventListener('click', () => chatFileInput.click());
         chatFileInput.addEventListener('change', async () => {
             if (!chatFileInput.files.length) return;
+
             const formData = new FormData();
             for (let i = 0; i < chatFileInput.files.length; i++) {
                 formData.append('files', chatFileInput.files[i]);
             }
+
             try {
                 const res = await fetch('/chat/attachments/upload/', {
                     method: 'POST',
-                    headers: {'X-CSRFToken': csrftoken},
-                    body: formData,
+                    headers: { 'X-CSRFToken': csrftoken },
+                    body: formData
                 });
                 const data = await res.json();
                 if (data.ok) {
                     pendingAttachments.push(...data.attachments);
                     renderAttachmentTray();
                 } else {
-                    addSystemMessage(data.error || 'Failed to upload attachment');
+                    MakaMessages.addSystemMessage(log, data.error || 'Failed to upload attachment');
                 }
             } catch (err) {
                 console.error(err);
-                addSystemMessage('Upload error');
+                MakaMessages.addSystemMessage(log, 'Upload error');
             }
             chatFileInput.value = '';
         });
     }
 
     function hideContextMenu() {
-        if (contextMenu) contextMenu.classList.add('hidden');
+        if (contextMenu) {
+            contextMenu.classList.add('hidden');
+        }
     }
 
     function cancelEditing() {
         editingMessageId = null;
         pendingAttachments = [];
         renderAttachmentTray();
-        if (editBanner) editBanner.classList.add('hidden');
+        if (editBanner) {
+            editBanner.classList.add('hidden');
+        }
         if (messageInput) {
             messageInput.value = '';
             adjustTextareaHeight();
@@ -386,57 +428,63 @@
     document.addEventListener('click', hideContextMenu);
     document.addEventListener('scroll', hideContextMenu, true);
 
-    log.addEventListener('click', function(e) {
-        if (e.target.closest('a')) return;
-        const msgWrapper = e.target.closest('[data-username]');
-        if (!msgWrapper) return;
+    if (log) {
+        log.addEventListener('click', function (e) {
+            if (e.target.closest('a')) return;
 
-        const username = msgWrapper.dataset.username;
-        if (!username) return;
+            const msgWrapper = e.target.closest('[data-username]');
+            if (!msgWrapper) return;
+            const username = msgWrapper.dataset.username;
+            if (!username) return;
 
-        e.stopPropagation();
+            e.stopPropagation();
+            selectedMsgWrapper = msgWrapper;
+            selectedMsgId = msgWrapper.dataset.messageId || null;
 
-        selectedMsgWrapper = msgWrapper;
-        selectedMsgId = msgWrapper.dataset.messageId || null;
-
-        if (username === currentUser) {
-            if (!selectedMsgId) return;
-            if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
-            if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
-        } else {
-            if (cmOwnOptions) cmOwnOptions.classList.add('hidden');
-            if (cmOtherOptions) cmOtherOptions.classList.remove('hidden');
-            if (cmPmBtn) {
-                cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
+            if (username === currentUser) {
+                if (!selectedMsgId) return;
+                if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
+                if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
+            } else {
+                if (cmOwnOptions) cmOwnOptions.classList.add('hidden');
+                if (cmOtherOptions) cmOtherOptions.classList.remove('hidden');
+                if (cmPmBtn) cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
             }
-        }
 
-        const menuWidth = 180;
-        const menuHeight = 90;
-        let left = e.clientX;
-        let top = e.clientY;
+            const menuWidth = 180;
+            const menuHeight = 90;
+            let left = e.clientX;
+            let top = e.clientY;
 
-        if (left + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 10;
-        if (top + menuHeight > window.innerHeight) top = window.innerHeight - menuHeight - 10;
+            if (left + menuWidth > window.innerWidth) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            if (top + menuHeight > window.innerHeight) {
+                top = window.innerHeight - menuHeight - 10;
+            }
 
-        contextMenu.style.left = left + 'px';
-        contextMenu.style.top = top + 'px';
-        contextMenu.classList.remove('hidden');
-    });
+            contextMenu.style.left = left + 'px';
+            contextMenu.style.top = top + 'px';
+            contextMenu.classList.remove('hidden');
+        });
+    }
 
     if (cmEditBtn) {
-        cmEditBtn.addEventListener('click', function() {
+        cmEditBtn.addEventListener('click', function () {
             hideContextMenu();
             if (!selectedMsgWrapper || !selectedMsgId) return;
+
             const contentEl = selectedMsgWrapper.querySelector('.msg-content');
             const currentContent = contentEl ? contentEl.textContent.trim() : '';
-
             let existingAtts = [];
+
             try {
                 if (selectedMsgWrapper.dataset.attachments) {
                     existingAtts = JSON.parse(selectedMsgWrapper.dataset.attachments);
                 }
-            } catch (err) {}
+            } catch (err) {
+                existingAtts = [];
+            }
 
             editingMessageId = selectedMsgId;
             pendingAttachments = [...existingAtts];
@@ -447,233 +495,75 @@
                 messageInput.focus();
                 adjustTextareaHeight();
             }
-            if (editBanner) editBanner.classList.remove('hidden');
+
+            if (editBanner) {
+                editBanner.classList.remove('hidden');
+            }
         });
     }
 
     if (cmDeleteBtn) {
-        cmDeleteBtn.addEventListener('click', function() {
+        cmDeleteBtn.addEventListener('click', function () {
             hideContextMenu();
             if (!selectedMsgId) return;
             if (chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(JSON.stringify({
-                    action: 'delete',
-                    message_id: selectedMsgId
-                }));
+                chatSocket.send(
+                    JSON.stringify({
+                        action: 'delete',
+                        message_id: selectedMsgId
+                    })
+                );
             }
+            selectedMsgId = null;
+            selectedMsgWrapper = null;
         });
     }
 
     function addSystemMessage(text) {
-        const el = document.createElement('div');
-        el.className = 'text-center text-xs text-gray-400 py-1 my-1';
-        el.textContent = text;
-        log.appendChild(el);
-        log.scrollTop = log.scrollHeight;
-    }
-
-    function getFileIcon(fileType, fileName) {
-        const ft = (fileType || '').toLowerCase();
-        const ext = (fileName || '').split('.').pop().toLowerCase();
-        if (ft.startsWith('video/') || ['mp4','mov','avi','mkv','webm'].includes(ext)) {
-            return `<svg class="w-6 h-6 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>`;
-        }
-        if (ft.startsWith('audio/') || ['mp3','wav','ogg','flac','aac','m4a'].includes(ext)) {
-            return `<svg class="w-6 h-6 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>`;
-        }
-        if (ft === 'application/pdf' || ext === 'pdf') {
-            return `<svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
-        }
-        if (['zip','rar','7z','tar','gz','bz2'].includes(ext) || ft.includes('zip') || ft.includes('compressed')) {
-            return `<svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>`;
-        }
-        if (['doc','docx','odt'].includes(ext) || ft.includes('word') || ft.includes('document')) {
-            return `<svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
-        }
-        if (['xls','xlsx','csv','ods'].includes(ext) || ft.includes('spreadsheet') || ft.includes('excel')) {
-            return `<svg class="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/></svg>`;
-        }
-        return `<svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
-    }
-
-    function renderAttachmentsHTML(attachments) {
-        if (!attachments || !attachments.length) return '';
-        return attachments.map(att => {
-            if (att.is_image) {
-                return `<a href="${att.url}" target="_blank" class="block">
-                    <img src="${att.url}" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm" loading="lazy">
-                </a>`;
-            } else {
-                return `<a href="${att.url}" download="${escapeHtml(att.name)}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                    ${getFileIcon(att.file_type, att.name)}
-                    <div class="flex flex-col min-w-0 flex-1">
-                        <span class="text-xs font-medium truncate group-hover:underline">${escapeHtml(att.name)}</span>
-                        <span class="text-[10px] text-gray-500">${escapeHtml(att.size || '')}</span>
-                    </div>
-                    <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                </a>`;
-            }
-        }).join('');
-    }
-
-    function renderMessage(data) {
-        const user = data.user || {};
-        const isMe = user.username === currentUser;
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'flex items-start gap-2';
-        if (isMe) wrapper.classList.add('justify-end');
-        wrapper.dataset.username = user.username || '?';
-        if (data.message_id) {
-            wrapper.dataset.messageId = data.message_id;
-        }
-        wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
-
-        const avatar = document.createElement('div');
-        avatar.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
-        if (user.avatar) {
-            const img = document.createElement('img');
-            img.src = user.avatar;
-            img.className = 'w-full h-full object-cover';
-            avatar.appendChild(img);
-        } else {
-            avatar.classList.add('bg-' + (user.color || 'gray') + '-300');
-            avatar.textContent = (user.username || '?').slice(0, 1).toUpperCase();
-        }
-
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words';
-        if (isMe) {
-            bubble.classList.add('bg-{{ request.user.profile.color }}-100', 'text-gray-800');
-        } else {
-            bubble.classList.add('bg-{{ other.profile.color }}-100', 'text-gray-800');
-        }
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'msg-content whitespace-pre-wrap break-words' + (data.message ? '' : ' hidden');
-        contentDiv.innerHTML = autolink(data.message || '');
-        bubble.appendChild(contentDiv);
-
-        const attDiv = document.createElement('div');
-        attDiv.className = 'msg-attachments flex flex-col gap-1.5' + (data.message && data.attachments && data.attachments.length ? ' mt-2' : '');
-        attDiv.innerHTML = renderAttachmentsHTML(data.attachments);
-        bubble.appendChild(attDiv);
-
-        if (isMe) {
-            wrapper.appendChild(bubble);
-            wrapper.appendChild(avatar);
-        } else {
-            wrapper.appendChild(avatar);
-            wrapper.appendChild(bubble);
-        }
-
-        log.appendChild(wrapper);
-        log.scrollTop = log.scrollHeight;
+        MakaMessages.addSystemMessage(log, text);
     }
 
     function renderInvite(inv) {
-        const isInviter = inv.inviter === currentUser;
-
         const wrapper = document.createElement('div');
-        wrapper.className = 'flex items-start gap-2';
-        if (isInviter) wrapper.classList.add('justify-end');
-        if (inv.invite_id) wrapper.dataset.inviteId = inv.invite_id;
+        wrapper.className = 'flex items-start gap-2 ' + (inv.inviter === currentUser ? 'justify-end' : '');
+        wrapper.dataset.inviteId = inv.invite_id;
 
-        function createAvatarElement(avatarUrl, username, color) {
-            const avatarEl = document.createElement('div');
-            avatarEl.className = 'w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0';
-            if (avatarUrl) {
-                const img = document.createElement('img');
-                img.src = avatarUrl;
-                img.className = 'w-full h-full object-cover';
-                avatarEl.appendChild(img);
-            } else {
-                avatarEl.classList.add('bg-' + (color || 'gray') + '-300');
-                avatarEl.textContent = (username || '?').slice(0, 1).toUpperCase();
-            }
-            return avatarEl;
-        }
+        const avatarUrl = inv.inviter_avatar || '';
+        const inviterColor = inv.inviter_color || 'gray';
+        const avatar = MakaMessages.createAvatar({
+            avatarUrl: avatarUrl,
+            username: inv.inviter,
+            color: inviterColor,
+            size: '9'
+        });
 
         const bubble = document.createElement('div');
         bubble.className = 'chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words';
-        if (isInviter) {
+
+        if (inv.inviter === currentUser) {
             bubble.classList.add('bg-{{ request.user.profile.color|default:"gray" }}-100', 'text-gray-800');
+            bubble.innerHTML = `<div>You invited <strong>${MakaMessages.escapeHtml(otherName)}</strong> to <em>${MakaMessages.escapeHtml(inv.group_name)}</em> — waiting for response</div>`;
         } else {
             bubble.classList.add('bg-{{ other.profile.color|default:"gray" }}-100', 'text-gray-800');
+            bubble.innerHTML = `
+                <div>
+                    <strong>${MakaMessages.escapeHtml(inv.inviter)}</strong> invited you to <em>${MakaMessages.escapeHtml(inv.group_name)}</em>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button type="button" data-action="accept-invite" data-invite-id="${inv.invite_id}" data-group-name="${MakaMessages.escapeHtml(inv.group_name)}" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">
+                        Accept
+                    </button>
+                    <button type="button" data-action="decline-invite" data-invite-id="${inv.invite_id}" data-group-name="${MakaMessages.escapeHtml(inv.group_name)}" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">
+                        Decline
+                    </button>
+                </div>
+            `;
         }
 
-        let avatar;
-
-        const textRow = document.createElement('div');
-        if (isInviter) {
-            textRow.append('You invited ');
-            const other = document.createElement('strong');
-            other.textContent = otherName;
-            textRow.appendChild(other);
-            textRow.append(' to ');
-            const group = document.createElement('em');
-            group.textContent = inv.group_name || '';
-            textRow.appendChild(group);
-            textRow.append(' — waiting for response');
-            bubble.appendChild(textRow);
-
-            const myAvatarUrl = inv.inviter_avatar || "{% if request.user.profile.avatar_data %}{% url 'avatar' request.user.id %}{% endif %}";
-            avatar = createAvatarElement(myAvatarUrl, currentUser, "{{ request.user.profile.color|default:'gray' }}");
-
+        if (inv.inviter === currentUser) {
             wrapper.appendChild(bubble);
             wrapper.appendChild(avatar);
         } else {
-            const inviter = document.createElement('strong');
-            inviter.textContent = inv.inviter || '?';
-            textRow.appendChild(inviter);
-            textRow.append(' invited you to ');
-            const group = document.createElement('em');
-            group.textContent = inv.group_name || '';
-            textRow.appendChild(group);
-            bubble.appendChild(textRow);
-
-            const btnRow = document.createElement('div');
-            btnRow.className = 'flex gap-2 mt-2';
-
-            const accept = document.createElement('button');
-            accept.className = 'px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm';
-            accept.textContent = 'Accept';
-
-            const decline = document.createElement('button');
-            decline.className = 'px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm';
-            decline.textContent = 'Decline';
-
-            accept.addEventListener('click', async () => {
-                accept.disabled = true;
-                decline.disabled = true;
-                const res = await fetch(`/chat/invites/${inv.invite_id}/accept/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': csrftoken}
-                });
-                const d = await res.json();
-                wrapper.remove();
-                if (d.ok) addSystemMessage(`You joined ${inv.group_name}`);
-            });
-
-            decline.addEventListener('click', async () => {
-                accept.disabled = true;
-                decline.disabled = true;
-                const res = await fetch(`/chat/invites/${inv.invite_id}/decline/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': csrftoken}
-                });
-                const d = await res.json();
-                wrapper.remove();
-                if (d.ok) addSystemMessage(`You declined the invite to ${inv.group_name}`);
-            });
-
-            btnRow.appendChild(accept);
-            btnRow.appendChild(decline);
-            bubble.appendChild(btnRow);
-
-            const otherAvatarUrl = inv.inviter_avatar || "{% if other.profile.avatar_data %}{% url 'avatar' other.id %}{% endif %}";
-            avatar = createAvatarElement(otherAvatarUrl, inv.inviter, "{{ other.profile.color|default:'gray' }}");
-
             wrapper.appendChild(avatar);
             wrapper.appendChild(bubble);
         }
@@ -682,21 +572,23 @@
         log.scrollTop = log.scrollHeight;
     }
 
-    chatSocket.onmessage = function(e) {
+    chatSocket.onmessage = function (e) {
         const data = JSON.parse(e.data);
-
         if (data.type === 'state') {
             const isBlocked = data.blocked;
             const areFriends = data.friends;
             const friendBtn = document.getElementById('friend-btn');
             const blockBtn = document.getElementById('block-btn');
+
             if (friendBtn) {
                 friendBtn.textContent = areFriends ? 'Unfriend' : 'Add friend';
                 friendBtn.disabled = isBlocked;
             }
+
             if (blockBtn) {
                 blockBtn.textContent = isBlocked ? 'Unblock' : 'Block';
             }
+
             const submit = document.getElementById('chat-message-submit');
             if (isBlocked) {
                 if (messageInput) messageInput.disabled = true;
@@ -714,13 +606,18 @@
         }
 
         if (data.type === 'invite') {
-            if (data.inviter !== currentUser) renderInvite(data);
+            if (data.inviter !== currentUser) {
+                renderInvite(data);
+            }
             return;
         }
 
         if (data.type === 'invite_response') {
             const invCard = document.querySelector(`[data-invite-id="${data.invite_id}"]`);
-            if (invCard) invCard.remove();
+            if (invCard) {
+                invCard.remove();
+            }
+
             if (data.invitee !== currentUser) {
                 const msg = data.accepted
                     ? `${data.user} accepted your invite to ${data.group_name}`
@@ -731,44 +628,34 @@
         }
 
         if (data.type === 'message') {
-            renderMessage(data);
-        } else if (data.type === 'edit_message') {
-            const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
-            if (wrapper) {
-                wrapper.dataset.attachments = JSON.stringify(data.attachments || []);
-                const contentEl = wrapper.querySelector('.msg-content');
-                if (contentEl) {
-                    if (data.message) {
-                        contentEl.innerHTML = autolink(data.message);
-                        contentEl.classList.remove('hidden');
-                    } else {
-                        contentEl.innerHTML = '';
-                        contentEl.classList.add('hidden');
-                    }
-                }
-                const attEl = wrapper.querySelector('.msg-attachments');
-                if (attEl) {
-                    attEl.innerHTML = renderAttachmentsHTML(data.attachments);
-                    if (data.message && data.attachments && data.attachments.length) {
-                        attEl.classList.add('mt-2');
-                    } else {
-                        attEl.classList.remove('mt-2');
-                    }
-                }
-            }
-        } else if (data.type === 'delete_message') {
-            const wrapper = document.querySelector(`[data-message-id="${data.message_id}"]`);
-            if (wrapper) wrapper.remove();
+            MakaMessages.appendMessage(log, data, {
+                currentUser: currentUser,
+                knownUsers: knownUsers,
+                myColor: '{{ request.user.profile.color|default:"gray" }}'
+            });
+            return;
+        }
+
+        if (data.type === 'edit_message') {
+            MakaMessages.updateMessage(data.message_id, data, {
+                knownUsers: knownUsers
+            });
+            return;
+        }
+
+        if (data.type === 'delete_message') {
+            MakaMessages.deleteMessage(data.message_id);
+            return;
         }
     };
 
-    chatSocket.onclose = function() {
+    chatSocket.onclose = function () {
         console.error('Chat socket closed unexpectedly');
     };
 
     if (messageInput) {
         messageInput.focus();
-        messageInput.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 cancelEditing();
             } else if (e.key === 'Enter' && !e.shiftKey) {
@@ -778,25 +665,30 @@
         });
     }
 
-    document.getElementById('chat-message-submit').addEventListener('click', function() {
-        if (messageInput.disabled) return;
+    document.getElementById('chat-message-submit').addEventListener('click', function () {
+        if (messageInput && messageInput.disabled) return;
+
         const message = messageInput.value.trim();
         const attachmentIds = pendingAttachments.map(a => a.id);
 
         if ((message || attachmentIds.length) && chatSocket.readyState === WebSocket.OPEN) {
             if (editingMessageId) {
-                chatSocket.send(JSON.stringify({
-                    action: 'edit',
-                    message_id: editingMessageId,
-                    message: message,
-                    attachment_ids: attachmentIds
-                }));
+                chatSocket.send(
+                    JSON.stringify({
+                        action: 'edit',
+                        message_id: editingMessageId,
+                        message: message,
+                        attachment_ids: attachmentIds
+                    })
+                );
                 cancelEditing();
             } else {
-                chatSocket.send(JSON.stringify({
-                    message: message,
-                    attachment_ids: attachmentIds
-                }));
+                chatSocket.send(
+                    JSON.stringify({
+                        message: message,
+                        attachment_ids: attachmentIds
+                    })
+                );
                 messageInput.value = '';
                 pendingAttachments = [];
                 renderAttachmentTray();
@@ -807,8 +699,9 @@
 
     const blockedByOther = JSON.parse(document.getElementById('blocked-flag').textContent);
     if (blockedByOther) {
-        messageInput.disabled = true;
-        document.getElementById('chat-message-submit').disabled = true;
+        if (messageInput) messageInput.disabled = true;
+        const submit = document.getElementById('chat-message-submit');
+        if (submit) submit.disabled = true;
     }
 
     const friendBtn = document.getElementById('friend-btn');
@@ -816,7 +709,8 @@
 
     friendBtn && friendBtn.addEventListener('click', async () => {
         const res = await fetch(`/chat/toggle-friend/${encodeURIComponent(otherName)}/`, {
-            method: 'POST', headers: {'X-CSRFToken': csrftoken}
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken }
         });
         const data = await res.json();
         if (data.ok) {
@@ -826,32 +720,35 @@
 
     blockBtn && blockBtn.addEventListener('click', async () => {
         const res = await fetch(`/chat/toggle-block/${encodeURIComponent(otherName)}/`, {
-            method: 'POST', headers: {'X-CSRFToken': csrftoken}
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken }
         });
         const data = await res.json();
         if (data.ok) {
             blockBtn.textContent = data.blocked ? 'Unblock' : 'Block';
             if (data.blocked) {
                 if (friendBtn) friendBtn.disabled = true;
-                messageInput.disabled = true;
+                if (messageInput) messageInput.disabled = true;
             } else {
                 if (friendBtn) friendBtn.disabled = false;
-                messageInput.disabled = false;
+                if (messageInput) messageInput.disabled = false;
             }
         }
     });
 
     const inviteDetails = document.getElementById('invite-details');
-
     document.querySelectorAll('.group-invite-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const gid = btn.dataset.groupId;
             const gname = btn.dataset.groupName;
-            if (inviteDetails) inviteDetails.removeAttribute('open');
+            if (inviteDetails) {
+                inviteDetails.removeAttribute('open');
+            }
+
             const res = await fetch(`/chat/groups/${gid}/invite/`, {
                 method: 'POST',
-                headers: {'X-CSRFToken': csrftoken},
-                body: new URLSearchParams({username: otherName})
+                headers: { 'X-CSRFToken': csrftoken },
+                body: new URLSearchParams({ username: otherName })
             });
             const data = await res.json();
             if (data.ok) {
@@ -859,7 +756,7 @@
                     invite_id: data.invite_id,
                     group_id: gid,
                     group_name: gname,
-                    inviter: currentUser,
+                    inviter: currentUser
                 });
             } else {
                 addSystemMessage(`Invite failed: ${data.error || 'unknown error'}`);
@@ -867,32 +764,38 @@
         });
     });
 
-    log.addEventListener('click', async function(e) {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
+    if (log) {
+        log.addEventListener('click', async function (e) {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
 
-        const action = btn.dataset.action;
-        const inviteId = btn.dataset.inviteId;
-        const groupName = btn.dataset.groupName;
-        const wrapper = btn.closest('[data-invite-id]');
+            const action = btn.dataset.action;
+            const inviteId = btn.dataset.inviteId;
+            const groupName = btn.dataset.groupName;
+            const wrapper = btn.closest('[data-invite-id]');
 
-        if (action === 'accept-invite') {
-            const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
-                method: 'POST',
-                headers: {'X-CSRFToken': csrftoken}
-            });
-            const d = await res.json();
-            if (wrapper) wrapper.remove();
-            if (d.ok) addSystemMessage(`You joined ${groupName}`);
-        } else if (action === 'decline-invite') {
-            const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
-                method: 'POST',
-                headers: {'X-CSRFToken': csrftoken}
-            });
-            const d = await res.json();
-            if (wrapper) wrapper.remove();
-            if (d.ok) addSystemMessage(`You declined the invite to ${groupName}`);
-        }
-    });
+            if (action === 'accept-invite') {
+                const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const d = await res.json();
+                if (wrapper) wrapper.remove();
+                if (d.ok) {
+                    addSystemMessage(`You joined ${groupName}`);
+                }
+            } else if (action === 'decline-invite') {
+                const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken }
+                });
+                const d = await res.json();
+                if (wrapper) wrapper.remove();
+                if (d.ok) {
+                    addSystemMessage(`You declined the invite to ${groupName}`);
+                }
+            }
+        });
+    }
 </script>
 {% endblock %}

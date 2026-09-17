@@ -1,80 +1,191 @@
 {% extends 'base.html' %}
-{% block title %}# {{ room_name }}{% endblock %}
+
+{% block title %}Lobby - {{ room_name }}{% endblock %}
+
 {% block content %}
+
 <div class="max-w-2xl mx-auto">
+
     <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-4 py-3 border-b flex justify-between items-center">
-            <span class="font-semibold text-gray-700"># {{ room_name }}</span>
-            <span class="text-sm text-green-500"><span id="online-count">0</span> online</span>
+
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <div>
+                <h1 class="font-semibold text-gray-800">
+                    {{ room_name }}
+                </h1>
+
+                <div class="text-sm text-gray-400">
+                    <span id="online-count">
+                        {{ online_count }}
+                    </span>
+                    online
+                </div>
+            </div>
         </div>
-        <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"></div>
+
+        <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
+            {% for message in messages %}
+            <div class="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-800 self-start max-w-xs">
+
+                <span class="text-{{ message.user.profile.color|default:'gray' }}-600">
+                    {{ message.user.profile.username|default:message.user.username }}
+                </span>
+
+                <br>
+
+                <span>
+                    {{ message.message }}
+                </span>
+
+            </div>
+            {% endfor %}
+        </div>
+
         <div class="px-4 py-3 border-t flex gap-2">
+
             <input id="chat-message-input" type="text"
-                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                placeholder="Write something...">
+                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                placeholder="Write something..." autocomplete="off">
+
             <button id="chat-message-submit"
-                class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm">
+                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">
                 Send
             </button>
+
         </div>
+
     </div>
+
 </div>
 
 {{ room_name|json_script:"room-name" }}
-<script>
-    const roomName = JSON.parse(document.getElementById('room-name').textContent);
 
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const chatSocket = new WebSocket(
-        wsScheme + '://' + window.location.host + '/ws/lobby/' + roomName + '/'
+<script>
+
+    const roomName = JSON.parse(
+        document.getElementById('room-name').textContent
     );
 
-    window.addEventListener('beforeunload', () => chatSocket.close());
+    const chatSocket =
+        MakaSockets.createLobbySocket(roomName);
 
-    chatSocket.onmessage = function(e) {
+    window.addEventListener(
+        'beforeunload',
+        () => chatSocket.close()
+    );
+
+    chatSocket.onmessage = function (e) {
+
         const data = JSON.parse(e.data);
 
         if (data.type === 'online_count') {
-            document.getElementById('online-count').textContent = data.count;
+
+            const onlineCount =
+                document.getElementById(
+                    'online-count'
+                );
+
+            if (onlineCount) {
+                onlineCount.textContent =
+                    data.count;
+            }
+
             return;
         }
 
         if (data.type === 'error') {
-            console.error(data.message || 'WebSocket error');
+
+            console.error(
+                data.message ||
+                'WebSocket error'
+            );
+
             return;
         }
 
-        const log = document.querySelector('#chat-log');
-        const msg = document.createElement('div');
-        msg.className = 'bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-800 self-start max-w-xs';
+        if (data.type === 'message') {
 
-        const username = document.createElement('span');
-        username.className = 'text-' + (data.user?.color || 'gray') + '-600';
-        username.textContent = data.user?.username || 'Unknown';
-        msg.appendChild(username);
-        msg.appendChild(document.createElement('br'));
-        msg.appendChild(document.createTextNode(' ' + (data.message || '')));
+            const log =
+                document.querySelector(
+                    '#chat-log'
+                );
 
-        log.appendChild(msg);
-        log.scrollTop = log.scrollHeight;
-    };
+            if (!log) return;
 
-    chatSocket.onclose = function(e) {
-        console.error('Chat socket closed unexpectedly');
-    };
+            MakaMessages.appendLobbyMessage(
+                log,
+                data
+            );
 
-    document.querySelector('#chat-message-input').focus();
-    document.querySelector('#chat-message-input').onkeyup = function(e) {
-        if (e.key === 'Enter') document.querySelector('#chat-message-submit').click();
-    };
-
-    document.querySelector('#chat-message-submit').onclick = function(e) {
-        const input = document.querySelector('#chat-message-input');
-        const message = input.value.trim();
-        if (message && chatSocket.readyState === WebSocket.OPEN) {
-            chatSocket.send(JSON.stringify({ 'message': message }));
-            input.value = '';
+            return;
         }
     };
+
+    chatSocket.onclose = function () {
+
+        console.error(
+            'Chat socket closed unexpectedly'
+        );
+
+    };
+
+    const input =
+        document.querySelector(
+            '#chat-message-input'
+        );
+
+    const submit =
+        document.querySelector(
+            '#chat-message-submit'
+        );
+
+    if (input) {
+
+        input.focus();
+
+        input.addEventListener(
+            'keyup',
+            function (e) {
+
+                if (e.key === 'Enter') {
+                    submit.click();
+                }
+
+            }
+        );
+
+    }
+
+    if (submit) {
+
+        submit.addEventListener(
+            'click',
+            function () {
+
+                const message =
+                    input.value.trim();
+
+                if (
+                    message &&
+                    chatSocket.readyState ===
+                    WebSocket.OPEN
+                ) {
+
+                    chatSocket.send(
+                        JSON.stringify({
+                            message:
+                                message
+                        })
+                    );
+
+                    input.value = '';
+                }
+
+            }
+        );
+
+    }
+
 </script>
+
 {% endblock %}
