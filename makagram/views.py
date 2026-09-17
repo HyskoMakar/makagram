@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from achievements.services import maybe_unlock_for_user, unlock_achievement
 from channel.models import ChannelPost
 from chat.models import Group, GroupMessage, PrivateMessage
 from notifications.models import Notification
@@ -92,12 +93,12 @@ def login_view(request):
             if profile and profile.mfa_enabled:
                 if not 'mfa_token' in request.POST:
                     request.session['pre_mfa_user_id'] = user.id
-
                     return redirect('verify_mfa_login')
-                else:
-                    login(request, user)
-                    return redirect('index')
-                
+
+            login(request, user)
+            maybe_unlock_for_user(user)
+            return redirect('index')
+
     return render(request, 'login.html', {'form': form})
 
 def verify_mfa_login(request):
@@ -113,6 +114,7 @@ def verify_mfa_login(request):
         
         if totp.verify(user_code):
             login(request, user)
+            maybe_unlock_for_user(user)
             del request.session['pre_mfa_user_id']
             return redirect('index')
         else:
@@ -128,7 +130,9 @@ def register_view(request):
     form = RegisterForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.save()
+        unlock_achievement(user, 'welcome')
         login(request, user)
+        maybe_unlock_for_user(user)
         return redirect('feed')
     return render(request, 'register.html', {'form': form})
 
@@ -190,6 +194,7 @@ def profile_view(request):
                 profile.avatar = None
 
         profile.save()
+        unlock_achievement(request.user, 'profile_setup')
         return redirect('profile')
 
     return render(request, 'profile.html', {

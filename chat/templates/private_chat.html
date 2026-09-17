@@ -1,358 +1,542 @@
-{% extends 'base.html' %}
-{% load chat_extras %}
-
-{% block title %}# {{ other.profile.username|default:other.username }}{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load chat_extras username_tags %} {% block title %}# {{ other.profile.display_name|default:other.username }}{% endblock %} {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-
-        <div class="px-4 py-3 border-b flex justify-between items-center w-full">
-            <div class="flex items-center justify-between gap-3 w-full">
-                <div class="flex items-center gap-4">
-                    <div
-                        class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold {% if not other.profile.avatar_data %}bg-{{ other.profile.color }}-300{% endif %}">
-                        {% if other.profile.avatar_data %}
-                        <img src="{% url 'avatar' other.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ other.profile.username|default:other.username|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    <div class="flex flex-col">
-                        <div>
-                            <span class="font-semibold text-{{ other.profile.color }}-600 mr-4">{{ other.profile.username|default:other.username }}</span>
-                        </div>
-                        <span class="text-sm text-gray-400">@{{ other.username }}</span>
-                        <span class="text-sm text-gray-600">{{ other.profile.description }}</span>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <form method="post" action="{% url 'toggle-mute' %}" class="inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="chat_type" value="private">
-                        <input type="hidden" name="target_id" value="{{ other.id }}">
-                        <button type="submit"
-                            class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
-                            {% if is_muted %}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                            </svg>
-                            <span>Muted</span>
-                            {% else %}
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span>Mute</span>
-                            {% endif %}
-                        </button>
-                    </form>
-                    <button id="friend-btn" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">
-                        {% if friends %}Unfriend{% else %}Add friend{% endif %}
-                    </button>
-                    <button id="block-btn" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-gray-50">
-                        {% if i_blocked %}Unblock{% else %}Block{% endif %}
-                    </button>
-                </div>
-            </div>
+  <div class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="px-4 py-3 border-b flex justify-between items-center w-full">
+      <div class="flex items-center justify-between gap-3 w-full">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-semibold {% if not other.profile.avatar_data %}bg-{{ other.profile.color }}-300{% endif %}"
+          >
+            {% if other.profile.avatar_data %}
+            <img
+              src="{% url 'avatar' other.id %}"
+              class="w-full h-full object-cover"
+            />
+            {% else %} {{ other.profile.username|default:other.username|slice:":1"|upper }} {% endif %}
+          </div>
+          <div class="flex flex-col">
+            <div>{% username other %}</div>
+            <span class="text-sm text-gray-400">@{{ other.username }}</span>
+            <span class="text-sm text-gray-600"
+              >{{ other.profile.description }}</span
+            >
+          </div>
         </div>
-
-        <div class="relative">
-            <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
-                {% for m in messages %}
-                {% with msg_user=m.from_user.profile.username|default:m.from_user.username %}
-                <div class="flex items-start gap-2 {% if m.from_user == request.user %}justify-end{% endif %}"
-                    data-username="{{ msg_user }}" data-message-id="{{ m.id }}"
-                    data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
-                    {% if m.from_user != request.user %}
-                    <div
-                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not m.from_user.profile.avatar_data %}bg-{{ m.from_user.profile.color|default:'gray' }}-300{% endif %}">
-                        {% if m.from_user.profile.avatar_data %}
-                        <img src="{% url 'avatar' m.from_user.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ msg_user|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <div
-                        class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
-                        {% if m.content %}
-                        <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
-                        {% else %}
-                        <div class="msg-content whitespace-pre-wrap break-words hidden"></div>
-                        {% endif %}
-
-                        <div
-                            class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}">
-                            {% for att in m.attachments.all %}
-                            {% if att.is_image %}
-                            <a href="/chat/attachments/{{ att.id }}/" target="_blank" class="block">
-                                <img src="/chat/attachments/{{ att.id }}/"
-                                    class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
-                            </a>
-                            {% else %}
-                            <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank"
-                                class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                                <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
-                                <div class="flex flex-col min-w-0 flex-1">
-                                    <span class="text-xs font-medium truncate group-hover:underline">{{
-                                        att.original_name }}</span>
-                                    <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
-                                </div>
-                                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
-                            </a>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    {% if m.from_user == request.user %}
-                    <div
-                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
-                        {% if request.user.profile.avatar_data %}
-                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ request.user.username|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endwith %}
-                {% endfor %}
-
-                {% for inv in pending_invites %}
-                <div class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}"
-                    data-invite-id="{{ inv.id }}">
-                    {% if inv.invited_by != request.user %}
-                    <div
-                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not inv.invited_by.profile.avatar_data %}bg-{{ inv.invited_by.profile.color|default:'gray' }}-300{% endif %}">
-                        {% if inv.invited_by.profile.avatar_data %}
-                        <img src="{% url 'avatar' inv.invited_by.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ inv.invited_by.username|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <div
-                        class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}">
-                        {% if inv.invited_by == request.user %}
-                        <div>You invited <strong>{{ other.profile.username|default:other.username }}</strong> to <em>{{
-                                inv.group.name }}</em> — waiting for response</div>
-                        {% else %}
-                        <div><strong>{{ inv.invited_by.profile.username|default:inv.invited_by.username }}</strong>
-                            invited you to <em>{{ inv.group.name }}</em></div>
-                        <div class="flex gap-2 mt-2">
-                            <button type="button" data-action="accept-invite" data-invite-id="{{ inv.id }}"
-                                data-group-name="{{ inv.group.name }}"
-                                class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm">Accept</button>
-                            <button type="button" data-action="decline-invite" data-invite-id="{{ inv.id }}"
-                                data-group-name="{{ inv.group.name }}"
-                                class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm">Decline</button>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    {% if inv.invited_by == request.user %}
-                    <div
-                        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
-                        {% if request.user.profile.avatar_data %}
-                        <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
-                        {% else %}
-                        {{ request.user.username|slice:":1"|upper }}
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div id="edit-banner"
-            class="hidden px-4 py-1.5 bg-emerald-50 border-t flex items-center justify-between text-xs text-emerald-700">
-            <div class="flex items-center gap-1.5 truncate">
-                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span>Editing message</span>
-            </div>
-            <button id="cancel-edit-btn" type="button"
-                class="text-emerald-500 hover:text-emerald-800 font-medium">Cancel</button>
-        </div>
-
-        <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
-
-        <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <button id="attach-file-btn" type="button"
-                class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-                title="Attach file">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
+        <div class="flex gap-2">
+          <form method="post" action="{% url 'toggle-mute' %}" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="chat_type" value="private" />
+            <input type="hidden" name="target_id" value="{{ other.id }}" />
+            <button
+              type="submit"
+              class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}"
+              title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}"
+            >
+              {% if is_muted %}
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                />
+              </svg>
+              <span>Muted</span>
+              {% else %}
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              <span>Mute</span>
+              {% endif %}
             </button>
-            <input type="file" id="chat-file-input" multiple class="hidden">
+          </form>
+          <button
+            id="friend-btn"
+            class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50"
+          >
+            {% if friends %}Unfriend{% else %}Add friend{% endif %}
+          </button>
+          <button
+            id="block-btn"
+            class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-gray-50"
+          >
+            {% if i_blocked %}Unblock{% else %}Block{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
 
-            <textarea id="chat-message-input" rows="1"
-                class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
-                placeholder="Write something..."></textarea>
-            {% if my_private_groups %}
-            <details class="relative flex-shrink-0" id="invite-details">
-                <summary
-                    class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden">
-                    Invite
-                </summary>
-                <div class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10"
-                    style="min-width: 11rem;">
-                    {% for group in my_private_groups %}
-                    <button type="button"
-                        class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-                        data-group-id="{{ group.id }}" data-group-name="{{ group.name }}">{{ group.name }}</button>
-                    {% endfor %}
-                </div>
-            </details>
+    <div class="relative">
+      <div id="chat-log" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
+        {% for m in messages %} {% with msg_user=m.from_user.profile.username|default:m.from_user.username %}
+        <div
+          class="flex items-start gap-2 {% if m.from_user == request.user %}justify-end{% endif %}"
+          data-username="{{ msg_user }}"
+          data-message-id="{{ m.id }}"
+          data-attachments='[{% for att in m.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}","file_type":"{{ att.file_type|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'
+        >
+          {% if m.from_user != request.user %}
+          <div
+            class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not m.from_user.profile.avatar_data %}bg-{{ m.from_user.profile.color|default:'gray' }}-300{% endif %}"
+          >
+            {% if m.from_user.profile.avatar_data %}
+            <img
+              src="{% url 'avatar' m.from_user.id %}"
+              class="w-full h-full object-cover"
+            />
+            {% else %} {{ msg_user|slice:":1"|upper }} {% endif %}
+          </div>
+          {% endif %}
+
+          <div
+            class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if m.from_user == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}"
+          >
+            {% if m.content %}
+            <div class="msg-content whitespace-pre-wrap break-words">{{ m.content|autolink }}</div>
             {% else %}
-            <div class="relative flex-shrink-0" title="You have no private groups to invite to">
-                <button type="button" disabled
-                    class="px-3 py-2 rounded-lg border text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none">
-                    Invite
-                </button>
+            <div
+              class="msg-content whitespace-pre-wrap break-words hidden"
+            ></div>
+            {% endif %}
+
+            <div
+              class="msg-attachments flex flex-col gap-1.5 {% if m.content and m.attachments.all %}mt-2{% endif %}"
+            >
+              {% for att in m.attachments.all %} {% if att.is_image %}
+              <a
+                href="/chat/attachments/{{ att.id }}/"
+                target="_blank"
+                class="block"
+              >
+                <img
+                  src="/chat/attachments/{{ att.id }}/"
+                  class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm"
+                />
+              </a>
+              {% else %}
+              <a
+                href="/chat/attachments/{{ att.id }}/"
+                download="{{ att.original_name }}"
+                target="_blank"
+                class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm"
+              >
+                <svg
+                  class="w-6 h-6 text-gray-500 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                  />
+                </svg>
+                <div class="flex flex-col min-w-0 flex-1">
+                  <span
+                    class="text-xs font-medium truncate group-hover:underline"
+                    >{{ att.original_name }}</span
+                  >
+                  <span class="text-[10px] text-gray-500"
+                    >{{ att.formatted_size }}</span
+                  >
+                </div>
+                <svg
+                  class="w-4 h-4 text-emerald-500 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+              </a>
+            {% endif %} 
+            {% endfor %}
+            </div>
+          </div>
+
+          {% if m.from_user == request.user %}
+          <div
+            class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}"
+          >
+            {% if request.user.profile.avatar_data %}
+            <img
+              src="{% url 'avatar' request.user.id %}"
+              class="w-full h-full object-cover"
+            />
+            {% else %} {{ request.user.username|slice:":1"|upper }} {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endwith %} {% endfor %} {% for inv in pending_invites %}
+        <div
+          class="flex items-start gap-2 {% if inv.invited_by == request.user %}justify-end{% endif %}"
+          data-invite-id="{{ inv.id }}"
+        >
+          {% if inv.invited_by != request.user %}
+          <div
+            class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not inv.invited_by.profile.avatar_data %}bg-{{ inv.invited_by.profile.color|default:'gray' }}-300{% endif %}"
+          >
+            {% if inv.invited_by.profile.avatar_data %}
+            <img
+              src="{% url 'avatar' inv.invited_by.id %}"
+              class="w-full h-full object-cover"
+            />
+            {% else %} {{ inv.invited_by.username|slice:":1"|upper }} {% endif
+            %}
+          </div>
+          {% endif %}
+
+          <div
+            class="chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if inv.invited_by == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-{{ other.profile.color|default:'gray' }}-100 text-gray-800{% endif %}"
+          >
+            {% if inv.invited_by == request.user %}
+            <div>
+              You invited
+              <strong
+                >{{ other.profile.username|default:other.username }}</strong
+              >
+              to <em>{{ inv.group.name }}</em> — waiting for response
+            </div>
+            {% else %}
+            <div>
+              <strong
+                >{{
+                inv.invited_by.profile.username|default:inv.invited_by.username
+                }}</strong
+              >
+              invited you to <em>{{ inv.group.name }}</em>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button
+                type="button"
+                data-action="accept-invite"
+                data-invite-id="{{ inv.id }}"
+                data-group-name="{{ inv.group.name }}"
+                class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                data-action="decline-invite"
+                data-invite-id="{{ inv.id }}"
+                data-group-name="{{ inv.group.name }}"
+                class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm"
+              >
+                Decline
+              </button>
             </div>
             {% endif %}
-            <button id="chat-message-submit"
-                class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0">
-                Send
-            </button>
-        </div>
+          </div>
 
+          {% if inv.invited_by == request.user %}
+          <div
+            class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}"
+          >
+            {% if request.user.profile.avatar_data %}
+            <img
+              src="{% url 'avatar' request.user.id %}"
+              class="w-full h-full object-cover"
+            />
+            {% else %} {{ request.user.username|slice:":1"|upper }} 
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
     </div>
+
+    <div
+      id="edit-banner"
+      class="hidden px-4 py-1.5 bg-emerald-50 border-t flex items-center justify-between text-xs text-emerald-700"
+    >
+      <div class="flex items-center gap-1.5 truncate">
+        <svg
+          class="w-3.5 h-3.5 text-emerald-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        <span>Editing message</span>
+      </div>
+      <button
+        id="cancel-edit-btn"
+        type="button"
+        class="text-emerald-500 hover:text-emerald-800 font-medium"
+      >
+        Cancel
+      </button>
+    </div>
+
+    <div
+      id="attachment-tray"
+      class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"
+    ></div>
+
+    <div class="px-4 py-3 border-t flex gap-2 items-center">
+      <button
+        id="attach-file-btn"
+        type="button"
+        class="p-2 text-gray-500 hover:text-emerald-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+        title="Attach file"
+      >
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+          />
+        </svg>
+      </button>
+      <input type="file" id="chat-file-input" multiple class="hidden" />
+
+      <textarea
+        id="chat-message-input"
+        rows="1"
+        class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ request.user.profile.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
+        placeholder="Write something..."
+      ></textarea>
+      {% if my_private_groups %}
+      <details class="relative flex-shrink-0" id="invite-details">
+        <summary
+          class="block px-3 py-2 rounded-lg border text-sm text-gray-500 cursor-pointer list-none hover:bg-gray-50 select-none [&::-webkit-details-marker]:hidden"
+        >
+          Invite
+        </summary>
+        <div
+          class="absolute bottom-full mb-2 right-0 bg-white border rounded-xl shadow-lg py-2 z-10"
+          style="min-width: 11rem"
+        >
+          {% for group in my_private_groups %}
+          <button
+            type="button"
+            class="group-invite-btn w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+            data-group-id="{{ group.id }}"
+            data-group-name="{{ group.name }}"
+          >
+            {{ group.name }}
+          </button>
+          {% endfor %}
+        </div>
+      </details>
+      {% else %}
+      <div
+        class="relative flex-shrink-0"
+        title="You have no private groups to invite to"
+      >
+        <button
+          type="button"
+          disabled
+          class="px-3 py-2 rounded-lg border text-sm text-gray-400 bg-gray-50 cursor-not-allowed select-none"
+        >
+          Invite
+        </button>
+      </div>
+      {% endif %}
+      <button
+        id="chat-message-submit"
+        class="bg-{{ request.user.profile.color }}-500 hover:bg-{{ request.user.profile.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0"
+      >
+        Send
+      </button>
+    </div>
+  </div>
 </div>
 
-<div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
-    <div id="cm-other-options">
-        <a id="cm-pm-btn" href="#" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">
-            Open Direct Message
-        </a>
-    </div>
-    <div id="cm-own-options" class="hidden">
-        <button id="cm-edit-btn" type="button"
-            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-        </button>
-        <button id="cm-delete-btn" type="button"
-            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2">
-            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-        </button>
-    </div>
+<div
+  id="context-menu"
+  class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50"
+  style="min-width: 11rem"
+>
+  <div id="cm-other-options">
+    <a
+      id="cm-pm-btn"
+      href="#"
+      class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
+    >
+      Open Direct Message
+    </a>
+  </div>
+  <div id="cm-own-options" class="hidden">
+    <button
+      id="cm-edit-btn"
+      type="button"
+      class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+    >
+      <svg
+        class="w-4 h-4 text-gray-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+        />
+      </svg>
+      Edit
+    </button>
+    <button
+      id="cm-delete-btn"
+      type="button"
+      class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+    >
+      <svg
+        class="w-4 h-4 text-red-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+      </svg>
+      Delete
+    </button>
+  </div>
 </div>
 
 {{ other.profile.username|default:other.username|json_script:"private-name" }}
-{{ chat_blocked|json_script:"blocked-flag" }}
-{{ request.user.profile.username|default:request.user.username|json_script:"current-user" }}
-{{ known_usernames|json_script:"known-usernames" }}
+{{ chat_blocked|json_script:"blocked-flag" }} {{ request.user.profile.username|default:request.user.username|json_script:"current-user" }} {{ known_usernames|json_script:"known-usernames" }}
 
 <script>
-    const otherName = JSON.parse(document.getElementById('private-name').textContent);
-    const currentUser = JSON.parse(document.getElementById('current-user').textContent);
-    const knownUsers = new Set(JSON.parse(document.getElementById('known-usernames').textContent));
-    const chatSocket = MakaSockets.createPrivateChatSocket(otherName);
+  const otherName = JSON.parse(
+    document.getElementById("private-name").textContent,
+  );
+  const currentUser = JSON.parse(
+    document.getElementById("current-user").textContent,
+  );
+  const knownUsers = new Set(
+    JSON.parse(document.getElementById("known-usernames").textContent),
+  );
+  const chatSocket = MakaSockets.createPrivateChatSocket(otherName);
 
-    window.addEventListener('beforeunload', () => {
-        chatSocket.close();
-    });
+  window.addEventListener("beforeunload", () => {
+    chatSocket.close();
+  });
 
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
-        return cookieValue;
+      }
+    }
+    return cookieValue;
+  }
+
+  const csrftoken = getCookie("csrftoken");
+  const log = document.getElementById("chat-log");
+  if (log) {
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const contextMenu = document.getElementById("context-menu");
+  const cmOtherOptions = document.getElementById("cm-other-options");
+  const cmOwnOptions = document.getElementById("cm-own-options");
+  const cmPmBtn = document.getElementById("cm-pm-btn");
+  const cmEditBtn = document.getElementById("cm-edit-btn");
+  const cmDeleteBtn = document.getElementById("cm-delete-btn");
+  const editBanner = document.getElementById("edit-banner");
+  const cancelEditBtn = document.getElementById("cancel-edit-btn");
+  const messageInput = document.getElementById("chat-message-input");
+  const attachFileBtn = document.getElementById("attach-file-btn");
+  const chatFileInput = document.getElementById("chat-file-input");
+  const attachmentTray = document.getElementById("attachment-tray");
+
+  let selectedMsgWrapper = null;
+  let selectedMsgId = null;
+  let editingMessageId = null;
+  let pendingAttachments = [];
+
+  function adjustTextareaHeight() {
+    if (!messageInput) return;
+    messageInput.style.height = "auto";
+    if (messageInput.scrollHeight > 160) {
+      messageInput.style.height = "160px";
+      messageInput.style.overflowY = "auto";
+    } else {
+      messageInput.style.height = messageInput.scrollHeight + "px";
+      messageInput.style.overflowY = "hidden";
+    }
+  }
+
+  if (messageInput) {
+    messageInput.addEventListener("input", adjustTextareaHeight);
+    messageInput.addEventListener("focus", adjustTextareaHeight);
+  }
+
+  function renderAttachmentTray() {
+    if (!attachmentTray) return;
+    if (pendingAttachments.length === 0) {
+      attachmentTray.classList.add("hidden");
+      attachmentTray.innerHTML = "";
+      return;
     }
 
-    const csrftoken = getCookie('csrftoken');
-    const log = document.getElementById('chat-log');
-    if (log) {
-        log.scrollTop = log.scrollHeight;
-    }
-
-    const contextMenu = document.getElementById('context-menu');
-    const cmOtherOptions = document.getElementById('cm-other-options');
-    const cmOwnOptions = document.getElementById('cm-own-options');
-    const cmPmBtn = document.getElementById('cm-pm-btn');
-    const cmEditBtn = document.getElementById('cm-edit-btn');
-    const cmDeleteBtn = document.getElementById('cm-delete-btn');
-    const editBanner = document.getElementById('edit-banner');
-    const cancelEditBtn = document.getElementById('cancel-edit-btn');
-    const messageInput = document.getElementById('chat-message-input');
-    const attachFileBtn = document.getElementById('attach-file-btn');
-    const chatFileInput = document.getElementById('chat-file-input');
-    const attachmentTray = document.getElementById('attachment-tray');
-
-    let selectedMsgWrapper = null;
-    let selectedMsgId = null;
-    let editingMessageId = null;
-    let pendingAttachments = [];
-
-    function adjustTextareaHeight() {
-        if (!messageInput) return;
-        messageInput.style.height = 'auto';
-        if (messageInput.scrollHeight > 160) {
-            messageInput.style.height = '160px';
-            messageInput.style.overflowY = 'auto';
-        } else {
-            messageInput.style.height = messageInput.scrollHeight + 'px';
-            messageInput.style.overflowY = 'hidden';
-        }
-    }
-
-    if (messageInput) {
-        messageInput.addEventListener('input', adjustTextareaHeight);
-        messageInput.addEventListener('focus', adjustTextareaHeight);
-    }
-
-    function renderAttachmentTray() {
-        if (!attachmentTray) return;
-        if (pendingAttachments.length === 0) {
-            attachmentTray.classList.add('hidden');
-            attachmentTray.innerHTML = '';
-            return;
-        }
-
-        attachmentTray.classList.remove('hidden');
-        attachmentTray.innerHTML = pendingAttachments.map((att, idx) => `
+    attachmentTray.classList.remove("hidden");
+    attachmentTray.innerHTML = pendingAttachments
+      .map(
+        (att, idx) => `
             <div class="flex items-center gap-1.5 bg-white border rounded-md px-2 py-1 shadow-sm">
-                ${att.is_image
-                ? `<img src="${MakaMessages.escapeHtml(att.url)}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
-                : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
-            }
+                ${
+                  att.is_image
+                    ? `<img src="${MakaMessages.escapeHtml(att.url)}" class="w-6 h-6 object-cover rounded flex-shrink-0">`
+                    : `<svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`
+                }
                 <span class="max-w-[120px] truncate font-medium text-gray-700">
                     ${MakaMessages.escapeHtml(att.name)}
                 </span>
@@ -360,192 +544,207 @@
                     &times;
                 </button>
             </div>
-        `).join('');
+        `,
+      )
+      .join("");
 
-        attachmentTray.querySelectorAll('[data-remove-att]').forEach(btn => {
-            btn.addEventListener('click', e => {
-                const i = parseInt(e.currentTarget.dataset.removeAtt);
-                pendingAttachments.splice(i, 1);
-                renderAttachmentTray();
-            });
-        });
-    }
-
-    if (attachFileBtn && chatFileInput) {
-        attachFileBtn.addEventListener('click', () => chatFileInput.click());
-        chatFileInput.addEventListener('change', async () => {
-            if (!chatFileInput.files.length) return;
-
-            const formData = new FormData();
-            for (let i = 0; i < chatFileInput.files.length; i++) {
-                formData.append('files', chatFileInput.files[i]);
-            }
-
-            try {
-                const res = await fetch('/chat/attachments/upload/', {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken },
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    pendingAttachments.push(...data.attachments);
-                    renderAttachmentTray();
-                } else {
-                    MakaMessages.addSystemMessage(log, data.error || 'Failed to upload attachment');
-                }
-            } catch (err) {
-                console.error(err);
-                MakaMessages.addSystemMessage(log, 'Upload error');
-            }
-            chatFileInput.value = '';
-        });
-    }
-
-    function hideContextMenu() {
-        if (contextMenu) {
-            contextMenu.classList.add('hidden');
-        }
-    }
-
-    function cancelEditing() {
-        editingMessageId = null;
-        pendingAttachments = [];
+    attachmentTray.querySelectorAll("[data-remove-att]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const i = parseInt(e.currentTarget.dataset.removeAtt);
+        pendingAttachments.splice(i, 1);
         renderAttachmentTray();
-        if (editBanner) {
-            editBanner.classList.add('hidden');
-        }
-        if (messageInput) {
-            messageInput.value = '';
-            adjustTextareaHeight();
-        }
-    }
+      });
+    });
+  }
 
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', cancelEditing);
-    }
+  if (attachFileBtn && chatFileInput) {
+    attachFileBtn.addEventListener("click", () => chatFileInput.click());
+    chatFileInput.addEventListener("change", async () => {
+      if (!chatFileInput.files.length) return;
 
-    document.addEventListener('click', hideContextMenu);
-    document.addEventListener('scroll', hideContextMenu, true);
+      const formData = new FormData();
+      for (let i = 0; i < chatFileInput.files.length; i++) {
+        formData.append("files", chatFileInput.files[i]);
+      }
 
-    if (log) {
-        log.addEventListener('click', function (e) {
-            if (e.target.closest('a')) return;
-
-            const msgWrapper = e.target.closest('[data-username]');
-            if (!msgWrapper) return;
-            const username = msgWrapper.dataset.username;
-            if (!username) return;
-
-            e.stopPropagation();
-            selectedMsgWrapper = msgWrapper;
-            selectedMsgId = msgWrapper.dataset.messageId || null;
-
-            if (username === currentUser) {
-                if (!selectedMsgId) return;
-                if (cmOtherOptions) cmOtherOptions.classList.add('hidden');
-                if (cmOwnOptions) cmOwnOptions.classList.remove('hidden');
-            } else {
-                if (cmOwnOptions) cmOwnOptions.classList.add('hidden');
-                if (cmOtherOptions) cmOtherOptions.classList.remove('hidden');
-                if (cmPmBtn) cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
-            }
-
-            const menuWidth = 180;
-            const menuHeight = 90;
-            let left = e.clientX;
-            let top = e.clientY;
-
-            if (left + menuWidth > window.innerWidth) {
-                left = window.innerWidth - menuWidth - 10;
-            }
-            if (top + menuHeight > window.innerHeight) {
-                top = window.innerHeight - menuHeight - 10;
-            }
-
-            contextMenu.style.left = left + 'px';
-            contextMenu.style.top = top + 'px';
-            contextMenu.classList.remove('hidden');
+      try {
+        const res = await fetch("/chat/attachments/upload/", {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+          body: formData,
         });
-    }
-
-    if (cmEditBtn) {
-        cmEditBtn.addEventListener('click', function () {
-            hideContextMenu();
-            if (!selectedMsgWrapper || !selectedMsgId) return;
-
-            const contentEl = selectedMsgWrapper.querySelector('.msg-content');
-            const currentContent = contentEl ? contentEl.textContent.trim() : '';
-            let existingAtts = [];
-
-            try {
-                if (selectedMsgWrapper.dataset.attachments) {
-                    existingAtts = JSON.parse(selectedMsgWrapper.dataset.attachments);
-                }
-            } catch (err) {
-                existingAtts = [];
-            }
-
-            editingMessageId = selectedMsgId;
-            pendingAttachments = [...existingAtts];
-            renderAttachmentTray();
-
-            if (messageInput) {
-                messageInput.value = currentContent;
-                messageInput.focus();
-                adjustTextareaHeight();
-            }
-
-            if (editBanner) {
-                editBanner.classList.remove('hidden');
-            }
-        });
-    }
-
-    if (cmDeleteBtn) {
-        cmDeleteBtn.addEventListener('click', function () {
-            hideContextMenu();
-            if (!selectedMsgId) return;
-            if (chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(
-                    JSON.stringify({
-                        action: 'delete',
-                        message_id: selectedMsgId
-                    })
-                );
-            }
-            selectedMsgId = null;
-            selectedMsgWrapper = null;
-        });
-    }
-
-    function addSystemMessage(text) {
-        MakaMessages.addSystemMessage(log, text);
-    }
-
-    function renderInvite(inv) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'flex items-start gap-2 ' + (inv.inviter === currentUser ? 'justify-end' : '');
-        wrapper.dataset.inviteId = inv.invite_id;
-
-        const avatarUrl = inv.inviter_avatar || '';
-        const inviterColor = inv.inviter_color || 'gray';
-        const avatar = MakaMessages.createAvatar({
-            avatarUrl: avatarUrl,
-            username: inv.inviter,
-            color: inviterColor,
-            size: '9'
-        });
-
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words';
-
-        if (inv.inviter === currentUser) {
-            bubble.classList.add('bg-{{ request.user.profile.color|default:"gray" }}-100', 'text-gray-800');
-            bubble.innerHTML = `<div>You invited <strong>${MakaMessages.escapeHtml(otherName)}</strong> to <em>${MakaMessages.escapeHtml(inv.group_name)}</em> — waiting for response</div>`;
+        const data = await res.json();
+        if (data.ok) {
+          pendingAttachments.push(...data.attachments);
+          renderAttachmentTray();
         } else {
-            bubble.classList.add('bg-{{ other.profile.color|default:"gray" }}-100', 'text-gray-800');
-            bubble.innerHTML = `
+          MakaMessages.addSystemMessage(
+            log,
+            data.error || "Failed to upload attachment",
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        MakaMessages.addSystemMessage(log, "Upload error");
+      }
+      chatFileInput.value = "";
+    });
+  }
+
+  function hideContextMenu() {
+    if (contextMenu) {
+      contextMenu.classList.add("hidden");
+    }
+  }
+
+  function cancelEditing() {
+    editingMessageId = null;
+    pendingAttachments = [];
+    renderAttachmentTray();
+    if (editBanner) {
+      editBanner.classList.add("hidden");
+    }
+    if (messageInput) {
+      messageInput.value = "";
+      adjustTextareaHeight();
+    }
+  }
+
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener("click", cancelEditing);
+  }
+
+  document.addEventListener("click", hideContextMenu);
+  document.addEventListener("scroll", hideContextMenu, true);
+
+  if (log) {
+    log.addEventListener("click", function (e) {
+      if (e.target.closest("a")) return;
+
+      const msgWrapper = e.target.closest("[data-username]");
+      if (!msgWrapper) return;
+      const username = msgWrapper.dataset.username;
+      if (!username) return;
+
+      e.stopPropagation();
+      selectedMsgWrapper = msgWrapper;
+      selectedMsgId = msgWrapper.dataset.messageId || null;
+
+      if (username === currentUser) {
+        if (!selectedMsgId) return;
+        if (cmOtherOptions) cmOtherOptions.classList.add("hidden");
+        if (cmOwnOptions) cmOwnOptions.classList.remove("hidden");
+      } else {
+        if (cmOwnOptions) cmOwnOptions.classList.add("hidden");
+        if (cmOtherOptions) cmOtherOptions.classList.remove("hidden");
+        if (cmPmBtn)
+          cmPmBtn.href = `/chat/private/${encodeURIComponent(username)}/`;
+      }
+
+      const menuWidth = 180;
+      const menuHeight = 90;
+      let left = e.clientX;
+      let top = e.clientY;
+
+      if (left + menuWidth > window.innerWidth) {
+        left = window.innerWidth - menuWidth - 10;
+      }
+      if (top + menuHeight > window.innerHeight) {
+        top = window.innerHeight - menuHeight - 10;
+      }
+
+      contextMenu.style.left = left + "px";
+      contextMenu.style.top = top + "px";
+      contextMenu.classList.remove("hidden");
+    });
+  }
+
+  if (cmEditBtn) {
+    cmEditBtn.addEventListener("click", function () {
+      hideContextMenu();
+      if (!selectedMsgWrapper || !selectedMsgId) return;
+
+      const contentEl = selectedMsgWrapper.querySelector(".msg-content");
+      const currentContent = contentEl ? contentEl.textContent.trim() : "";
+      let existingAtts = [];
+
+      try {
+        if (selectedMsgWrapper.dataset.attachments) {
+          existingAtts = JSON.parse(selectedMsgWrapper.dataset.attachments);
+        }
+      } catch (err) {
+        existingAtts = [];
+      }
+
+      editingMessageId = selectedMsgId;
+      pendingAttachments = [...existingAtts];
+      renderAttachmentTray();
+
+      if (messageInput) {
+        messageInput.value = currentContent;
+        messageInput.focus();
+        adjustTextareaHeight();
+      }
+
+      if (editBanner) {
+        editBanner.classList.remove("hidden");
+      }
+    });
+  }
+
+  if (cmDeleteBtn) {
+    cmDeleteBtn.addEventListener("click", function () {
+      hideContextMenu();
+      if (!selectedMsgId) return;
+      if (chatSocket.readyState === WebSocket.OPEN) {
+        chatSocket.send(
+          JSON.stringify({
+            action: "delete",
+            message_id: selectedMsgId,
+          }),
+        );
+      }
+      selectedMsgId = null;
+      selectedMsgWrapper = null;
+    });
+  }
+
+  function addSystemMessage(text) {
+    MakaMessages.addSystemMessage(log, text);
+  }
+
+  function renderInvite(inv) {
+    const wrapper = document.createElement("div");
+    wrapper.className =
+      "flex items-start gap-2 " +
+      (inv.inviter === currentUser ? "justify-end" : "");
+    wrapper.dataset.inviteId = inv.invite_id;
+
+    const avatarUrl = inv.inviter_avatar || "";
+    const inviterColor = inv.inviter_color || "gray";
+    const avatar = MakaMessages.createAvatar({
+      avatarUrl: avatarUrl,
+      username: inv.inviter,
+      color: inviterColor,
+      size: "9",
+    });
+
+    const bubble = document.createElement("div");
+    bubble.className =
+      "chat-message-bubble px-3 py-2 rounded-lg text-sm max-w-xs break-words";
+
+    if (inv.inviter === currentUser) {
+      bubble.classList.add(
+        'bg-{{ request.user.profile.color|default:"gray" }}-100',
+        "text-gray-800",
+      );
+      bubble.innerHTML = `<div>You invited <strong>${MakaMessages.escapeHtml(otherName)}</strong> to <em>${MakaMessages.escapeHtml(inv.group_name)}</em> — waiting for response</div>`;
+    } else {
+      bubble.classList.add(
+        'bg-{{ other.profile.color|default:"gray" }}-100',
+        "text-gray-800",
+      );
+      bubble.innerHTML = `
                 <div>
                     <strong>${MakaMessages.escapeHtml(inv.inviter)}</strong> invited you to <em>${MakaMessages.escapeHtml(inv.group_name)}</em>
                 </div>
@@ -558,244 +757,261 @@
                     </button>
                 </div>
             `;
-        }
-
-        if (inv.inviter === currentUser) {
-            wrapper.appendChild(bubble);
-            wrapper.appendChild(avatar);
-        } else {
-            wrapper.appendChild(avatar);
-            wrapper.appendChild(bubble);
-        }
-
-        log.appendChild(wrapper);
-        log.scrollTop = log.scrollHeight;
     }
 
-    chatSocket.onmessage = function (e) {
-        const data = JSON.parse(e.data);
-        if (data.type === 'state') {
-            const isBlocked = data.blocked;
-            const areFriends = data.friends;
-            const friendBtn = document.getElementById('friend-btn');
-            const blockBtn = document.getElementById('block-btn');
-
-            if (friendBtn) {
-                friendBtn.textContent = areFriends ? 'Unfriend' : 'Add friend';
-                friendBtn.disabled = isBlocked;
-            }
-
-            if (blockBtn) {
-                blockBtn.textContent = isBlocked ? 'Unblock' : 'Block';
-            }
-
-            const submit = document.getElementById('chat-message-submit');
-            if (isBlocked) {
-                if (messageInput) messageInput.disabled = true;
-                if (submit) submit.disabled = true;
-            } else {
-                if (messageInput) messageInput.disabled = false;
-                if (submit) submit.disabled = false;
-            }
-            return;
-        }
-
-        if (data.type === 'error') {
-            addSystemMessage(data.message || 'Error');
-            return;
-        }
-
-        if (data.type === 'invite') {
-            if (data.inviter !== currentUser) {
-                renderInvite(data);
-            }
-            return;
-        }
-
-        if (data.type === 'invite_response') {
-            const invCard = document.querySelector(`[data-invite-id="${data.invite_id}"]`);
-            if (invCard) {
-                invCard.remove();
-            }
-
-            if (data.invitee !== currentUser) {
-                const msg = data.accepted
-                    ? `${data.user} accepted your invite to ${data.group_name}`
-                    : `${data.user} declined your invite to ${data.group_name}`;
-                addSystemMessage(msg);
-            }
-            return;
-        }
-
-        if (data.type === 'message') {
-            MakaMessages.appendMessage(log, data, {
-                currentUser: currentUser,
-                knownUsers: knownUsers,
-                myColor: '{{ request.user.profile.color|default:"gray" }}'
-            });
-            return;
-        }
-
-        if (data.type === 'edit_message') {
-            MakaMessages.updateMessage(data.message_id, data, {
-                knownUsers: knownUsers
-            });
-            return;
-        }
-
-        if (data.type === 'delete_message') {
-            MakaMessages.deleteMessage(data.message_id);
-            return;
-        }
-    };
-
-    chatSocket.onclose = function () {
-        console.error('Chat socket closed unexpectedly');
-    };
-
-    if (messageInput) {
-        messageInput.focus();
-        messageInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                cancelEditing();
-            } else if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                document.getElementById('chat-message-submit').click();
-            }
-        });
+    if (inv.inviter === currentUser) {
+      wrapper.appendChild(bubble);
+      wrapper.appendChild(avatar);
+    } else {
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(bubble);
     }
 
-    document.getElementById('chat-message-submit').addEventListener('click', function () {
-        if (messageInput && messageInput.disabled) return;
+    log.appendChild(wrapper);
+    log.scrollTop = log.scrollHeight;
+  }
 
-        const message = messageInput.value.trim();
-        const attachmentIds = pendingAttachments.map(a => a.id);
+  chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    if (data.type === "state") {
+      const isBlocked = data.blocked;
+      const areFriends = data.friends;
+      const friendBtn = document.getElementById("friend-btn");
+      const blockBtn = document.getElementById("block-btn");
 
-        if ((message || attachmentIds.length) && chatSocket.readyState === WebSocket.OPEN) {
-            if (editingMessageId) {
-                chatSocket.send(
-                    JSON.stringify({
-                        action: 'edit',
-                        message_id: editingMessageId,
-                        message: message,
-                        attachment_ids: attachmentIds
-                    })
-                );
-                cancelEditing();
-            } else {
-                chatSocket.send(
-                    JSON.stringify({
-                        message: message,
-                        attachment_ids: attachmentIds
-                    })
-                );
-                messageInput.value = '';
-                pendingAttachments = [];
-                renderAttachmentTray();
-                adjustTextareaHeight();
-            }
-        }
-    });
+      if (friendBtn) {
+        friendBtn.textContent = areFriends ? "Unfriend" : "Add friend";
+        friendBtn.disabled = isBlocked;
+      }
 
-    const blockedByOther = JSON.parse(document.getElementById('blocked-flag').textContent);
-    if (blockedByOther) {
+      if (blockBtn) {
+        blockBtn.textContent = isBlocked ? "Unblock" : "Block";
+      }
+
+      const submit = document.getElementById("chat-message-submit");
+      if (isBlocked) {
         if (messageInput) messageInput.disabled = true;
-        const submit = document.getElementById('chat-message-submit');
         if (submit) submit.disabled = true;
+      } else {
+        if (messageInput) messageInput.disabled = false;
+        if (submit) submit.disabled = false;
+      }
+      return;
     }
 
-    const friendBtn = document.getElementById('friend-btn');
-    const blockBtn = document.getElementById('block-btn');
-
-    friendBtn && friendBtn.addEventListener('click', async () => {
-        const res = await fetch(`/chat/toggle-friend/${encodeURIComponent(otherName)}/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken }
-        });
-        const data = await res.json();
-        if (data.ok) {
-            friendBtn.textContent = data.friends ? 'Unfriend' : 'Add friend';
-        }
-    });
-
-    blockBtn && blockBtn.addEventListener('click', async () => {
-        const res = await fetch(`/chat/toggle-block/${encodeURIComponent(otherName)}/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrftoken }
-        });
-        const data = await res.json();
-        if (data.ok) {
-            blockBtn.textContent = data.blocked ? 'Unblock' : 'Block';
-            if (data.blocked) {
-                if (friendBtn) friendBtn.disabled = true;
-                if (messageInput) messageInput.disabled = true;
-            } else {
-                if (friendBtn) friendBtn.disabled = false;
-                if (messageInput) messageInput.disabled = false;
-            }
-        }
-    });
-
-    const inviteDetails = document.getElementById('invite-details');
-    document.querySelectorAll('.group-invite-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const gid = btn.dataset.groupId;
-            const gname = btn.dataset.groupName;
-            if (inviteDetails) {
-                inviteDetails.removeAttribute('open');
-            }
-
-            const res = await fetch(`/chat/groups/${gid}/invite/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken },
-                body: new URLSearchParams({ username: otherName })
-            });
-            const data = await res.json();
-            if (data.ok) {
-                renderInvite({
-                    invite_id: data.invite_id,
-                    group_id: gid,
-                    group_name: gname,
-                    inviter: currentUser
-                });
-            } else {
-                addSystemMessage(`Invite failed: ${data.error || 'unknown error'}`);
-            }
-        });
-    });
-
-    if (log) {
-        log.addEventListener('click', async function (e) {
-            const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
-
-            const action = btn.dataset.action;
-            const inviteId = btn.dataset.inviteId;
-            const groupName = btn.dataset.groupName;
-            const wrapper = btn.closest('[data-invite-id]');
-
-            if (action === 'accept-invite') {
-                const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken }
-                });
-                const d = await res.json();
-                if (wrapper) wrapper.remove();
-                if (d.ok) {
-                    addSystemMessage(`You joined ${groupName}`);
-                }
-            } else if (action === 'decline-invite') {
-                const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrftoken }
-                });
-                const d = await res.json();
-                if (wrapper) wrapper.remove();
-                if (d.ok) {
-                    addSystemMessage(`You declined the invite to ${groupName}`);
-                }
-            }
-        });
+    if (data.type === "error") {
+      addSystemMessage(data.message || "Error");
+      return;
     }
+
+    if (data.type === "invite") {
+      if (data.inviter !== currentUser) {
+        renderInvite(data);
+      }
+      return;
+    }
+
+    if (data.type === "invite_response") {
+      const invCard = document.querySelector(
+        `[data-invite-id="${data.invite_id}"]`,
+      );
+      if (invCard) {
+        invCard.remove();
+      }
+
+      if (data.invitee !== currentUser) {
+        const msg = data.accepted
+          ? `${data.user} accepted your invite to ${data.group_name}`
+          : `${data.user} declined your invite to ${data.group_name}`;
+        addSystemMessage(msg);
+      }
+      return;
+    }
+
+    if (data.type === "message") {
+      MakaMessages.appendMessage(log, data, {
+        currentUser: currentUser,
+        knownUsers: knownUsers,
+        myColor: '{{ request.user.profile.color|default:"gray" }}',
+      });
+      return;
+    }
+
+    if (data.type === "edit_message") {
+      MakaMessages.updateMessage(data.message_id, data, {
+        knownUsers: knownUsers,
+      });
+      return;
+    }
+
+    if (data.type === "delete_message") {
+      MakaMessages.deleteMessage(data.message_id);
+      return;
+    }
+  };
+
+  chatSocket.onclose = function () {
+    console.error("Chat socket closed unexpectedly");
+  };
+
+  if (messageInput) {
+    messageInput.focus();
+    messageInput.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        cancelEditing();
+      } else if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById("chat-message-submit").click();
+      }
+    });
+  }
+
+  document
+    .getElementById("chat-message-submit")
+    .addEventListener("click", function () {
+      if (messageInput && messageInput.disabled) return;
+
+      const message = messageInput.value.trim();
+      const attachmentIds = pendingAttachments.map((a) => a.id);
+
+      if (
+        (message || attachmentIds.length) &&
+        chatSocket.readyState === WebSocket.OPEN
+      ) {
+        if (editingMessageId) {
+          chatSocket.send(
+            JSON.stringify({
+              action: "edit",
+              message_id: editingMessageId,
+              message: message,
+              attachment_ids: attachmentIds,
+            }),
+          );
+          cancelEditing();
+        } else {
+          chatSocket.send(
+            JSON.stringify({
+              message: message,
+              attachment_ids: attachmentIds,
+            }),
+          );
+          messageInput.value = "";
+          pendingAttachments = [];
+          renderAttachmentTray();
+          adjustTextareaHeight();
+        }
+      }
+    });
+
+  const blockedByOther = JSON.parse(
+    document.getElementById("blocked-flag").textContent,
+  );
+  if (blockedByOther) {
+    if (messageInput) messageInput.disabled = true;
+    const submit = document.getElementById("chat-message-submit");
+    if (submit) submit.disabled = true;
+  }
+
+  const friendBtn = document.getElementById("friend-btn");
+  const blockBtn = document.getElementById("block-btn");
+
+  friendBtn &&
+    friendBtn.addEventListener("click", async () => {
+      const res = await fetch(
+        `/chat/toggle-friend/${encodeURIComponent(otherName)}/`,
+        {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+        },
+      );
+      const data = await res.json();
+      if (data.ok) {
+        friendBtn.textContent = data.friends ? "Unfriend" : "Add friend";
+      }
+    });
+
+  blockBtn &&
+    blockBtn.addEventListener("click", async () => {
+      const res = await fetch(
+        `/chat/toggle-block/${encodeURIComponent(otherName)}/`,
+        {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+        },
+      );
+      const data = await res.json();
+      if (data.ok) {
+        blockBtn.textContent = data.blocked ? "Unblock" : "Block";
+        if (data.blocked) {
+          if (friendBtn) friendBtn.disabled = true;
+          if (messageInput) messageInput.disabled = true;
+        } else {
+          if (friendBtn) friendBtn.disabled = false;
+          if (messageInput) messageInput.disabled = false;
+        }
+      }
+    });
+
+  const inviteDetails = document.getElementById("invite-details");
+  document.querySelectorAll(".group-invite-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const gid = btn.dataset.groupId;
+      const gname = btn.dataset.groupName;
+      if (inviteDetails) {
+        inviteDetails.removeAttribute("open");
+      }
+
+      const res = await fetch(`/chat/groups/${gid}/invite/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        body: new URLSearchParams({ username: otherName }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        renderInvite({
+          invite_id: data.invite_id,
+          group_id: gid,
+          group_name: gname,
+          inviter: currentUser,
+        });
+      } else {
+        addSystemMessage(`Invite failed: ${data.error || "unknown error"}`);
+      }
+    });
+  });
+
+  if (log) {
+    log.addEventListener("click", async function (e) {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const inviteId = btn.dataset.inviteId;
+      const groupName = btn.dataset.groupName;
+      const wrapper = btn.closest("[data-invite-id]");
+
+      if (action === "accept-invite") {
+        const res = await fetch(`/chat/invites/${inviteId}/accept/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+        });
+        const d = await res.json();
+        if (wrapper) wrapper.remove();
+        if (d.ok) {
+          addSystemMessage(`You joined ${groupName}`);
+        }
+      } else if (action === "decline-invite") {
+        const res = await fetch(`/chat/invites/${inviteId}/decline/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrftoken },
+        });
+        const d = await res.json();
+        if (wrapper) wrapper.remove();
+        if (d.ok) {
+          addSystemMessage(`You declined the invite to ${groupName}`);
+        }
+      }
+    });
+  }
 </script>
 {% endblock %}

@@ -1,76 +1,126 @@
-{% extends 'base.html' %}
-{% block title %}Profile{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% load username_tags %} {% block title %}Profile{% endblock %} {% block content %}
 <div class="max-w-md mx-auto">
-    <div class="bg-white rounded-xl shadow p-6">
-        {% if error %}<div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error }}</div>{% endif %}
-        <div class="flex items-center gap-4 mb-6">
-            {% if profile.avatar_data %}
-            <img src="{% url 'avatar' request.user.id %}" class="w-14 h-14 rounded-full object-cover">
-            {% else %}
-            <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white bg-{{ profile.color }}-300">
-                {{ profile.username|slice:":1"|upper }}
-            </div>
-            {% endif %}
-            <div>
-                <p class="font-semibold text-{{ profile.color }}-600">{{ profile.username }}</p>
-                <p class="text-sm text-gray-400">@{{ request.user.username }}</p>
-            </div>
-        </div>
-
-        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="text-sm text-gray-600">Nickname</label>
-                <input name="username" type="text" value="{{ profile.username }}"
-                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 mt-1">
-            </div>
-            <div>
-                <label class="text-sm text-gray-600">Description</label>
-                <input name="description" type="text" value="{{ profile.description }}"
-                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 mt-1">
-            </div>
-            <div>
-                <label class="text-sm text-gray-600 block mb-1">Avatar</label>
-                <div class="flex items-center">
-                    <input name="avatar" type="file" accept="image/*"
-                        class="w-full text-sm text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-50 file:text-slate-600 hover:file:bg-slate-100">
-                    {% if profile.avatar_data %}
-                    <button type="submit" name="clear_avatar" value="1"
-                    class="text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:dark:bg-red-300/20 rounded-lg py-1 px-3">Remove</button>
-                    {% endif %}
-                </div>
-            </div>
-            <div>
-                <label class="text-sm text-gray-600 block mb-2">Color</label>
-                <div class="flex flex-wrap gap-2">
-                    {% for color in colors %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="color" value="{{ color }}" class="hidden peer"
-                            {% if profile.color == color %}checked{% endif %}>
-                        <div class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-400"></div>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-            <div>
-                <label class="text-sm text-gray-600 block mb-1">2FA</label>
-                <div class="flex items-center">
-                    {% if request.user.profile.mfa_enabled %}
-                    <p class="text-green-500 w-full pl-2">Enabled</p>
-                    <a href="{% url 'remove_mfa' %}"
-                        class="text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:dark:bg-red-300/20 rounded-lg py-1 px-3">Remove</a>
-                    {% else %}
-                    <p class="text-red-500 w-full pl-2">Disabled</p>
-                    <a href="{% url 'setup_mfa' %}"
-                        class="text-sm text-slate-600 bg-slate-50 hover:bg-slate-100 hover:dark:bg-slate-300/20 rounded-lg py-1 px-3">Enable</a>
-                    {% endif %}
-                </div>
-            </div>
-            <button type="submit" class="bg-slate-500 hover:bg-slate-600 text-white rounded-lg py-2 text-sm">
-                Save
-            </button>
-        </form>
+  <div class="bg-white rounded-xl shadow p-6">
+    {% if error %}
+    <div
+      class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+    >
+      {{ error }}
     </div>
+    {% endif %}
+    <div class="flex items-center gap-4 mb-6">
+      {% if profile.avatar_data %}
+      <img
+        src="{% url 'avatar' request.user.id %}"
+        class="w-14 h-14 rounded-full object-cover"
+      />
+      {% else %}
+      <div
+        class="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold text-white bg-{{ profile.color }}-300"
+      >
+        {{ profile.display_name|slice:":1"|upper }}
+      </div>
+      {% endif %}
+      <div>{% username request.user %}</div>
+    </div>
+
+    <form
+      method="post"
+      enctype="multipart/form-data"
+      class="flex flex-col gap-4"
+    >
+      {% csrf_token %}
+      <div>
+        <label class="text-sm text-gray-600">Nickname</label>
+        <input
+          name="username"
+          type="text"
+          value="{{ profile.username }}"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 mt-1"
+        />
+      </div>
+      <div>
+        <label class="text-sm text-gray-600">Description</label>
+        <input
+          name="description"
+          type="text"
+          value="{{ profile.description }}"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 mt-1"
+        />
+      </div>
+      <div>
+        <label class="text-sm text-gray-600 block mb-1">Avatar</label>
+        <div class="flex items-center">
+          <input
+            name="avatar"
+            type="file"
+            accept="image/*"
+            class="w-full text-sm text-gray-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-slate-50 file:text-slate-600 hover:file:bg-slate-100"
+          />
+          {% if profile.avatar_data %}
+          <button
+            type="submit"
+            name="clear_avatar"
+            value="1"
+            class="text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:dark:bg-red-300/20 rounded-lg py-1 px-3"
+          >
+            Remove
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <label class="text-sm text-gray-600 block mb-2">Color</label>
+        <div class="flex flex-wrap gap-2">
+          {% for color in colors %}
+          <label class="cursor-pointer">
+            <input
+              type="radio"
+              name="color"
+              value="{{ color }}"
+              class="hidden peer"
+              {%
+              if
+              profile.color=""
+              ="color"
+              %}checked{%
+              endif
+              %}
+            />
+            <div
+              class="w-7 h-7 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-400"
+            ></div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div>
+        <label class="text-sm text-gray-600 block mb-1">2FA</label>
+        <div class="flex items-center">
+          {% if request.user.profile.mfa_enabled %}
+          <p class="text-green-500 w-full pl-2">Enabled</p>
+          <a
+            href="{% url 'remove_mfa' %}"
+            class="text-sm text-red-600 bg-red-50 hover:bg-red-100 hover:dark:bg-red-300/20 rounded-lg py-1 px-3"
+            >Remove</a
+          >
+          {% else %}
+          <p class="text-red-500 w-full pl-2">Disabled</p>
+          <a
+            href="{% url 'setup_mfa' %}"
+            class="text-sm text-slate-600 bg-slate-50 hover:bg-slate-100 hover:dark:bg-slate-300/20 rounded-lg py-1 px-3"
+            >Enable</a
+          >
+          {% endif %}
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="bg-slate-500 hover:bg-slate-600 text-white rounded-lg py-2 text-sm"
+      >
+        Save
+      </button>
+    </form>
+  </div>
 </div>
 {% endblock %}

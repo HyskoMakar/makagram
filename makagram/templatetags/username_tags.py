@@ -28,13 +28,16 @@ def username(user):
             if achievement
             else ''
         )
+        suffix_color = 'amber' if achievement and achievement.is_super else 'gray'
     else:
         display_name = user.username
         color = 'gray'
         suffix = ''
+        suffix_color = 'gray'
 
     return {
         'username': display_name,
         'color': color,
         'suffix': suffix,
+        'suffix_color': suffix_color,
     }

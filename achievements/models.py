@@ -24,6 +24,10 @@ class Achievement(models.Model):
         default='🏆',
     )
 
+    is_super = models.BooleanField(
+        default=False,
+    )
+
     is_active = models.BooleanField(
         default=True,
     )

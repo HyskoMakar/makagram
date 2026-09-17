@@ -1,11 +1,19 @@
-{% load static %}
+{% load static username_tags %}
 <!doctype html>
 <html lang="en" class="">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="{% static 'images/favicon.ico' %}?v=2" type="image/x-icon">
-    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}?v=2" type="image/x-icon">
+    <link
+      rel="icon"
+      href="{% static 'images/favicon.ico' %}?v=2"
+      type="image/x-icon"
+    />
+    <link
+      rel="shortcut icon"
+      href="{% static 'images/favicon.ico' %}?v=2"
+      type="image/x-icon"
+    />
     <title>{% block title %}{% endblock %}</title>
     <script>
       if (localStorage.getItem("theme") === "dark")
@@ -295,23 +303,19 @@
                 src="{% url 'avatar' request.user.id %}"
                 class="w-full h-full object-cover"
               />
-              {% else %} {{ profile.username|default:request.user.username|slice:":1"|upper }}
-              {% endif %}
+              {% else %} {{ profile.display_name|default:request.user.username|slice:":1"|upper }} {% endif %}
             </button>
             <div
               id="profile-dropdown"
               class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50"
             >
-              <div
-                class="px-4 py-2 text-sm font-medium text-{{ profile.color|default:'blue' }}-600 border-b"
-              >
-                {{ profile.username|default:request.user.username }}
-              </div>
+              <div class="px-4 py-2 border-b">{% username request.user %}</div>
               <a
                 href="{% url 'profile' %}"
                 class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
                 >Profile</a
               >
+              <a href="{% url 'achievements-list' %}" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50">Achievements</a>
               <button
                 type="button"
                 id="theme-toggle"

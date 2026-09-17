@@ -1,266 +1,546 @@
-{% extends 'base.html' %}
-{% load chat_extras %}
-
-{% block title %}{{ channel.name }}{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% load chat_extras username_tags %} {% block title %}{{ channel.name }}{% endblock %} {% block content %}
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-        <div class="px-4 py-3 border-b flex justify-between items-center w-full">
-            <div class="flex items-center gap-4 min-w-0">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-{{ channel.color|default:'blue' }}-300 text-lg select-none flex-shrink-0">
-                    {{ channel.name|slice:":1"|upper }}
-                </div>
-                <div class="flex flex-col min-w-0">
-                    <span class="font-semibold text-{{ channel.color|default:'blue' }}-600 truncate">{{ channel.name }}</span>
-                    <span class="text-xs text-gray-400 truncate">
-                        <span id="subscriber-count">{{ subscriber_count }}</span> subscriber{{ subscriber_count|pluralize }}
-                        {% if channel.description %} &middot; {{ channel.description }}{% endif %}
-                    </span>
-                </div>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-                {% if is_subscriber or is_owner %}
-                <form method="post" action="{% url 'toggle-mute' %}" class="inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="chat_type" value="channel">
-                    <input type="hidden" name="target_id" value="{{ channel.id }}">
-                    <button type="submit" class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}" title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}">
-                        {% if is_muted %}
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
-                        <span>Muted</span>
-                        {% else %}
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                        <span>Mute</span>
-                        {% endif %}
-                    </button>
-                </form>
-                {% endif %}
-
-                {% if is_owner %}
-                <button id="subscribers-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">Subscribers</button>
-                <button id="channel-settings-toggle" type="button" class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50">Edit</button>
-                {% elif is_subscriber %}
-                <form method="post" action="{% url 'channel-unsubscribe' channel.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50">Unsubscribe</button>
-                </form>
-                {% else %}
-                <form method="post" action="{% url 'channel-subscribe' channel.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="px-3 py-1 rounded bg-purple-500 hover:bg-purple-600 text-white text-sm">Subscribe</button>
-                </form>
-                {% endif %}
-            </div>
+  <div class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="px-4 py-3 border-b flex justify-between items-center w-full">
+      <div class="flex items-center gap-4 min-w-0">
+        <div
+          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-{{ channel.color|default:'blue' }}-300 text-lg select-none flex-shrink-0"
+        >
+          {{ channel.name|slice:":1"|upper }}
         </div>
-
-        {% if is_owner %}
-        <div id="subscribers-panel" class="hidden px-4 py-4 border-b bg-gray-50">
-            <h3 class="font-semibold text-sm mb-3 text-gray-700">Subscribers</h3>
-            <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
-                {% for subscriber in subscribers %}
-                {% with sub_username=subscriber.profile.username|default:subscriber.username %}
-                <div class="flex items-center justify-between gap-3 bg-white border rounded-lg px-3 py-2">
-                    <div class="flex items-center gap-2 min-w-0">
-                        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 {% if not subscriber.profile.avatar_data %}bg-{{ subscriber.profile.color|default:'gray' }}-300{% endif %}">
-                            {% if subscriber.profile.avatar_data %}
-                            <img src="{% url 'avatar' subscriber.id %}" class="w-full h-full object-cover">
-                            {% else %}
-                            {{ sub_username|slice:":1"|upper }}
-                            {% endif %}
-                        </div>
-                        <span class="text-sm text-gray-800 truncate">{{ sub_username }}</span>
-                        {% if subscriber == channel.owner %}
-                        <span class="text-xs text-violet-600 font-medium flex-shrink-0">Creator</span>
-                        {% elif subscriber.id in admin_ids %}
-                        <span class="text-xs text-yellow-600 font-medium flex-shrink-0">Admin</span>
-                        {% endif %}
-                    </div>
-
-                    {% if subscriber != channel.owner %}
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        {% if subscriber.id in admin_ids %}
-                        <button type="button" data-user-id="{{ subscriber.id }}" class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50">Remove admin</button>
-                        {% else %}
-                        <button type="button" data-user-id="{{ subscriber.id }}" class="promote-btn text-xs px-2 py-1 rounded border text-purple-600 hover:bg-purple-50">Make admin</button>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endwith %}
-                {% empty %}
-                <div class="text-sm text-gray-500">No subscribers yet.</div>
-                {% endfor %}
-            </div>
+        <div class="flex flex-col min-w-0">
+          <span
+            class="font-semibold text-{{ channel.color|default:'blue' }}-600 truncate"
+            >{{ channel.name }}</span
+          >
+          <span class="text-xs text-gray-400 truncate">
+            <span id="subscriber-count">{{ subscriber_count }}</span>
+            subscriber{{ subscriber_count|pluralize }} {% if channel.description %} &middot; {{ channel.description }}{% endif %}
+          </span>
         </div>
-        {% endif %}
-
-        {% if is_owner %}
-        <div id="channel-settings-panel" class="hidden px-4 py-4 border-b bg-gray-50">
-            <h3 class="font-semibold text-sm mb-3 text-gray-700">Channel Settings</h3>
-            <form method="post" action="{% url 'channel-edit' channel.id %}" class="flex flex-col gap-4">
-                {% csrf_token %}
-                <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-1">Channel Name</label>
-                    <input type="text" name="name" value="{{ channel.name }}" required class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-1">Description</label>
-                    <input type="text" name="description" value="{{ channel.description }}" class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
-                </div>
-                <div>
-                    <label class="text-xs font-medium text-gray-600 block mb-1">Channel Color</label>
-                    <div class="flex flex-wrap gap-2">
-                        {% for color in colors %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="color" value="{{ color }}" class="hidden peer" {% if channel.color == color %}checked{% endif %}>
-                            <div class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"></div>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t">
-                    <button type="submit" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium">Save changes</button>
-                </div>
-            </form>
-
-            <form method="post" action="{% url 'channel-delete' channel.id %}" class="mt-4 pt-3 border-t flex justify-between items-center">
-                {% csrf_token %}
-                <span class="text-xs text-red-500 font-medium">Danger Zone</span>
-                <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm">Delete Channel</button>
-            </form>
-        </div>
-        {% endif %}
-
-        <div id="channel-posts" class="flex flex-col gap-2 p-4 h-96 overflow-y-auto">
-            {% for entry in posts %}
-            {% with post=entry.post author_username=entry.post.author.profile.username|default:entry.post.author.username %}
-            <div class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}" data-post-id="{{ post.id }}" data-author-id="{{ post.author.id|default:'' }}"
-                 data-attachments='[{% for att in post.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'>
-                {% if post.author != request.user %}
-                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not post.author.profile.avatar_data %}bg-{{ post.author.profile.color|default:'gray' }}-300{% endif %}">
-                    {% if post.author.profile.avatar_data %}
-                    <img src="{% url 'avatar' post.author.id %}" class="w-full h-full object-cover">
-                    {% else %}
-                    {{ author_username|default:"?"|slice:":1"|upper }}
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <div class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if is_admin or post.author == request.user %}cursor-pointer{% endif %} {% if post.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                    {% if post.author != request.user %}
-                    <div class="text-xs font-medium text-{{ post.author.profile.color|default:'gray' }}-500 mb-1 flex items-center justify-between gap-2">
-                        <span>{{ author_username|default:"Deleted user" }}</span>
-                        <span class="text-xs text-gray-400 font-normal">{{ post.created_at|date:"M j, H:i" }}</span>
-                    </div>
-                    {% else %}
-                    <div class="text-xs text-gray-400 mb-1 text-right">{{ post.created_at|date:"M j, H:i" }}</div>
-                    {% endif %}
-
-                    {% if post.content %}
-                    <div class="post-content whitespace-pre-wrap break-words">{{ post.content|autolink }}</div>
-                    {% else %}
-                    <div class="post-content whitespace-pre-wrap break-words hidden"></div>
-                    {% endif %}
-
-                    <div class="post-attachments flex flex-col gap-1.5 {% if post.content and post.attachments.all %}mt-2{% endif %}">
-                        {% for att in post.attachments.all %}
-                        {% if att.is_image %}
-                        <a href="/chat/attachments/{{ att.id }}/" target="_blank" class="block">
-                            <img src="/chat/attachments/{{ att.id }}/" class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm">
-                        </a>
-                        {% else %}
-                        <a href="/chat/attachments/{{ att.id }}/" download="{{ att.original_name }}" target="_blank" class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm">
-                            <svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                            <div class="flex flex-col min-w-0 flex-1">
-                                <span class="text-xs font-medium truncate group-hover:underline">{{ att.original_name }}</span>
-                                <span class="text-[10px] text-gray-500">{{ att.formatted_size }}</span>
-                            </div>
-                            <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        </a>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-
-                    <div class="flex items-center justify-between gap-2 mt-1">
-                        <div class="flex items-center gap-1">
-                            <button type="button"
-                                    class="like-btn flex items-center gap-1 text-xs {% if entry.liked %}text-red-500{% else %}text-gray-400{% endif %} {% if is_subscriber %}hover:opacity-75{% else %}opacity-50 cursor-not-allowed{% endif %}"
-                                    data-post-id="{{ post.id }}"
-                                    data-liked="{{ entry.liked|yesno:'1,0' }}"
-                                    {% if not is_subscriber %}disabled{% endif %}>
-                                <span class="like-icon">{% if entry.liked %}&#9829;{% else %}&#9825;{% endif %}</span>
-                                <span class="like-count">{{ entry.like_count }}</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {% if post.author == request.user %}
-                <div class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}">
-                    {% if request.user.profile.avatar_data %}
-                    <img src="{% url 'avatar' request.user.id %}" class="w-full h-full object-cover">
-                    {% else %}
-                    {{ request.user.username|slice:":1"|upper }}
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-            {% endwith %}
-            {% empty %}
-            <div class="text-gray-500 text-sm">No posts yet.</div>
-            {% endfor %}
-        </div>
-
-        <div id="edit-banner" class="hidden px-4 py-1.5 bg-blue-50 border-t flex items-center justify-between text-xs text-blue-700">
-            <div class="flex items-center gap-1.5 truncate">
-                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                <span>Editing post</span>
-            </div>
-            <button id="cancel-edit-btn" type="button" class="text-blue-500 hover:text-blue-800 font-medium">Cancel</button>
-        </div>
-
-        <div id="attachment-tray" class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"></div>
-
-        {% if is_admin %}
-        <div class="px-4 py-3 border-t flex gap-2 items-center">
-            <button id="attach-file-btn" type="button" class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="Attach file">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-            </button>
-            <input type="file" id="chat-file-input" multiple class="hidden">
-
-            <textarea id="post-input" rows="1"
-                   class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ channel.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
-                   placeholder="Write a post..."></textarea>
-            <button id="post-send"
-                    class="bg-{{ channel.color }}-500 hover:bg-{{ channel.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0">
-                Post
-            </button>
-        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        {% if is_subscriber or is_owner %}
+        <form method="post" action="{% url 'toggle-mute' %}" class="inline">
+          {% csrf_token %}
+          <input type="hidden" name="chat_type" value="channel" />
+          <input type="hidden" name="target_id" value="{{ channel.id }}" />
+          <button
+            type="submit"
+            class="px-3 py-1 rounded border text-sm flex items-center gap-1.5 hover:bg-gray-50{% if is_muted %}text-amber-600{% else %}text-gray-500{% endif %}"
+            title="{% if is_muted %}Unmute notifications{% else %}Mute notifications{% endif %}"
+          >
+            {% if is_muted %}
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+              />
+            </svg>
+            <span>Muted</span>
+            {% else %}
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+            <span>Mute</span>
+            {% endif %}
+          </button>
+        </form>
+        {% endif %} {% if is_owner %}
+        <button
+          id="subscribers-toggle"
+          type="button"
+          class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50"
+        >
+          Subscribers
+        </button>
+        <button
+          id="channel-settings-toggle"
+          type="button"
+          class="px-3 py-1 rounded border text-sm text-gray-500 hover:bg-gray-50"
+        >
+          Edit
+        </button>
         {% elif is_subscriber %}
-        <div class="px-4 py-3 border-t text-gray-500 text-sm">
-            Only channel admins can write posts.
-        </div>
+        <form method="post" action="{% url 'channel-unsubscribe' channel.id %}">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-3 py-1 rounded border text-sm text-red-600 hover:bg-red-50"
+          >
+            Unsubscribe
+          </button>
+        </form>
         {% else %}
-        <div class="px-4 py-3 border-t text-gray-500 text-sm">
-            Subscribe to like posts and get updates from this channel.
+        <form method="post" action="{% url 'channel-subscribe' channel.id %}">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="px-3 py-1 rounded bg-purple-500 hover:bg-purple-600 text-white text-sm"
+          >
+            Subscribe
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if is_owner %}
+    <div id="subscribers-panel" class="hidden px-4 py-4 border-b bg-gray-50">
+      <h3 class="font-semibold text-sm mb-3 text-gray-700">Subscribers</h3>
+      <div class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+        {% for subscriber in subscribers %}
+        <div
+          class="flex items-center justify-between gap-3 bg-white border rounded-lg px-3 py-2"
+        >
+          <div class="flex items-center gap-2 min-w-0">
+            <div
+              class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold text-white flex-shrink-0 {% if not subscriber.profile.avatar_data %}bg-{{ subscriber.profile.color|default:'gray' }}-300{% endif %}"
+            >
+              {% if subscriber.profile.avatar_data %}
+              <img
+                src="{% url 'avatar' subscriber.id %}"
+                class="w-full h-full object-cover"
+              />
+              {% else %} {{ subscriber.profile.display_name|default:subscriber.username|slice:":1"|upper }} {% endif %}
+            </div>
+            <span class="text-sm text-gray-800 truncate"
+              >{% username subscriber %}</span
+            >
+            {% if subscriber == channel.owner %}
+            <span class="text-xs text-violet-600 font-medium flex-shrink-0"
+              >Creator</span
+            >
+            {% elif subscriber.id in admin_ids %}
+            <span class="text-xs text-yellow-600 font-medium flex-shrink-0"
+              >Admin</span
+            >
+            {% endif %}
+          </div>
+
+          {% if subscriber != channel.owner %}
+          <div class="flex items-center gap-2 flex-shrink-0">
+            {% if subscriber.id in admin_ids %}
+            <button
+              type="button"
+              data-user-id="{{ subscriber.id }}"
+              class="demote-btn text-xs px-2 py-1 rounded border text-red-600 hover:bg-red-50"
+            >
+              Remove admin
+            </button>
+            {% else %}
+            <button
+              type="button"
+              data-user-id="{{ subscriber.id }}"
+              class="promote-btn text-xs px-2 py-1 rounded border text-purple-600 hover:bg-purple-50"
+            >
+              Make admin
+            </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="text-sm text-gray-500">No subscribers yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %} {% if is_owner %}
+    <div
+      id="channel-settings-panel"
+      class="hidden px-4 py-4 border-b bg-gray-50"
+    >
+      <h3 class="font-semibold text-sm mb-3 text-gray-700">Channel Settings</h3>
+      <form
+        method="post"
+        action="{% url 'channel-edit' channel.id %}"
+        class="flex flex-col gap-4"
+      >
+        {% csrf_token %}
+        <div>
+          <label class="text-xs font-medium text-gray-600 block mb-1"
+            >Channel Name</label
+          >
+          <input
+            type="text"
+            name="name"
+            value="{{ channel.name }}"
+            required
+            class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600 block mb-1"
+            >Description</label
+          >
+          <input
+            type="text"
+            name="description"
+            value="{{ channel.description }}"
+            class="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+          />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-600 block mb-1"
+            >Channel Color</label
+          >
+          <div class="flex flex-wrap gap-2">
+            {% for color in colors %}
+            <label class="cursor-pointer">
+              <input
+                type="radio"
+                name="color"
+                value="{{ color }}"
+                class="hidden peer"
+                {%
+                if
+                channel.color=""
+                ="color"
+                %}checked{%
+                endif
+                %}
+              />
+              <div
+                class="w-6 h-6 rounded-full ring-2 ring-transparent peer-checked:ring-gray-800 peer-checked:ring-offset-2 bg-{{ color }}-300"
+              ></div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t">
+          <button
+            type="submit"
+            class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium"
+          >
+            Save changes
+          </button>
+        </div>
+      </form>
+
+      <form
+        method="post"
+        action="{% url 'channel-delete' channel.id %}"
+        class="mt-4 pt-3 border-t flex justify-between items-center"
+      >
+        {% csrf_token %}
+        <span class="text-xs text-red-500 font-medium">Danger Zone</span>
+        <button
+          type="submit"
+          class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-sm"
+        >
+          Delete Channel
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div
+      id="channel-posts"
+      class="flex flex-col gap-2 p-4 h-96 overflow-y-auto"
+    >
+      {% for entry in posts %} {% with post=entry.post %}
+      <div
+        class="flex items-start gap-2 {% if post.author == request.user %}justify-end{% endif %}"
+        data-post-id="{{ post.id }}"
+        data-author-id="{{ post.author.id|default:'' }}"
+        data-attachments='[{% for att in post.attachments.all %}{"id":{{ att.id }},"url":"/chat/attachments/{{ att.id }}/","name":"{{ att.original_name|escapejs }}","is_image":{{ att.is_image|yesno:"true,false" }},"size":"{{ att.formatted_size|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'
+      >
+        {% if post.author != request.user %}
+        <div
+          class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not post.author.profile.avatar_data %}bg-{{ post.author.profile.color|default:'gray' }}-300{% endif %}"
+        >
+          {% if post.author.profile.avatar_data %}
+          <img
+            src="{% url 'avatar' post.author.id %}"
+            class="w-full h-full object-cover"
+          />
+          {% else %} {{ author_username|default:"?"|slice:":1"|upper }} {% endif %}
         </div>
         {% endif %}
+
+        <div
+          class="px-3 py-2 rounded-lg text-sm max-w-xs break-words {% if is_admin or post.author == request.user %}cursor-pointer{% endif %} {% if post.author == request.user %}bg-{{ request.user.profile.color|default:'gray' }}-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}"
+        >
+          {% if post.author != request.user %}
+          <div
+            class="text-xs font-medium text-{{ post.author.profile.color|default:'gray' }}-500 mb-1 flex items-center justify-between gap-2"
+          >
+            <span>{% username post.author %}</span>
+            <span class="text-xs text-gray-400 font-normal"
+              >{{ post.created_at|date:"M j, H:i" }}</span
+            >
+          </div>
+          {% else %}
+          <div class="text-xs text-gray-400 mb-1 text-right">
+            {{ post.created_at|date:"M j, H:i" }}
+          </div>
+          {% endif %} {% if post.content %}
+          <div class="post-content whitespace-pre-wrap break-words">{{ post.content|autolink }}</div>
+          {% else %}
+          <div
+            class="post-content whitespace-pre-wrap break-words hidden"
+          ></div>
+          {% endif %}
+
+          <div
+            class="post-attachments flex flex-col gap-1.5 {% if post.content and post.attachments.all %}mt-2{% endif %}"
+          >
+            {% for att in post.attachments.all %} {% if att.is_image %}
+            <a
+              href="/chat/attachments/{{ att.id }}/"
+              target="_blank"
+              class="block"
+            >
+              <img
+                src="/chat/attachments/{{ att.id }}/"
+                class="rounded-lg max-h-60 max-w-full object-cover border shadow-sm"
+              />
+            </a>
+            {% else %}
+            <a
+              href="/chat/attachments/{{ att.id }}/"
+              download="{{ att.original_name }}"
+              target="_blank"
+              class="flex items-center gap-2.5 p-2 bg-white/80 hover:bg-white border rounded-lg text-gray-800 transition-colors group shadow-sm"
+            >
+              <svg
+                class="w-6 h-6 text-gray-500 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
+              </svg>
+              <div class="flex flex-col min-w-0 flex-1">
+                <span class="text-xs font-medium truncate group-hover:underline"
+                  >{{ att.original_name }}</span
+                >
+                <span class="text-[10px] text-gray-500"
+                  >{{ att.formatted_size }}</span
+                >
+              </div>
+              <svg
+                class="w-4 h-4 text-blue-500 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+            </a>
+            {% endif %} {% endfor %}
+          </div>
+
+          <div class="flex items-center justify-between gap-2 mt-1">
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                class="like-btn flex items-center gap-1 text-xs {% if entry.liked %}text-red-500{% else %}text-gray-400{% endif %} {% if is_subscriber %}hover:opacity-75{% else %}opacity-50 cursor-not-allowed{% endif %}"
+                data-post-id="{{ post.id }}"
+                data-liked="{{ entry.liked|yesno:'1,0' }}"
+                {%
+                if
+                not
+                is_subscriber
+                %}disabled{%
+                endif
+                %}
+              >
+                <span class="like-icon"
+                  >{% if entry.liked %}&#9829;{% else %}&#9825;{% endif %}</span
+                >
+                <span class="like-count">{{ entry.like_count }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {% if post.author == request.user %}
+        <div
+          class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0 {% if not request.user.profile.avatar_data %}bg-{{ request.user.profile.color|default:'gray' }}-300{% endif %}"
+        >
+          {% if request.user.profile.avatar_data %}
+          <img
+            src="{% url 'avatar' request.user.id %}"
+            class="w-full h-full object-cover"
+          />
+          {% else %} {{ request.user.username|slice:":1"|upper }} {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="text-gray-500 text-sm">No posts yet.</div>
+      {% endfor %}
     </div>
+
+    <div
+      id="edit-banner"
+      class="hidden px-4 py-1.5 bg-blue-50 border-t flex items-center justify-between text-xs text-blue-700"
+    >
+      <div class="flex items-center gap-1.5 truncate">
+        <svg
+          class="w-3.5 h-3.5 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        <span>Editing post</span>
+      </div>
+      <button
+        id="cancel-edit-btn"
+        type="button"
+        class="text-blue-500 hover:text-blue-800 font-medium"
+      >
+        Cancel
+      </button>
+    </div>
+
+    <div
+      id="attachment-tray"
+      class="hidden px-4 py-2 bg-gray-50 border-t flex flex-wrap gap-2 text-xs"
+    ></div>
+
+    {% if is_admin %}
+    <div class="px-4 py-3 border-t flex gap-2 items-center">
+      <button
+        id="attach-file-btn"
+        type="button"
+        class="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+        title="Attach file"
+      >
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+          />
+        </svg>
+      </button>
+      <input type="file" id="chat-file-input" multiple class="hidden" />
+
+      <textarea
+        id="post-input"
+        rows="1"
+        class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-{{ channel.color }}-400 resize-none overflow-hidden leading-normal max-h-40"
+        placeholder="Write a post..."
+      ></textarea>
+      <button
+        id="post-send"
+        class="bg-{{ channel.color }}-500 hover:bg-{{ channel.color }}-600 text-white px-4 py-2 rounded-lg text-sm flex-shrink-0"
+      >
+        Post
+      </button>
+    </div>
+    {% elif is_subscriber %}
+    <div class="px-4 py-3 border-t text-gray-500 text-sm">
+      Only channel admins can write posts.
+    </div>
+    {% else %}
+    <div class="px-4 py-3 border-t text-gray-500 text-sm">
+      Subscribe to like posts and get updates from this channel.
+    </div>
+    {% endif %}
+  </div>
 </div>
 
-<div id="context-menu" class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50" style="min-width: 11rem;">
-    <button id="cm-edit-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-        Edit
-    </button>
-    <button id="cm-delete-btn" type="button" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2">
-        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        Delete
-    </button>
+<div
+  id="context-menu"
+  class="hidden fixed bg-white border rounded-xl shadow-lg py-2 z-50"
+  style="min-width: 11rem"
+>
+  <button
+    id="cm-edit-btn"
+    type="button"
+    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+  >
+    <svg
+      class="w-4 h-4 text-gray-500"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+      />
+    </svg>
+    Edit
+  </button>
+  <button
+    id="cm-delete-btn"
+    type="button"
+    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+  >
+    <svg
+      class="w-4 h-4 text-red-500"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
+    </svg>
+    Delete
+  </button>
 </div>
 
-<div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"></div>
+<div
+  id="toast"
+  class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"
+></div>
 
 <script>
   (function(){
