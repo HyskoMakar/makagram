@@ -1,0 +1,11 @@
+<span class="username-wrapper inline-flex items-center gap-1 min-w-0">
+    <span class="font-semibold text-{{ color }}-600 truncate">
+        {{ username }}
+    </span>
+
+    {% if suffix %}
+    <span class="text-xs text-gray-400 font-medium whitespace-nowrap">
+        [{{ suffix }}]
+    </span>
+    {% endif %}
+</span>

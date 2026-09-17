@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            Achievements
+        </h1>
+
+        <p class="text-gray-500 mt-1">
+            Unlock achievements and collect username suffixes.
+        </p>
+    </div>
+
+    <div class="grid gap-4">
+
+        {% for achievement in achievements %}
+
+        {% if achievement.id in unlocked_ids %}
+
+        <div class="bg-white border rounded-2xl p-5 shadow-sm">
+
+            <div class="flex items-start justify-between gap-4">
+
+                <div class="flex items-start gap-4">
+
+                    <div class="text-3xl">
+                        {{ achievement.icon }}
+                    </div>
+
+                    <div>
+
+                        <h2 class="font-semibold text-gray-900">
+                            {{ achievement.name }}
+                        </h2>
+
+                        <p class="text-sm text-gray-500 mt-1">
+                            {{ achievement.description }}
+                        </p>
+
+                        <div class="mt-3 text-sm">
+
+                            <span class="text-gray-400">
+                                Suffix:
+                            </span>
+
+                            <span class="font-medium text-gray-700">
+                                [{{ achievement.suffix }}]
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div>
+
+                    {% if equipped_id == achievement.id %}
+
+                    <button type="button" class="px-4 py-2 rounded-lg text-sm bg-gray-100 text-gray-500" disabled>
+                        Equipped
+                    </button>
+
+                    {% else %}
+
+                    <button type="button"
+                        class="equip-achievement px-4 py-2 rounded-lg text-sm bg-emerald-500 hover:bg-emerald-600 text-white"
+                        data-id="{{ achievement.id }}">
+                        Equip
+                    </button>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="bg-gray-50 border rounded-2xl p-5 opacity-70">
+
+            <div class="flex items-start gap-4">
+
+                <div class="text-3xl grayscale">
+                    🔒
+                </div>
+
+                <div>
+
+                    <h2 class="font-semibold text-gray-700">
+                        {{ achievement.name }}
+                    </h2>
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ achievement.description }}
+                    </p>
+
+                    <div class="mt-3 text-sm text-gray-400">
+                        Locked
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        {% empty %}
+
+        <div class="bg-white border rounded-2xl p-8 text-center text-gray-500">
+            No achievements yet.
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+
+                if (cookie.substring(0, name.length + 1) === name + '=') {
+                    cookieValue = decodeURIComponent(
+                        cookie.substring(name.length + 1)
+                    );
+                    break;
+                }
+            }
+        }
+
+        return cookieValue;
+    }
+
+    document.querySelectorAll('.equip-achievement').forEach(button => {
+
+        button.addEventListener('click', async () => {
+
+            const id = button.dataset.id;
+
+            button.disabled = true;
+
+            try {
+
+                const response = await fetch(
+                    `/achievements/equip/${id}/`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.ok) {
+                    throw new Error(
+                        data.error || 'Could not equip achievement'
+                    );
+                }
+
+                window.location.reload();
+
+            } catch (error) {
+
+                console.error(error);
+
+                button.disabled = false;
+
+                alert(
+                    error.message ||
+                    'Could not equip achievement'
+                );
+            }
+        });
+
+    });
+</script>
+
+{% endblock %}

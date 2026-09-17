@@ -21,6 +21,8 @@ class Profile(models.Model):
     avatar_data = models.BinaryField(blank=True, null=True)
     avatar_type = models.CharField(max_length=50, blank=True)
 
+    equipped_achievement = models.ForeignKey('achievements.Achievement', null=True, blank=True, on_delete=models.SET_NULL, related_name='equipped_profiles')
+
     mfa_secret = models.CharField(db_index=True, max_length=32, default=pyotp.random_base32)
     mfa_enabled = models.BooleanField(default=False)
 

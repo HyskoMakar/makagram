@@ -31,6 +31,7 @@ urlpatterns = [
     path('channel/', include('channel.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('admin/abuse/', views.admin_abuse_page_view, name='admin-abuse'),
+    path('achievements/', include('achievements.urls')),
 
     # admin
     path('admin/', admin.site.urls),
