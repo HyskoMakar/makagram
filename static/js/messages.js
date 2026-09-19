@@ -45,17 +45,13 @@
                             ? url
                             : `https://${url}`;
 
-                    return `
-                        <a
-                            href="${href}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="text-emerald-600 underline hover:text-emerald-800 break-all"
-                            onclick="event.stopPropagation();"
-                        >
-                            ${url}
-                        </a>${trailing}
-                    `;
+                    return `<a
+                                href="${href}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-blue-600 underline hover:text-blue-800 break-all"
+                                onclick="event.stopPropagation();"
+                            >${url}</a>${trailing}`;
                 }
             );
 
@@ -431,29 +427,21 @@
         return wrapper;
     }
 
+    function appendMessage(container, data, options) {
+        if (!container) return;
 
-    function appendMessage(
-        container,
-        data,
-        options
-    ) {
+        if (data.html) {
+            container.insertAdjacentHTML('beforeend', data.html);
+            container.scrollTop = container.scrollHeight;
 
-        const element =
-            renderMessage(
-                data,
-                options
-            );
+            return container.lastElementChild;
+        }
 
-        container.appendChild(
-            element
-        );
-
-        container.scrollTop =
-            container.scrollHeight;
-
+        const element = renderMessage(data, options);
+        container.appendChild(element);
+        container.scrollTop = container.scrollHeight;
         return element;
     }
-
 
     function updateMessage(
         messageId,

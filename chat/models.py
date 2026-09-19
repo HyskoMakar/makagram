@@ -112,6 +112,10 @@ class GroupMessage(models.Model):
     def __str__(self):
         return f'{self.author.username} in {self.group.name}: {self.content[:50]}'
 
+    @property
+    def from_user(self):
+        return self.author
+
 
 class Attachment(models.Model):
     file_data = models.BinaryField(null=True)

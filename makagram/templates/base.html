@@ -52,23 +52,6 @@
       .dark .bg-white {
         @apply bg-neutral-900;
       }
-      .dark .chat-message-bubble {
-        position: relative;
-        isolation: isolate;
-      }
-      .dark .chat-message-bubble::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: rgb(0 0 0 / 55%);
-        pointer-events: none;
-        z-index: 0;
-      }
-      .dark .chat-message-bubble > * {
-        position: relative;
-        z-index: 1;
-      }
       .dark .bg-slate-50 {
         @apply bg-slate-400/15;
       }

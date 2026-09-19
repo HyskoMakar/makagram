@@ -3,8 +3,17 @@ import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from django.template.loader import render_to_string
+
 MAX_MESSAGE_LENGTH = 4000
 
+@sync_to_async
+def render_message_html(msg, user, show_author_name=False):
+    return render_to_string('includes/message.html', {
+        'm': msg,
+        'request': {'user': user},
+        'show_author_name': show_author_name,
+    })
 
 class BaseChatConsumer(AsyncWebsocketConsumer):
 
@@ -126,21 +135,18 @@ class GroupChatConsumer(BaseChatConsumer):
             return
 
         msg_obj, attachments = await self._save_message(message, attachment_ids)
+        msg_html = await render_message_html(msg_obj, self.me, show_author_name=True)
         await self.channel_layer.group_send(self.room_group_name, {
             'type': 'group.message',
             'message_id': msg_obj.id if msg_obj else None,
-            'message': message,
-            'attachments': attachments,
-            'user': await self._get_user_data(self.me),
+            'html': msg_html,
         })
 
     async def group_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
             'message_id': event.get('message_id'),
-            'message': event['message'],
-            'attachments': event.get('attachments', []),
-            'user': event['user'],
+            'html': event['html'],
         }))
 
     async def group_message_edited(self, event):
@@ -301,21 +307,18 @@ class PrivateChatConsumer(BaseChatConsumer):
             return
 
         msg_obj, attachments = await self._save_message(to_user, message, attachment_ids)
+        msg_html = await render_message_html(msg_obj, self.me, show_author_name=False)
         await self.channel_layer.group_send(self.room_group_name, {
             'type': 'chat.message',
             'message_id': msg_obj.id if msg_obj else None,
-            'message': message,
-            'attachments': attachments,
-            'user': await self._get_user_data(self.me),
+            'html': msg_html,
         })
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             'type': 'message',
             'message_id': event.get('message_id'),
-            'message': event['message'],
-            'attachments': event.get('attachments', []),
-            'user': event['user'],
+            'html': event['html'],
         }))
 
     async def chat_message_edited(self, event):

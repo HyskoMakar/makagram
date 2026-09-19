@@ -297,9 +297,8 @@
           <div class="text-xs text-gray-400 mb-1 text-right">
             {{ post.created_at|date:"M j, H:i" }}
           </div>
-          {% endif %} {% if post.content %}
-          <div class="post-content whitespace-pre-wrap break-words">{{ post.content|autolink }}</div>
-          {% else %}
+          {% endif %} 
+          {% if post.content %}<div class="post-content whitespace-pre-wrap break-words">{{ post.content|autolink }}</div>{% else %}
           <div
             class="post-content whitespace-pre-wrap break-words hidden"
           ></div>
