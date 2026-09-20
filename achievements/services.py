@@ -13,7 +13,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Register in the app.',
         'suffix': 'new',
         'icon': '🎉',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: True,
     },
     {
@@ -22,7 +22,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Send your first message.',
         'suffix': 'speaker',
         'icon': '💬',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['total_messages'] >= 1,
     },
     {
@@ -31,7 +31,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Add your first friend.',
         'suffix': 'buddy',
         'icon': '🤝',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['friend_count'] >= 1,
     },
     {
@@ -40,7 +40,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Join or create your first group.',
         'suffix': 'host',
         'icon': '🏠',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['group_count'] >= 1,
     },
     {
@@ -49,7 +49,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Join or create your first channel.',
         'suffix': 'channel',
         'icon': '📣',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['channel_count'] >= 1,
     },
     {
@@ -58,7 +58,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Send 5 messages in total.',
         'suffix': 'chatter',
         'icon': '🗣️',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['total_messages'] >= 5,
     },
     {
@@ -67,7 +67,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Add 3 friends.',
         'suffix': 'buzz',
         'icon': '🦋',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['friend_count'] >= 3,
     },
     {
@@ -76,7 +76,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Join 2 groups.',
         'suffix': 'crew',
         'icon': '👥',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['group_count'] >= 2,
     },
     {
@@ -85,7 +85,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Join 2 channels.',
         'suffix': 'fan',
         'icon': '📺',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['channel_count'] >= 2,
     },
     {
@@ -94,7 +94,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Create 3 posts or messages.',
         'suffix': 'creator',
         'icon': '🎨',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['total_messages'] >= 3,
     },
     {
@@ -103,7 +103,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Write a message to another user.',
         'suffix': 'private person',
         'icon': '🛟',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['total_messages'] >= 1,
     },
     {
@@ -112,7 +112,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Unlock 5 achievements.',
         'suffix': 'collector',
         'icon': '📦',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['unlocked_count'] >= 5,
     },
     {
@@ -121,7 +121,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Use a nickname longer than 8 characters.',
         'suffix': 'trend',
         'icon': '✨',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: len(ctx['profile_name']) >= 8,
     },
     {
@@ -130,7 +130,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Log in late at night or early morning.',
         'suffix': 'owl',
         'icon': '🦉',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['last_login'].hour >= 22 or ctx['last_login'].hour < 4,
     },
     {
@@ -139,7 +139,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Stay active for at least 7 days.',
         'suffix': 'veteran',
         'icon': '🏅',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: timezone.now() - user.date_joined >= timedelta(days=7),
     },
     {
@@ -148,7 +148,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Use chats, groups and channels.',
         'suffix': 'explorer',
         'icon': '🧭',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['total_messages'] >= 1 and ctx['group_count'] >= 1 and ctx['channel_count'] >= 1,
     },
     {
@@ -157,7 +157,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Unlock 10 achievements.',
         'suffix': 'legend',
         'icon': '👑',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['unlocked_count'] >= 10,
     },
     {
@@ -166,7 +166,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Unlock 15 achievements.',
         'suffix': 'master',
         'icon': '🧠',
-        'is_super': False,
+        'type': 'common',
         'check': lambda user, ctx: ctx['unlocked_count'] >= 15,
     },
     {
@@ -175,7 +175,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Be a Django superuser.',
         'suffix': 'admin',
         'icon': '🛡️',
-        'is_super': True,
+        'type': 'ultra',
         'check': lambda user, ctx: user.is_superuser,
     },
     {
@@ -184,7 +184,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Have 100 subscribers on your channel.',
         'suffix': 'popular',
         'icon': '📈',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['has_popular_channel'],
     },
     {
@@ -193,7 +193,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Put 200 likes on different posts.',
         'suffix': 'lover',
         'icon': '💖',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['total_likes'] >= 200,
     },
     {
@@ -202,7 +202,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Send 1000 messages in one section without counting repeated consecutive identical messages.',
         'suffix': 'spam',
         'icon': '📨',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['total_messages'] >= 1000,
     },
     {
@@ -211,7 +211,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Be blocked by 50 users.',
         'suffix': 'banned',
         'icon': '🚫',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['blocked_by_users'] >= 50,
     },
     {
@@ -220,7 +220,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Be an admin in 10 channels owned by different users, each older than 7 days.',
         'suffix': 'staff',
         'icon': '🧑‍💼',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['admin_in_other_channels'] >= 10,
     },
     {
@@ -229,7 +229,7 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Unlock all regular achievements.',
         'suffix': 'achiever',
         'icon': '🏆',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['regular_unlocked_keys'] >= ctx['regular_keys'],
     },
     {
@@ -238,11 +238,10 @@ DEFAULT_ACHIEVEMENTS = [
         'description': 'Complete all super challenges.',
         'suffix': 'super',
         'icon': '🌟',
-        'is_super': True,
+        'type': 'super',
         'check': lambda user, ctx: ctx['required_super_keys'].issubset(ctx['unlocked_keys']),
     },
 ]
-
 
 def ensure_default_achievements():
     for data in DEFAULT_ACHIEVEMENTS:
@@ -253,7 +252,9 @@ def ensure_default_achievements():
                 'description': data['description'],
                 'suffix': data['suffix'],
                 'icon': data['icon'],
-                'is_super': data.get('is_super', False),
+                'type': data['type'],
+                'hidden': False if data['type'] != 'ultra' else True
+                'hidden': False,
                 'is_active': True,
             },
         )
@@ -344,12 +345,12 @@ def maybe_unlock_for_user(user):
             sub_count=models.Count('subscribers')
         ).filter(sub_count__gte=100).exists(),
         'regular_keys': set(
-            Achievement.objects.filter(is_super=False).exclude(key='achiever').values_list('key', flat=True)
+            Achievement.objects.filter(type='common').exclude(key='achiever').values_list('key', flat=True)
         ),
         'regular_unlocked_keys': set(
-            UserAchievement.objects.filter(user=user, achievement__is_super=False).exclude(achievement__key='achiever').values_list('achievement__key', flat=True)
+            UserAchievement.objects.filter(user=user, achievement__type='common').exclude(achievement__key='achiever').values_list('achievement__key', flat=True)
         ),
-        'required_super_keys': {'superuser', 'popular', 'lover', 'spammer', 'worst', 'administration', 'achiever'},
+        'required_super_keys': {'popular', 'lover', 'spammer', 'worst', 'administration', 'achiever'},
         'unlocked_keys': set(UserAchievement.objects.filter(user=user).values_list('achievement__key', flat=True)),
     }
 

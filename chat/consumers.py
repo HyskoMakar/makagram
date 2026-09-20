@@ -135,7 +135,7 @@ class GroupChatConsumer(BaseChatConsumer):
             return
 
         msg_obj, attachments = await self._save_message(message, attachment_ids)
-        msg_html = await render_message_html(msg_obj, self.me, show_author_name=True)
+        msg_html = await render_message_html(msg_obj, self, show_author_name=True)
         await self.channel_layer.group_send(self.room_group_name, {
             'type': 'group.message',
             'message_id': msg_obj.id if msg_obj else None,

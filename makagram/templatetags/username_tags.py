@@ -28,7 +28,16 @@ def username(user):
             if achievement
             else ''
         )
-        suffix_color = 'amber' if achievement and achievement.is_super else 'gray'
+        if achievement is not None:
+            if achievement.type == 'super':
+                suffix_color = 'amber'
+            elif achievement.type == 'ultra':
+                suffix_color = 'purple'
+            else:
+                suffix_color = 'gray'
+        else:
+            suffix_color = 'gray'
+
     else:
         display_name = user.username
         color = 'gray'

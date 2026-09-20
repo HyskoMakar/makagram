@@ -730,18 +730,21 @@
 
     socket.onmessage = function (e) {
       const data = JSON.parse(e.data);
-      if (data.type === "message") {
-        if (data.html) {
-              messagesDiv.insertAdjacentHTML("beforeend", data.html);
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          } else {
-              MakaMessages.appendMessage(messagesDiv, data, {
-                  currentUser: currentUser,
-                  knownUsers: knownUsers,
-                  myColor: myColor,
-              });
-          }
-          return;
+      if (data.type === "message" && data.html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.html.trim();
+            const msgEl = tempDiv.firstElementChild;
+
+            const msgAuthor = msgEl.getAttribute('data-username');
+
+            if (msgAuthor !== currentUser) {
+                msgEl.classList.remove('justify-end');
+            } else {
+                msgEl.classList.add('justify-end');
+            }
+
+            messagesDiv.appendChild(msgEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
       } else if (data.type === "edit_message") {
         MakaMessages.updateMessage(data.message_id, data, {
           knownUsers: knownUsers,

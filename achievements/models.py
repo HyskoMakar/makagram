@@ -24,7 +24,12 @@ class Achievement(models.Model):
         default='🏆',
     )
 
-    is_super = models.BooleanField(
+    type = models.CharField(
+        max_length=10,
+        default='common',
+    )
+
+    hidden = models.BooleanField(
         default=False,
     )
 
@@ -35,6 +40,10 @@ class Achievement(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
+
+    @property
+    def is_super(self):
+        return self.type == 'super'
 
     class Meta:
         ordering = ['id']
