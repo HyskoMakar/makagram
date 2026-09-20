@@ -253,7 +253,7 @@ def ensure_default_achievements():
                 'suffix': data['suffix'],
                 'icon': data['icon'],
                 'type': data['type'],
-                'hidden': False if data['type'] != 'ultra' else True
+                'hidden': False if data['type'] != 'ultra' else True,
                 'hidden': False,
                 'is_active': True,
             },
