@@ -497,7 +497,7 @@
   <button
     id="cm-edit-btn"
     type="button"
-    class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
   >
     <svg
       class="w-4 h-4 text-gray-500"
@@ -517,7 +517,7 @@
   <button
     id="cm-delete-btn"
     type="button"
-    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
   >
     <svg
       class="w-4 h-4 text-red-500"
@@ -541,6 +541,11 @@
   class="fixed bottom-6 right-6 bg-gray-800 text-white px-4 py-2 rounded-xl shadow-lg hidden text-sm z-50"
 ></div>
 
+{{ channel.id|json_script:"channel-id" }}
+{{ is_subscriber|json_script:"is-subscriber" }}
+{{ is_admin|json_script:"is-admin" }}
+{{ request.user.id|json_script:"current-user-id" }}
+{{ request.user.profile.color|default:'gray'|json_script:"my-color" }}
 <script>
   (function(){
     function getCookie(name) {
@@ -558,11 +563,11 @@
         return cookieValue;
     }
     const csrftoken = getCookie('csrftoken');
-    const channelId = {{ channel.id }};
-    const isSubscriber = {{ is_subscriber|yesno:'true,false' }};
-    const isAdmin = {{ is_admin|yesno:'true,false' }};
-    const currentUserId = {{ request.user.id|default:'null' }};
-    const myColor = "{{ request.user.profile.color|default:'gray' }}";
+    const channelId = JSON.parse(document.getElementById('channel-id').textContent);
+    const isSubscriber = JSON.parse(document.getElementById('is-subscriber').textContent);
+    const isAdmin = JSON.parse(document.getElementById('is-admin').textContent);
+    const currentUserId = JSON.parse(document.getElementById('current-user-id').textContent);
+    const myColor = JSON.parse(document.getElementById('my-color').textContent);
 
     let editingPostId = null;
     let selectedPostCard = null;

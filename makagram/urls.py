@@ -34,4 +34,5 @@ urlpatterns = [
 
     # admin
     path('admin/', include('abuse.urls')),
+    path('notadminpage/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
