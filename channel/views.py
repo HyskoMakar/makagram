@@ -79,6 +79,7 @@ class ChannelForm(forms.Form):
 def create_channel(request):
     form = ChannelForm()
 
+    error = None
     if request.method == 'POST':
         form = ChannelForm(request.POST)
         if form.is_valid():
@@ -87,7 +88,9 @@ def create_channel(request):
             color = form.cleaned_data['color'] or 'blue'
             color = color if color in ALLOWED_COLORS else 'blue'
 
-            if not name:
+            if Channel.objects.filter(owner=request.user).count() >= 2:
+                error = "You can't create more than 2 channels"
+            elif not name:
                 form.add_error('name', 'Channel name cannot be empty.')
             elif Channel.objects.filter(name=name).exists():
                 form.add_error('name', 'A channel with this name already exists.')
@@ -98,7 +101,6 @@ def create_channel(request):
                     color=color,
                     owner=request.user,
                 )
-                # the creator is automatically a subscriber and an admin
                 channel.subscribers.add(request.user)
                 channel.admins.add(request.user)
                 return redirect('channel-view', channel_id=channel.id)
@@ -106,7 +108,7 @@ def create_channel(request):
     return render(request, 'channel_create.html', {
         'form': form,
         'colors': ALLOWED_COLORS,
-        'error': None,
+        'error': error,
     })
 
 

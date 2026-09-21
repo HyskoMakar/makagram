@@ -9,6 +9,19 @@
         <image src="{% static 'images/channels_logo.png' %}"></image>
     </div>
 
+    <div class="mb-4">
+        <div class="relative">
+            <input type="text" id="channelSearchInput" placeholder="Search channels..."
+                class="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all shadow-sm" />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
     <div class="flex items-center justify-between gap-2 mb-4 overflow-x-auto pb-1">
         <div class="flex items-center gap-2">
             <a href="?tab=all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-purple-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}">
@@ -35,7 +48,7 @@
     <div class="grid gap-3">
         {% for entry in channels %}
         {% with channel=entry.channel %}
-        <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
+        <div class="flex items-center gap-3 px-5 py-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all js-channel-item" data-name="{{ channel.name|lower }}">
             <a href="{% url 'channel-view' channel.id %}" class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 bg-{{ channel.color|default:'blue' }}-400 text-sm select-none shadow-sm">
                     {{ channel.name|slice:":1"|upper }}
@@ -71,4 +84,24 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('channelSearchInput');
+        const channels = document.querySelectorAll('.js-channel-item');
+
+        searchInput.addEventListener('input', function (e) {
+            const query = e.target.value.toLowerCase().trim();
+
+            channels.forEach(channel => {
+                const name = channel.getAttribute('data-name') || '';
+                if (name.includes(query)) {
+                    channel.style.display = '';
+                } else {
+                    channel.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

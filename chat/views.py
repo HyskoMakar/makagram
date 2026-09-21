@@ -111,6 +111,7 @@ class GroupForm(forms.Form):
 
 @login_required(login_url='login')
 def create_group(request):
+    error = None
     if request.method == 'POST':
         form = GroupForm(request.POST)
         if form.is_valid():
@@ -118,7 +119,9 @@ def create_group(request):
             color = form.cleaned_data['color'] or 'blue'
             color = color if color in ALLOWED_COLORS else 'blue'
 
-            if not name:
+            if Group.objects.filter(owner=request.user).count() >= 3:
+                error = "You can't create more than 3 groups"
+            elif not name:
                 form.add_error('name', 'Group name cannot be empty.')
             elif Group.objects.filter(name=name).exists():
                 form.add_error('name', 'A group with this name already exists.')
@@ -137,7 +140,7 @@ def create_group(request):
     return render(request, 'group_create.html', {
         'form': form,
         'colors': ALLOWED_COLORS,
-        'error': None,
+        'error': error,
     })
 
 
