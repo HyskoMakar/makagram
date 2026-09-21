@@ -47,7 +47,7 @@
           {% endif %}
         </div>
       </div>
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="hidden sm:flex items-center gap-2 flex-shrink-0">
         {% if user.id in online_ids %}
         <span
           class="text-xs text-green-600 font-semibold px-2 py-0.5 bg-green-50 rounded-full border border-green-100"
@@ -81,13 +81,13 @@
           href="?tab={{ tab }}&gtab=all"
           class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab != 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}"
         >
-          All Groups
+          All
         </a>
         <a
           href="?tab={{ tab }}&gtab=mine"
           class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if gtab == 'mine' %}bg-emerald-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}"
         >
-          My Groups
+          Mine
         </a>
       </div>
 
@@ -95,7 +95,7 @@
         href="{% url 'group-create' %}"
         class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-sm transition-all"
       >
-        + Create group
+        + Create
       </a>
     </div>
 
@@ -128,7 +128,7 @@
         </a>
         <div class="flex items-center gap-2 flex-shrink-0">
           <span
-            class="text-xs text-gray-400 border px-2.5 py-0.5 rounded-full bg-gray-50"
+            class="hidden sm:flex text-xs text-gray-400 border px-2.5 py-0.5 rounded-full bg-gray-50"
           >
             {% if group.private %}Private{% else %}Public{% endif %}
           </span>

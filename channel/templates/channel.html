@@ -1,7 +1,7 @@
 {% extends 'base.html' %} {% load chat_extras username_tags %} {% block title %}{{ channel.name }}{% endblock %} {% block content %}
 <div class="max-w-2xl mx-auto">
   <div class="bg-white rounded-xl shadow overflow-hidden">
-    <div class="px-4 py-3 border-b flex justify-between items-center w-full">
+    <div class="px-4 py-3 border-b sm:flex justify-between items-center w-full">
       <div class="flex items-center gap-4 min-w-0">
         <div
           class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold bg-{{ channel.color|default:'blue' }}-300 text-lg select-none flex-shrink-0"
@@ -19,7 +19,7 @@
           </span>
         </div>
       </div>
-      <div class="flex items-center gap-2 flex-shrink-0">
+      <div class="flex items-center gap-2 flex-shrink-0 mt-2">
         {% if is_subscriber or is_owner %}
         <form method="post" action="{% url 'toggle-mute' %}" class="inline">
           {% csrf_token %}

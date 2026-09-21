@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'chat',
     'channel',
     'achievements',
+    'abuse',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

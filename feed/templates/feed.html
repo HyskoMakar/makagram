@@ -4,7 +4,7 @@
     <image src="{% static 'images/feed_logo.png' %}"></image>
   </div>
 
-  <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+  <div class="flex flex-wrap mb-4 pb-1 gap-2">
     <a
       href="?tab=all"
       class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'all' or not tab %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}"
@@ -27,7 +27,7 @@
       href="?tab=private"
       class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors {% if tab == 'private' %}bg-blue-500 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-50 border{% endif %}"
     >
-      Direct Messages
+      Direct
     </a>
     <a
       href="?tab=system"
@@ -42,7 +42,7 @@
     <div
       class="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 p-4 transition-all"
     >
-      <div class="flex items-center justify-between gap-3 mb-2">
+      <div class="sm:flex items-center justify-between gap-3 mb-2">
         <div class="flex items-center gap-3 min-w-0">
           <div
             class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 {% if item.author and not item.author.profile.avatar_data %}bg-{{ item.color }}-400{% elif not item.author %}bg-{{ item.color }}-400{% endif %} text-sm select-none shadow-sm"

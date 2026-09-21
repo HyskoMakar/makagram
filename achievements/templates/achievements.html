@@ -9,7 +9,7 @@
     </p>
   </div>
 
-  <div class="grid gap-4 grid-cols-2">
+  <div class="grid gap-4 sm:grid-cols-2">
     {% for achievement in achievements %} {% if achievement.id in unlocked_ids %}
 
     <div class="bg-white border rounded-2xl p-5 shadow-sm {% if achievement.is_super %}border-amber-400{% elif achievement.type == 'ultra' %}border-purple-400{% endif %}">

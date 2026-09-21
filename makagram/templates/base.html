@@ -254,7 +254,7 @@
 
             <div
               id="notif-dropdown"
-              class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border py-2 z-50"
+              class="hidden fixed sm:absolute right-0 mt-2 w-screen sm:w-80 bg-white rounded-xl shadow-lg border py-2 z-50"
             >
               <div class="px-4 py-2 border-b flex items-center justify-between">
                 <span class="font-semibold text-sm text-gray-800"
@@ -267,7 +267,7 @@
                   Mark all as read
                 </button>
               </div>
-              <div id="notif-list" class="max-h-80 overflow-y-auto divide-y">
+              <div id="notif-list" class="max-h-80 overflow-y-auto divide-y max-w-screen">
                 <div class="px-4 py-3 text-sm text-gray-400 text-center">
                   Loading...
                 </div>
@@ -290,9 +290,9 @@
             </button>
             <div
               id="profile-dropdown"
-              class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border py-2 z-50"
+              class="hidden fixed sm:absolute right-0 mt-[10px] w-48 bg-white rounded-xl shadow-lg border py-2 z-50"
             >
-              <div class="px-4 py-2 border-b">{% username request.user %}</div>
+              <div class="px-4 py-2 border-b text-sm">{% username request.user %}</div>
               <a
                 href="{% url 'profile' %}"
                 class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"

@@ -21,7 +21,10 @@
         {{ profile.display_name|slice:":1"|upper }}
       </div>
       {% endif %}
-      <div>{% username request.user %}</div>
+      <div>
+        {% username request.user %}<br>
+        <span class="text-gray-400 text-sm">@{{ request.user.username }}</span>
+      </div>
     </div>
 
     <form

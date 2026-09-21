@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Abuse Page - Edit Achievement{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Edit custom achievement</h2>
+            <p class="text-sm text-gray-500 mt-1">This achievement has purple color and not seen by common users. Only
+                admins can give this achievement to users.</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="space-y-5 mb-8">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input name="name" type="text" value="{{ achievement.name|default:'' }}" required
+                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    placeholder="Superuser">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea name="description" rows="3" required
+                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
+                    placeholder="Be a Superuser">{{ achievement.description|default:'' }}</textarea>
+            </div>
+
+            <div class="flex gap-8 w-full">
+                <div class="grow">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Suffix</label>
+                    <input name="suffix" type="text" value="{{ achievement.suffix|default:'' }}" required
+                        class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        placeholder="admin">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                    <input name="icon" value="{{ achievement.icon|default:'' }}" required
+                        class="border rounded-lg px-2 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 w-9">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                    class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

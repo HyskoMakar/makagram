@@ -30,9 +30,8 @@ urlpatterns = [
     path('chat/', include('chat.urls')),
     path('channel/', include('channel.urls')),
     path('api/notifications/', include('notifications.urls')),
-    path('admin/abuse/', views.admin_abuse_page_view, name='admin-abuse'),
     path('achievements/', include('achievements.urls')),
 
     # admin
-    path('admin/', admin.site.urls),
+    path('admin/', include('abuse.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

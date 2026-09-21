@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div class="text-xs uppercase tracking-wide text-gray-400">Users</div>
             <div class="mt-3 text-3xl font-semibold text-gray-900">{{ stats.total_users }}</div>
@@ -82,6 +82,73 @@
                 </button>
             </div>
         </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Manage custom achievements</h2>
+            <p class="text-sm text-gray-500 mt-1">This achievements have purple color and not seen by common users. Only admins can give that achievements to users.</p>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ error }}</div>
+        {% endif %}
+
+        <div class="flex items-center gap-3 pt-2 mb-8">
+            <a href="{% url 'abuse-achievement-create' %}"
+                class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium w-full text-center">
+                Create New
+            </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t pt-8">
+            {% for achievement in achievements %} {% if achievement.key != 'superuser' %}
+            <div class="bg-white border rounded-2xl p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="text-3xl">{{ achievement.icon }}</div>
+            
+                        <div>
+                            <h2 class="font-semibold text-gray-900">{{ achievement.name }}</h2>
+            
+                            <p class="text-sm text-gray-500 mt-1">
+                                {{ achievement.description }}
+                            </p>
+            
+                            <div class="mt-3 text-sm">
+                                <span class="text-gray-400"> Suffix: </span>
+            
+                                <span
+                                    class="font-medium text-purple-500">
+                                    [{{ achievement.suffix }}]
+                                </span>
+                            </div>
+
+                            <form method="post" action="{% url 'abuse-achievement-unlock' achievement.key %}" class="mt-4 flex gap-2 border-t pt-4 w-full">
+                                {% csrf_token %}
+                                <input id="username" name="username" type="text" value="{{ username|default:'' }}" required
+                                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                                    placeholder="Some username..">
+                                <button
+                                    class="equip-achievement px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-800 text-white text-nowrap">Lock / Unlock</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="grid gap-2">
+                        <form method="get" action="{% url 'abuse-achievement-edit' achievement.key %}">
+                            {% csrf_token %}
+                            <button class="equip-achievement px-4 py-2 rounded-lg text-sm bg-slate-50 hover:bg-slate-100 hover:dark:bg-slate-300/20 w-full">Edit</button>
+                        </form>
+                        <form method="post" action="{% url 'abuse-achievement-delete' achievement.key %}">
+                            {% csrf_token %}
+                            <button class="equip-achievement px-4 py-2 rounded-lg text-sm text-red-600 bg-red-50 hover:bg-red-100 w-full">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}{% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}
