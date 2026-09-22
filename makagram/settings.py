@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from pathlib import Path
 
 try:
@@ -6,18 +7,19 @@ try:
 except ImportError:
     dj_database_url = None
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-change-this-secret-key')
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
-
+load_dotenv()
 
 def env_list(name, default=''):
     return [value.strip() for value in os.environ.get(name, default).split(',') if value.strip()]
 
 
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1')
-CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'http://localhost')
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1,.ngrok-free.app')
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', 'http://localhost,http://127.0.0.1,https://*.ngrok-free.app')
 
 INSTALLED_APPS = [
     'daphne',
@@ -69,20 +71,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'makagram.wsgi.application'
 ASGI_APPLICATION = 'makagram.asgi.application'
 
-if dj_database_url and os.environ.get('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ['DATABASE_URL'],
-            conn_max_age=600,
-        )
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

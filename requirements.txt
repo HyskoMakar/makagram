@@ -21,6 +21,7 @@ psycopg2-binary==2.9.13
 pycparser==3.0
 pyOpenSSL==26.4.0
 PyOTP==2.10.0
+python-dotenv==1.2.3
 qrcode==8.2
 redis==8.1.0
 service-identity==26.1.0

@@ -101,7 +101,7 @@
             </a>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 border-t pt-8">
+        <div class="grid lg:grid-cols-2 gap-4 border-t pt-8">
             {% for achievement in achievements %} {% if achievement.key != 'superuser' %}
             <div class="bg-white border rounded-2xl p-5 shadow-sm">
                 <div class="flex items-start justify-between gap-4">
@@ -123,15 +123,6 @@
                                     [{{ achievement.suffix }}]
                                 </span>
                             </div>
-
-                            <form method="post" action="{% url 'abuse-achievement-unlock' achievement.key %}" class="mt-4 flex gap-2 border-t pt-4 w-full">
-                                {% csrf_token %}
-                                <input id="username" name="username" type="text" value="{{ username|default:'' }}" required
-                                    class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-                                    placeholder="Some username..">
-                                <button
-                                    class="equip-achievement px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-800 text-white text-nowrap">Lock / Unlock</button>
-                            </form>
                         </div>
                     </div>
                     
@@ -146,6 +137,16 @@
                         </form>
                     </div>
                 </div>
+                <form method="post" action="{% url 'abuse-achievement-unlock' achievement.key %}"
+                    class="mt-4 sm:flex gap-2 border-t pt-4 w-full">
+                    {% csrf_token %}
+                    <input id="username" name="username" type="text" value="{{ username|default:'' }}" required
+                        class="w-full border rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 mb-2 sm:mb-0"
+                        placeholder="Some username..">
+                    <button
+                        class="equip-achievement px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-800 text-white text-nowrap w-full sm:w-auto">Lock
+                        / Unlock</button>
+                </form>
             </div>
             {% endif %}{% endfor %}
         </div>
