@@ -1,0 +1,7 @@
+DEBUG=False
+
+DJANGO_SUPERUSER_EMAIL=someemail@gmail.com
+DJANGO_SUPERUSER_PASSWORD=somePassword123!
+DJANGO_SUPERUSER_USERNAME=someusername
+
+SECRET_KEY=some_secret_key
